@@ -1,25 +1,31 @@
-import React from 'react';
-import Square from './Square';
-import { PieceProps } from './Piece';
+import React from "react";
+import Square from "./Square";
+import { PieceProps } from "./Piece";
 
 interface BoardProps {
-    gameState: PieceProps[];
-    onMovePiece: (pieceId: string, newPosition: { row: number; col: number }) => void;
-  }
+  gameState: PieceProps[];
+}
 
-const Board: React.FC<BoardProps> = ({ gameState, onMovePiece }) => {
+const Board: React.FC<BoardProps> = ({ gameState }) => {
   const rowCount = 8;
   const squareSize = 50;
 
   const renderSquare = (row: number, col: number): JSX.Element => {
     const isEven = (row + col) % 2 === 0;
-    const color = isEven ? 'silver' : 'saddlebrown';
+    const color = isEven ? "silver" : "saddlebrown";
 
     const piece = gameState.find(
-        (p) => p.position.row === (7 -row) && p.position.col === col
+      (p) => p.position.row === 7 - row && p.position.col === col
     );
 
-    return <Square key={`${row}-${col}`} size={squareSize} color={color} piece={piece} />;
+    return (
+      <Square
+        key={`${row}-${col}`}
+        size={squareSize}
+        color={color}
+        piece={piece}
+      />
+    );
   };
 
   const renderRow = (row: number): JSX.Element => {
@@ -29,7 +35,11 @@ const Board: React.FC<BoardProps> = ({ gameState, onMovePiece }) => {
       squares.push(renderSquare(row, col));
     }
 
-    return <div key={row} style={{ display: 'flex' }}>{squares}</div>;
+    return (
+      <div key={row} style={{ display: "flex" }}>
+        {squares}
+      </div>
+    );
   };
 
   const rows: JSX.Element[] = [];

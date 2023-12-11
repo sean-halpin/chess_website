@@ -75,21 +75,10 @@ const ChessGame: React.FC = () => {
   placePawns(initialGameState);
   placeBackRow(initialGameState);
 
-  const movePiece = (
-    pieceId: string,
-    newPosition: { row: number; col: number }
-  ): void => {
-    setGameState((prevGameState) =>
-      prevGameState.map((piece) =>
-        piece.id === pieceId ? { ...piece, position: newPosition } : piece
-      )
-    );
-  };
-
   return (
     <div>
       <h1>Chess Game</h1>
-      <Board gameState={gameState} onMovePiece={movePiece} />
+      <Board gameState={gameState} />
     </div>
   );
 };
