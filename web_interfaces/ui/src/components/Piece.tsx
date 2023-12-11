@@ -3,10 +3,12 @@
 import React from "react";
 import "./Piece.css";
 
+export type PieceType = "castle" | "knight" | "bishop" | "queen" | "king" | "pawn";
+
 export interface PieceProps {
   id: string;
   color: "white" | "black";
-  type: "pawn" | "castle" | "knight" | "bishop" | "queen" | "king";
+  type: PieceType;
   position: { row: number; col: number };
 }
 

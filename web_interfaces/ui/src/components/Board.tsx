@@ -16,7 +16,7 @@ const Board: React.FC<BoardProps> = ({ gameState, onMovePiece }) => {
     const color = isEven ? 'silver' : 'saddlebrown';
 
     const piece = gameState.find(
-        (p) => p.position.row === row && p.position.col === col
+        (p) => p.position.row === (7 -row) && p.position.col === col
     );
 
     return <Square key={`${row}-${col}`} size={squareSize} color={color} piece={piece} />;

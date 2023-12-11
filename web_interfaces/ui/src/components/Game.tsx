@@ -2,10 +2,51 @@
 
 import React, { useState } from "react";
 import Board from "./Board";
-import { PieceProps } from "./Piece";
+import { PieceType, PieceProps } from "./Piece";
 
 // Initial state for all pieces (sample positions)
 const initialGameState: PieceProps[] = [];
+
+type PieceColor = "white" | "black";
+
+function placePieces(gs: PieceProps[], color: string, row: number) {
+  const piecesOrder = [
+    "castle",
+    "knight",
+    "bishop",
+    "queen",
+    "king",
+    "bishop",
+    "knight",
+    "castle",
+  ];
+
+  for (let i = 0; i < 8; i++) {
+    const type = piecesOrder[i];
+    if (i === 3) {
+      gs.push({
+        id: `${color}-${type}-${i}`,
+        type: "queen" as PieceType,
+        color: color as PieceColor,
+        position: { row: row, col: i },
+      });
+    } else if (i === 4) {
+      gs.push({
+        id: `${color}-${type}-${i}`,
+        type: "king" as PieceType,
+        color: color as PieceColor,
+        position: { row: row, col: i },
+      });
+    } else {
+      gs.push({
+        id: `${color}-${type}-${i}`,
+        type: type as PieceType,
+        color: color as PieceColor,
+        position: { row: row, col: i },
+      });
+    }
+  }
+}
 
 function placePawns(gs: PieceProps[]) {
   for (let i = 0; i < 8; i++) {
@@ -23,58 +64,10 @@ function placePawns(gs: PieceProps[]) {
     });
   }
 }
+
 function placeBackRow(gs: PieceProps[]) {
-  for (let i = 0; i < 8; i++) {
-    switch (i) {
-      case 0:
-      case 7:
-        gs.push({
-          id: `white-castle-${i}`,
-          type: "castle",
-          color: "white",
-          position: { row: 0, col: i },
-        });
-        gs.push({
-          id: `black-castle-${i}`,
-          type: "castle",
-          color: "black",
-          position: { row: 7, col: i },
-        });
-        break;
-      case 1:
-      case 6:
-        gs.push({
-          id: `white-knight-${i}`,
-          type: "knight",
-          color: "white",
-          position: { row: 0, col: i },
-        });
-        gs.push({
-          id: `black-knight-${i}`,
-          type: "knight",
-          color: "black",
-          position: { row: 7, col: i },
-        });
-        break;
-      case 2:
-      case 5:
-        gs.push({
-          id: `white-bishop-${i}`,
-          type: "bishop",
-          color: "white",
-          position: { row: 0, col: i },
-        });
-        gs.push({
-          id: `black-bishop-${i}`,
-          type: "bishop",
-          color: "black",
-          position: { row: 7, col: i },
-        });
-        break;
-      default:
-        break;
-    }
-  }
+  placePieces(gs, "white", 0);
+  placePieces(gs, "black", 7);
 }
 
 const ChessGame: React.FC = () => {
