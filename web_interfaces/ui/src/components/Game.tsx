@@ -1,5 +1,7 @@
-// ChessGame.tsx
+// Game.tsx
 
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import React, { useState } from "react";
 import Board from "./Board";
 import { PieceType, PieceProps } from "./Piece";
@@ -9,7 +11,13 @@ const initialGameState: PieceProps[] = [];
 
 type PieceColor = "white" | "black";
 
-function pushPiece(gs: PieceProps[], color: PieceColor, row: number, type: PieceType, i: number) {
+function pushPiece(
+  gs: PieceProps[],
+  color: PieceColor,
+  row: number,
+  type: PieceType,
+  i: number
+) {
   gs.push({
     id: `${color}-${type}-${i}`,
     type: type,
@@ -19,7 +27,16 @@ function pushPiece(gs: PieceProps[], color: PieceColor, row: number, type: Piece
 }
 
 function placePieces(gs: PieceProps[], color: PieceColor, row: number) {
-  const piecesOrder: PieceType[] = ["castle", "knight", "bishop", "queen", "king", "bishop", "knight", "castle"];
+  const piecesOrder: PieceType[] = [
+    "castle",
+    "knight",
+    "bishop",
+    "queen",
+    "king",
+    "bishop",
+    "knight",
+    "castle",
+  ];
 
   for (let i = 0; i < 8; i++) {
     if (i === 3) {
@@ -52,7 +69,9 @@ const ChessGame: React.FC = () => {
   return (
     <div>
       <h1>Chess Game</h1>
-      <Board gameState={gameState} />
+      <DndProvider backend={HTML5Backend}>
+        <Board gameState={gameState} />
+      </DndProvider>
     </div>
   );
 };

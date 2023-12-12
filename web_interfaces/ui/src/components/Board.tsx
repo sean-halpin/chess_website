@@ -1,3 +1,5 @@
+// Board.tsx
+
 import React from "react";
 import Square from "./Square";
 import { PieceProps } from "./Piece";
@@ -15,15 +17,16 @@ const Board: React.FC<BoardProps> = ({ gameState }) => {
     const color = isEven ? "silver" : "saddlebrown";
 
     const piece = gameState.find(
-      (p) => p.position.row === 7 - row && p.position.col === col
+      (p) => p.position.row === 7-row && p.position.col === col
     );
 
     return (
       <Square
-        key={`${row}-${col}`}
+        key={`${7-row}-${col}`}
         size={squareSize}
         color={color}
         piece={piece}
+        position={{row:7-row, col:col}}
       />
     );
   };
