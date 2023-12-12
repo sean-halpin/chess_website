@@ -5,6 +5,7 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import React, { useState } from "react";
 import Board from "./Board";
 import { PieceType, PieceProps } from "./Piece";
+import { GameCommand } from "./GameCommand";
 
 // Initial state for all pieces (sample positions)
 const initialGameState: PieceProps[] = [];
@@ -62,15 +63,39 @@ function placeBackRow(gs: PieceProps[]) {
 }
 
 const ChessGame: React.FC = () => {
-  const [gameState, setGameState] = useState<PieceProps[]>(initialGameState);
   placePawns(initialGameState);
   placeBackRow(initialGameState);
+  const [gameState, setGameState] = useState<PieceProps[]>(initialGameState);
+
+  const sendGameCommand = (newCommand: GameCommand) => {
+    switch (newCommand.command) {
+      case "move":
+        console.log(`[Game] New Command: ${newCommand.command}`);
+        const updatedGameState = gameState.map((piece) =>
+          piece.id === newCommand.pieceId
+            ? { ...piece, position: newCommand.destination }
+            : piece
+        );
+
+        setGameState(updatedGameState);
+        break;
+
+      case "resign":
+        console.log(`[Game] New Command: ${newCommand.command}`);
+        // Handle resign logic here
+        break;
+
+      default:
+        console.warn(`[Game] Unknown command`);
+        break;
+    }
+  };
 
   return (
     <div>
       <h1>Chess Game</h1>
       <DndProvider backend={HTML5Backend}>
-        <Board gameState={gameState} />
+        <Board gameState={gameState} sendGameCommand={sendGameCommand} />
       </DndProvider>
     </div>
   );

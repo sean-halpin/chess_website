@@ -3,12 +3,14 @@
 import React from "react";
 import Square from "./Square";
 import { PieceProps } from "./Piece";
+import { GameCommand } from "./GameCommand";
 
 interface BoardProps {
   gameState: PieceProps[];
+  sendGameCommand: (command: GameCommand) => void
 }
 
-const Board: React.FC<BoardProps> = ({ gameState }) => {
+const Board: React.FC<BoardProps> = ({ gameState, sendGameCommand }) => {
   const rowCount = 8;
   const squareSize = 50;
 
@@ -27,6 +29,7 @@ const Board: React.FC<BoardProps> = ({ gameState }) => {
         color={color}
         piece={piece}
         position={{row:7-row, col:col}}
+        sendGameCommand={sendGameCommand}
       />
     );
   };
