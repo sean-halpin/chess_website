@@ -7,65 +7,62 @@ import Board from "./Board";
 import { PieceType, PieceProps } from "./Piece";
 import { GameCommand } from "./GameCommand";
 
-// Initial state for all pieces (sample positions)
-const initialGameState: PieceProps[] = [];
-
 type PieceColor = "white" | "black";
 
-function pushPiece(
-  gs: PieceProps[],
+const createPiece = (
   color: PieceColor,
   row: number,
   type: PieceType,
   i: number
-) {
-  gs.push({
-    id: `${color}-${type}-${i}`,
-    type: type,
-    color: color,
-    position: { row: row, col: i },
-  });
-}
+): PieceProps => ({
+  id: `${color}-${type}-${i}`,
+  type,
+  color,
+  position: { row, col: i },
+});
 
-function placePieces(gs: PieceProps[], color: PieceColor, row: number) {
-  const piecesOrder: PieceType[] = [
-    "castle",
-    "knight",
-    "bishop",
-    "queen",
-    "king",
-    "bishop",
-    "knight",
-    "castle",
-  ];
+const createPiecesOrder = (): PieceType[] => [
+  "castle",
+  "knight",
+  "bishop",
+  "queen",
+  "king",
+  "bishop",
+  "knight",
+  "castle",
+];
 
-  for (let i = 0; i < 8; i++) {
-    if (i === 3) {
-      pushPiece(gs, color, row, "queen", i);
-    } else if (i === 4) {
-      pushPiece(gs, color, row, "king", i);
-    } else {
-      pushPiece(gs, color, row, piecesOrder[i], i);
-    }
-  }
-}
+const createPieces = (color: PieceColor, row: number): PieceProps[] =>
+  Array.from({ length: 8 }, (_, i) =>
+    createPiece(
+      color,
+      row,
+      i === 3 ? "queen" : i === 4 ? "king" : createPiecesOrder()[i],
+      i
+    )
+  );
 
-function placePawns(gs: PieceProps[]) {
-  for (let i = 0; i < 8; i++) {
-    pushPiece(gs, "white", 1, "pawn", i);
-    pushPiece(gs, "black", 6, "pawn", i);
-  }
-}
+const createPawns = (): PieceProps[] =>
+  Array.from({ length: 16 }, (_, i) =>
+    createPiece(i < 8 ? "white" : "black", i < 8 ? 1 : 6, "pawn", i % 8)
+  );
 
-function placeBackRow(gs: PieceProps[]) {
-  placePieces(gs, "white", 0);
-  placePieces(gs, "black", 7);
+const placeBackRow = (): PieceProps[] => [
+  ...createPieces("white", 0),
+  ...createPieces("black", 7),
+];
+
+export interface GameState {
+  board: PieceProps[][];
+  currentPlayer: "white" | "black";
+  winner?: "white" | "black" | "draw";
 }
 
 const ChessGame: React.FC = () => {
-  placePawns(initialGameState);
-  placeBackRow(initialGameState);
-  const [gameState, setGameState] = useState<PieceProps[]>(initialGameState);
+  const [gameState, setGameState] = useState<PieceProps[]>([
+    ...createPawns(),
+    ...placeBackRow(),
+  ]);
 
   const sendGameCommand = (newCommand: GameCommand) => {
     switch (newCommand.command) {

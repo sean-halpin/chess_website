@@ -20,11 +20,11 @@ export interface PieceProps {
 }
 
 export const Piece: React.FC<PieceProps> = ({ id, color, type, position }) => {
-  const [{ isDragging }, drag, preview] = useDrag({
+  const [{ isDragging }, drag] = useDrag({
     type: "PIECE",
     item: { id, color, type, position },
     collect: (monitor) => ({
-      isDragging: !!monitor.isDragging(),
+      isDragging: monitor.isDragging(),
     }),
   });
 
