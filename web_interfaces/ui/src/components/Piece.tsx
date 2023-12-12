@@ -3,7 +3,13 @@
 import React from "react";
 import "./Piece.css";
 
-export type PieceType = "castle" | "knight" | "bishop" | "queen" | "king" | "pawn";
+export type PieceType =
+  | "castle"
+  | "knight"
+  | "bishop"
+  | "queen"
+  | "king"
+  | "pawn";
 
 export interface PieceProps {
   id: string;
@@ -12,11 +18,22 @@ export interface PieceProps {
   position: { row: number; col: number };
 }
 
-export const Piece: React.FC<PieceProps> = ({ id, color, type, position }) => {
+export const Piece: React.FC<PieceProps> = ({
+  id,
+  color,
+  type,
+  position,
+}) => {
   const imagePath = `${
     process.env.PUBLIC_URL || ""
   }/images/${color}-${type.toLowerCase()}.png`;
 
-  return <img src={imagePath} alt={`${color} ${type}`} color={`${color}`} className="piece" />;
+  return (
+      <img
+        src={imagePath}
+        alt={`${color} ${type}`}
+        color={`${color}`}
+        className="piece"   
+      />
+  );
 };
-
