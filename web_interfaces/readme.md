@@ -18,3 +18,16 @@ npx create-react-app my-react-app --template typescript
 ```
 npm install react-dnd react-dnd-html5-backend react-dnd-preview
 ```
+
+# Github.io
+```
+npm install gh-pages --save-dev
+
+"scripts": {
+    .....
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
+},
+
+npm run deploy
+```
