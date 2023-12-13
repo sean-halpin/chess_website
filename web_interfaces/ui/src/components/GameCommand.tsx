@@ -1,3 +1,5 @@
+// GameCommand.tsx
+
 export type CommandType = "move" | "resign";
 
 export interface MoveCommand {

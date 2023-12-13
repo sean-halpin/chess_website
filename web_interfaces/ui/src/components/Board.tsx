@@ -2,12 +2,12 @@
 
 import React from "react";
 import Square from "./Square";
-import { PieceProps } from "./Piece";
+import { ChessPiece } from "./Piece";
 import { GameCommand } from "./GameCommand";
 
 interface BoardProps {
-  gameState: PieceProps[];
-  sendGameCommand: (command: GameCommand) => void
+  gameState: ChessPiece[];
+  sendGameCommand: (command: GameCommand) => void;
 }
 
 const Board: React.FC<BoardProps> = ({ gameState, sendGameCommand }) => {
@@ -18,17 +18,21 @@ const Board: React.FC<BoardProps> = ({ gameState, sendGameCommand }) => {
     const isEven = (row + col) % 2 === 0;
     const color = isEven ? "silver" : "saddlebrown";
 
-    const piece = gameState.find(
-      (p) => p.position.row === 7-row && p.position.col === col
-    );
-
+    const piece =
+      gameState
+        .filter((p) => p !== null)
+        .find((p) => {
+          return p
+            ? p.position.row === 7 - row && p.position.col === col
+            : false;
+        }) || null;
     return (
       <Square
-        key={`${7-row}-${col}`}
+        key={`${7 - row}-${col}`}
         size={squareSize}
         color={color}
         piece={piece}
-        position={{row:7-row, col:col}}
+        position={{ row: 7 - row, col: col }}
         sendGameCommand={sendGameCommand}
       />
     );

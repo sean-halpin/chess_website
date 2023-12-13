@@ -12,14 +12,16 @@ export type PieceType =
   | "king"
   | "pawn";
 
-export interface PieceProps {
+export interface IChessPiece {
   id: string;
   color: "white" | "black";
   type: PieceType;
   position: { row: number; col: number };
 }
 
-export const Piece: React.FC<PieceProps> = ({ id, color, type, position }) => {
+export type ChessPiece = IChessPiece | null;
+
+export const Piece: React.FC<IChessPiece> = ({ id, color, type, position }) => {
   const [{ isDragging }, drag] = useDrag({
     type: "PIECE",
     item: { id, color, type, position },
