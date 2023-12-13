@@ -4,7 +4,7 @@ import React from "react";
 import "./Piece.css";
 import { useDrag } from "react-dnd";
 
-export type PieceType =
+export type Rank =
   | "castle"
   | "knight"
   | "bishop"
@@ -15,16 +15,17 @@ export type PieceType =
 export interface IChessPiece {
   id: string;
   color: "white" | "black";
-  type: PieceType;
+  rank: Rank;
   position: { row: number; col: number };
+  firstMove: boolean;
 }
 
 export type ChessPiece = IChessPiece | null;
 
-export const Piece: React.FC<IChessPiece> = ({ id, color, type, position }) => {
+export const Piece: React.FC<IChessPiece> = ({ id, color, rank, position }) => {
   const [{ isDragging }, drag] = useDrag({
     type: "PIECE",
-    item: { id, color, type, position },
+    item: { id, color, rank, position },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
@@ -32,11 +33,11 @@ export const Piece: React.FC<IChessPiece> = ({ id, color, type, position }) => {
 
   const imagePath = `${
     process.env.PUBLIC_URL || ""
-  }/images/${color}-${type.toLowerCase()}.png`;
+  }/images/${color}-${rank.toLowerCase()}.png`;
 
   return (
     <div ref={drag} style={{ opacity: isDragging ? 0.5 : 1 }}>
-      <img src={imagePath} alt={`${color} ${type}`} className="piece" />
+      <img src={imagePath} alt={`${color} ${rank}`} className="piece" />
     </div>
   );
 };
