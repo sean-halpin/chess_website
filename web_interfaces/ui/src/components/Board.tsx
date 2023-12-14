@@ -14,7 +14,7 @@ const Board: React.FC<BoardProps> = ({ pieces, sendGameCommand }) => {
   const squareSize = 50;
 
   const renderSquare = (row: number, col: number): JSX.Element => {
-    const isEven = (row + col) % 2 === 0;
+    const isEven = (row + col) % 2 === 1;
     const color = isEven ? "silver" : "saddlebrown";
 
     const piece =
