@@ -6,6 +6,7 @@ import React, { useState } from "react";
 import Board from "./Board";
 import { Rank, ChessPiece, IChessPiece } from "./Piece";
 import { GameCommand, BoardLocation } from "./GameCommand";
+import "./Game.css";
 
 type PieceColor = "white" | "black";
 
