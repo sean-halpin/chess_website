@@ -7,7 +7,7 @@ export interface ILocation {
     col: number
 }
 
-export class Loc implements ILocation {
+export class BoardLocation implements ILocation {
     constructor(public row: number, public col: number) {}
   
     isEqual(otherLocation: ILocation): boolean {
@@ -18,8 +18,8 @@ export class Loc implements ILocation {
 export interface MoveCommand {
   command: "move";
   pieceId: string;
-  source: Loc;
-  destination: Loc;
+  source: BoardLocation;
+  destination: BoardLocation;
 }
 
 export interface ResignCommand {

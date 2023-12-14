@@ -3,7 +3,7 @@
 import React from "react";
 import { Piece, ChessPiece } from "./Piece";
 import { useDrop } from "react-dnd";
-import { GameCommand, Loc } from "./GameCommand";
+import { GameCommand, BoardLocation } from "./GameCommand";
 
 interface SquareProps {
   size: number;
@@ -45,8 +45,8 @@ const Square: React.FC<SquareProps> = ({
         const moveCommand: GameCommand = {
           command: "move",
           pieceId: piece.id,
-          source: new Loc(piece.position.row, piece.position.col),
-          destination: new Loc(position.row, position.col),
+          source: new BoardLocation(piece.position.row, piece.position.col),
+          destination: new BoardLocation(position.row, position.col),
         };
         sendGameCommand(moveCommand);
       }

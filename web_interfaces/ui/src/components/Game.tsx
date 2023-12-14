@@ -5,7 +5,7 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import React, { useState } from "react";
 import Board from "./Board";
 import { Rank, ChessPiece, IChessPiece } from "./Piece";
-import { GameCommand, Loc } from "./GameCommand";
+import { GameCommand, BoardLocation } from "./GameCommand";
 
 type PieceColor = "white" | "black";
 
@@ -77,39 +77,57 @@ export const ChessGame: React.FC = () => {
   });
 
   const findLegalPawnMoves = (
-    piece: IChessPiece,
-    src: Loc,
-    dest: Loc,
+    movingPiece: IChessPiece,
+    src: BoardLocation,
+    dest: BoardLocation,
     board: ChessBoard
-  ): Loc[] => {
-    const dests: Loc[] = [];
-    const teamDirection = piece.color === "white" ? 1 : -1;
-    const { row, col } = piece.position;
+  ): BoardLocation[] => {
+    const dests: BoardLocation[] = [];
+    const teamDirection = movingPiece.color === "white" ? 1 : -1;
+    const { row, col } = movingPiece.position;
 
-    const isSquareEmpty = (r: number, c: number) => board[r]?.[c] == null;
-
+    const isOOB = (r: number, c: number) => {
+      return r < 0 || r > 7 || c < 0 || c > 7;
+    };
+    const isSquareEmpty = (r: number, c: number) => {
+      return !isOOB(r, c) && board[r][c] == null;
+    };
+    const isSquareAttackable = (r: number, c: number) => {
+      return !isOOB(r, c) && board[r][c]?.color !== movingPiece.color;
+    };
+    // Pawn advance 1
     if (isSquareEmpty(row + 1 * teamDirection, col)) {
-      dests.push(new Loc(row + 1 * teamDirection, col));
+      dests.push(new BoardLocation(row + 1 * teamDirection, col));
     }
-
+    // Pawn sideways attack
+    if (isSquareAttackable(row + 1 * teamDirection, col + 1)) {
+      dests.push(new BoardLocation(row + 1 * teamDirection, col + 1));
+    }
+    if (isSquareAttackable(row + 1 * teamDirection, col - 1)) {
+      dests.push(new BoardLocation(row + 1 * teamDirection, col - 1));
+    }
+    // Pawn advance 2 on first move
     if (
-      piece.firstMove &&
+      movingPiece.firstMove &&
       isSquareEmpty(row + 2 * teamDirection, col) &&
       isSquareEmpty(row + 1 * teamDirection, col)
     ) {
-      dests.push(new Loc(row + 2 * teamDirection, col));
+      dests.push(new BoardLocation(row + 2 * teamDirection, col));
     }
 
     return dests;
   };
 
-  const isCommandLegal = (cmd: GameCommand, board: ChessBoard): Boolean => {
+  const isCommandLegal = (cmd: GameCommand, gameState: GameState): Boolean => {
     switch (cmd.command) {
       case "move":
-        let moving_piece = board
+        let moving_piece = gameState.board
           .flat()
           .filter((p) => p != null)
           .find((p) => p?.id === cmd.pieceId);
+        if (gameState.currentPlayer !== moving_piece?.color) {
+          return false;
+        }
         if (moving_piece) {
           switch (moving_piece.rank) {
             case "pawn":
@@ -139,24 +157,28 @@ export const ChessGame: React.FC = () => {
       case "move":
         console.log(`[Game] New Command: ${newCommand.command}`);
         const updatedBoard = [...gameState.board.map((row) => [...row])]; // Create a copy of the board
-        if (isCommandLegal(newCommand, updatedBoard)) {
+        if (isCommandLegal(newCommand, gameState)) {
           const pieceToMove =
             updatedBoard[newCommand.source.row][newCommand.source.col];
-          if (pieceToMove) pieceToMove.position = newCommand.destination;
-          // Update the destination cell with the moved piece
-          updatedBoard[newCommand.destination.row][newCommand.destination.col] =
-            pieceToMove;
-          updatedBoard[newCommand.source.row][newCommand.source.col] = null; // Empty the source cell
+          if (pieceToMove) {
+            pieceToMove.position = newCommand.destination;
+            pieceToMove.firstMove = false;
+            // Update the destination cell with the moved piece
+            updatedBoard[newCommand.destination.row][
+              newCommand.destination.col
+            ] = pieceToMove;
+            updatedBoard[newCommand.source.row][newCommand.source.col] = null; // Empty the source cell
 
-          // Update the position of the moved piece in the gameState
-          const updatedGameState: GameState = {
-            ...gameState,
-            board: updatedBoard,
-            currentPlayer:
-              gameState.currentPlayer === "white" ? "black" : "white", // Switch player turn
-          };
+            // Update the position of the moved piece in the gameState
+            const updatedGameState: GameState = {
+              ...gameState,
+              board: updatedBoard,
+              currentPlayer:
+                gameState.currentPlayer === "white" ? "black" : "white", // Switch player turn
+            };
 
-          setGameState(updatedGameState);
+            setGameState(updatedGameState);
+          }
         }
         break;
       case "resign":
