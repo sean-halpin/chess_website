@@ -3,6 +3,7 @@
 import React from "react";
 import "./Piece.css";
 import { useDrag } from "react-dnd";
+import { BoardLocation } from "./GameCommand";
 
 export type Rank =
   | "castle"
@@ -16,7 +17,7 @@ export interface IChessPiece {
   id: string;
   color: "white" | "black";
   rank: Rank;
-  position: { row: number; col: number };
+  position: BoardLocation;
   firstMove: boolean;
 }
 

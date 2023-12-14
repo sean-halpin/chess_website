@@ -6,12 +6,11 @@ import { ChessPiece } from "./Piece";
 import { GameCommand } from "./GameCommand";
 
 interface BoardProps {
-  gameState: ChessPiece[];
+  pieces: ChessPiece[];
   sendGameCommand: (command: GameCommand) => void;
 }
 
-const Board: React.FC<BoardProps> = ({ gameState, sendGameCommand }) => {
-  const rowCount = 8;
+const Board: React.FC<BoardProps> = ({ pieces, sendGameCommand }) => {
   const squareSize = 50;
 
   const renderSquare = (row: number, col: number): JSX.Element => {
@@ -19,20 +18,20 @@ const Board: React.FC<BoardProps> = ({ gameState, sendGameCommand }) => {
     const color = isEven ? "silver" : "saddlebrown";
 
     const piece =
-      gameState
+      pieces
         .filter((p) => p !== null)
         .find((p) => {
           return p
-            ? p.position.row === 7 - row && p.position.col === col
+            ? p.position.row === row && p.position.col === col
             : false;
         }) || null;
     return (
       <Square
-        key={`${7 - row}-${col}`}
+        key={`${row}-${col}`}
         size={squareSize}
         color={color}
         piece={piece}
-        position={{ row: 7 - row, col: col }}
+        position={{ row: row, col: col }}
         sendGameCommand={sendGameCommand}
       />
     );
@@ -41,7 +40,7 @@ const Board: React.FC<BoardProps> = ({ gameState, sendGameCommand }) => {
   const renderRow = (row: number): JSX.Element => {
     const squares: JSX.Element[] = [];
 
-    for (let col = 0; col < rowCount; col++) {
+    for (let col = 0; col <= 7; col++) {
       squares.push(renderSquare(row, col));
     }
 
@@ -53,7 +52,7 @@ const Board: React.FC<BoardProps> = ({ gameState, sendGameCommand }) => {
   };
 
   const rows: JSX.Element[] = [];
-  for (let row = 0; row < rowCount; row++) {
+  for (let row = 7; row >= 0; row--) {
     rows.push(renderRow(row));
   }
 

@@ -12,14 +12,14 @@ type PieceColor = "white" | "black";
 
 const createPiece = (
   color: PieceColor,
-  row: number,
+  position: BoardLocation,
   rank: Rank,
   i: number
 ): ChessPiece => ({
   id: `${color}-${rank}-${i}`,
   rank,
   color,
-  position: { row, col: i },
+  position,
   firstMove: true,
 });
 
@@ -35,18 +35,23 @@ const createPiecesOrder = (): Rank[] => [
 ];
 
 const createPieces = (color: PieceColor, row: number): ChessPiece[] =>
-  Array.from({ length: 8 }, (_, i) =>
+  Array.from({ length: 8 }, (_, column) =>
     createPiece(
       color,
-      row,
-      i === 3 ? "queen" : i === 4 ? "king" : createPiecesOrder()[i],
-      i
+      new BoardLocation(row, column),
+      column === 3 ? "queen" : column === 4 ? "king" : createPiecesOrder()[column],
+      column
     )
   );
 
 const createPawns = (): ChessPiece[] =>
-  Array.from({ length: 16 }, (_, i) =>
-    createPiece(i < 8 ? "white" : "black", i < 8 ? 1 : 6, "pawn", i % 8)
+  Array.from({ length: 16 }, (_, column) =>
+    createPiece(
+      column < 8 ? "white" : "black",
+      new BoardLocation(column < 8 ? 1 : 6, column % 8),
+      "pawn",
+      column % 8
+    )
   );
 
 const placeBackRow = (): ChessPiece[] => [
@@ -55,11 +60,19 @@ const placeBackRow = (): ChessPiece[] => [
 ];
 
 type ChessBoard = ChessPiece[][];
+interface MoveResult {
+  destination: BoardLocation;
+  movingPiece: ChessPiece;
+  takenPiece: ChessPiece;
+  enPassantPossible?: Boolean;
+}
+type CommandResult = MoveResult | null;
 
 export interface GameState {
   board: ChessBoard;
   currentPlayer: "white" | "black";
   winner?: "white" | "black" | "draw";
+  commands: CommandResult[];
 }
 
 export const ChessGame: React.FC = () => {
@@ -75,15 +88,15 @@ export const ChessGame: React.FC = () => {
   const [gameState, setGameState] = useState<GameState>({
     board: initialBoard,
     currentPlayer: "white",
+    commands: [],
   });
 
   const findLegalPawnMoves = (
     movingPiece: IChessPiece,
-    src: BoardLocation,
-    dest: BoardLocation,
-    currentBoard: ChessBoard
-  ): BoardLocation[] => {
-    const dests: BoardLocation[] = [];
+    gameState: GameState
+  ): MoveResult[] => {
+    const moveResults: MoveResult[] = [];
+    const currentBoard = gameState.board;
     const teamDirection = movingPiece.color === "white" ? 1 : -1;
     const { row, col } = movingPiece.position;
 
@@ -93,23 +106,39 @@ export const ChessGame: React.FC = () => {
     const isSquareEmpty = (r: number, c: number) => {
       return !isOOB(r, c) && currentBoard[r][c] == null;
     };
-    const isSquareAttackable = (r: number, c: number) => {
-      return (
+    const isSquareAttackable = (r: number, c: number): ChessPiece | null => {
+      if (
         !isOOB(r, c) &&
         currentBoard[r][c] != null &&
         currentBoard[r][c]?.color !== movingPiece.color
-      );
+      ) {
+        return currentBoard[r][c];
+      } else {
+        return null;
+      }
     };
     // Pawn advance 1
     if (isSquareEmpty(row + 1 * teamDirection, col)) {
-      dests.push(new BoardLocation(row + 1 * teamDirection, col));
+      moveResults.push({
+        destination: new BoardLocation(row + 1 * teamDirection, col),
+        movingPiece: movingPiece,
+        takenPiece: null,
+      });
     }
     // Pawn sideways attack
     if (isSquareAttackable(row + 1 * teamDirection, col + 1)) {
-      dests.push(new BoardLocation(row + 1 * teamDirection, col + 1));
+      moveResults.push({
+        destination: new BoardLocation(row + 1 * teamDirection, col + 1),
+        takenPiece: currentBoard[row + 1 * teamDirection][col + 1],
+        movingPiece: movingPiece,
+      });
     }
     if (isSquareAttackable(row + 1 * teamDirection, col - 1)) {
-      dests.push(new BoardLocation(row + 1 * teamDirection, col - 1));
+      moveResults.push({
+        destination: new BoardLocation(row + 1 * teamDirection, col - 1),
+        takenPiece: currentBoard[row + 1 * teamDirection][col - 1],
+        movingPiece: movingPiece,
+      });
     }
     // Pawn advance 2 on first move
     if (
@@ -117,14 +146,41 @@ export const ChessGame: React.FC = () => {
       isSquareEmpty(row + 2 * teamDirection, col) &&
       isSquareEmpty(row + 1 * teamDirection, col)
     ) {
-      dests.push(new BoardLocation(row + 2 * teamDirection, col));
+      moveResults.push({
+        destination: new BoardLocation(row + 2 * teamDirection, col),
+        movingPiece: movingPiece,
+        takenPiece: null,
+        enPassantPossible: true,
+      });
     }
     // En Passant
+    if (
+      gameState.commands.length > 0 &&
+      gameState.commands[gameState.commands.length - 1]?.enPassantPossible
+    ) {
+      if (isSquareAttackable(row, col - 1)?.rank === "pawn") {
+        moveResults.push({
+          destination: new BoardLocation(row + 1 * teamDirection, col - 1),
+          movingPiece: movingPiece,
+          takenPiece: currentBoard[row][col - 1],
+        });
+      }
+      if (isSquareAttackable(row, col + 1)?.rank === "pawn") {
+        moveResults.push({
+          destination: new BoardLocation(row + 1 * teamDirection, col + 1),
+          movingPiece: movingPiece,
+          takenPiece: currentBoard[row][col + 1],
+        });
+      }
+    }
 
-    return dests;
+    return moveResults;
   };
 
-  const isCommandLegal = (cmd: GameCommand, gameState: GameState): Boolean => {
+  const executeCommand = (
+    cmd: GameCommand,
+    gameState: GameState
+  ): CommandResult => {
     switch (cmd.command) {
       case "move":
         let moving_piece = gameState.board
@@ -132,20 +188,14 @@ export const ChessGame: React.FC = () => {
           .filter((p) => p != null)
           .find((p) => p?.id === cmd.pieceId);
         if (gameState.currentPlayer !== moving_piece?.color) {
-          return false;
+          return null;
         }
         if (moving_piece) {
           switch (moving_piece.rank) {
             case "pawn":
-              return (
-                findLegalPawnMoves(
-                  moving_piece,
-                  cmd.source,
-                  cmd.destination,
-                  gameState.board
-                ).filter((location) => location.isEqual(cmd.destination))
-                  .length === 1
-              );
+              return findLegalPawnMoves(moving_piece, gameState).filter(
+                (result) => result.destination.isEqual(cmd.destination)
+              )[0];
           }
         }
         break;
@@ -154,7 +204,7 @@ export const ChessGame: React.FC = () => {
       default:
         break;
     }
-    return false;
+    return null;
   };
 
   const sendGameCommand = (newCommand: GameCommand) => {
@@ -162,27 +212,34 @@ export const ChessGame: React.FC = () => {
       case "move":
         console.log(`[Game] New Command: ${newCommand.command}`);
         const updatedBoard = [...gameState.board.map((row) => [...row])]; // Create a copy of the board
-        if (isCommandLegal(newCommand, gameState)) {
-          const pieceToMove =
-            updatedBoard[newCommand.source.row][newCommand.source.col];
-          if (pieceToMove) {
-            pieceToMove.position = newCommand.destination;
-            pieceToMove.firstMove = false;
-            // Update the destination cell with the moved piece
-            updatedBoard[newCommand.destination.row][
-              newCommand.destination.col
-            ] = pieceToMove;
-            updatedBoard[newCommand.source.row][newCommand.source.col] = null; // Empty the source cell
-
-            // Update the position of the moved piece in the gameState
-            const updatedGameState: GameState = {
-              ...gameState,
-              board: updatedBoard,
-              currentPlayer:
-                gameState.currentPlayer === "white" ? "black" : "white", // Switch player turn
-            };
-            setGameState(updatedGameState);
+        const cmdResult: CommandResult = executeCommand(newCommand, gameState);
+        if (cmdResult) {
+          // Remove taken piece
+          let takenPiece = cmdResult.takenPiece;
+          if (takenPiece) {
+            updatedBoard[takenPiece.position.row][takenPiece.position.col] =
+              null;
+            takenPiece = null;
           }
+          // Update moving piece
+          const movingPiece = cmdResult.movingPiece;
+          if (movingPiece) {
+            movingPiece.position = cmdResult.destination;
+            movingPiece.firstMove = false;
+            updatedBoard[newCommand.source.row][newCommand.source.col] = null;
+            updatedBoard[movingPiece.position.row][movingPiece.position.col] =
+              movingPiece;
+          }
+          // Push Latest Command Result
+          gameState.commands.push(cmdResult);
+          // Update GameState
+          const updatedGameState: GameState = {
+            board: updatedBoard,
+            currentPlayer:
+              gameState.currentPlayer === "white" ? "black" : "white",
+            commands: gameState.commands,
+          };
+          setGameState(updatedGameState);
         }
         break;
       case "resign":
@@ -201,7 +258,7 @@ export const ChessGame: React.FC = () => {
         <h1>Chess Game</h1>
         <DndProvider backend={HTML5Backend}>
           <Board
-            gameState={gameState.board.flat()}
+            pieces={gameState.board.flat()}
             sendGameCommand={sendGameCommand}
           />
         </DndProvider>
