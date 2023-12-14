@@ -63,16 +63,16 @@ export interface GameState {
 
 export const ChessGame: React.FC = () => {
   const pieces: ChessPiece[] = [...createPawns(), ...placeBackRow()];
-  const board: ChessBoard = Array.from({ length: 8 }, () =>
+  const initialBoard: ChessBoard = Array.from({ length: 8 }, () =>
     Array(8).fill(null)
   );
   pieces.forEach((p) => {
     if (p) {
-      board[p.position.row][p.position.col] = p;
+      initialBoard[p.position.row][p.position.col] = p;
     }
   });
   const [gameState, setGameState] = useState<GameState>({
-    board: board,
+    board: initialBoard,
     currentPlayer: "white",
   });
 
@@ -80,7 +80,7 @@ export const ChessGame: React.FC = () => {
     movingPiece: IChessPiece,
     src: BoardLocation,
     dest: BoardLocation,
-    board: ChessBoard
+    currentBoard: ChessBoard
   ): BoardLocation[] => {
     const dests: BoardLocation[] = [];
     const teamDirection = movingPiece.color === "white" ? 1 : -1;
@@ -90,10 +90,14 @@ export const ChessGame: React.FC = () => {
       return r < 0 || r > 7 || c < 0 || c > 7;
     };
     const isSquareEmpty = (r: number, c: number) => {
-      return !isOOB(r, c) && board[r][c] == null;
+      return !isOOB(r, c) && currentBoard[r][c] == null;
     };
     const isSquareAttackable = (r: number, c: number) => {
-      return !isOOB(r, c) && board[r][c]?.color !== movingPiece.color;
+      return (
+        !isOOB(r, c) &&
+        currentBoard[r][c] != null &&
+        currentBoard[r][c]?.color !== movingPiece.color
+      );
     };
     // Pawn advance 1
     if (isSquareEmpty(row + 1 * teamDirection, col)) {
@@ -114,6 +118,7 @@ export const ChessGame: React.FC = () => {
     ) {
       dests.push(new BoardLocation(row + 2 * teamDirection, col));
     }
+    // En Passant
 
     return dests;
   };
@@ -131,13 +136,12 @@ export const ChessGame: React.FC = () => {
         if (moving_piece) {
           switch (moving_piece.rank) {
             case "pawn":
-              console.log("Check Pawn Legal");
               return (
                 findLegalPawnMoves(
                   moving_piece,
                   cmd.source,
                   cmd.destination,
-                  board
+                  gameState.board
                 ).filter((location) => location.isEqual(cmd.destination))
                   .length === 1
               );
@@ -176,7 +180,6 @@ export const ChessGame: React.FC = () => {
               currentPlayer:
                 gameState.currentPlayer === "white" ? "black" : "white", // Switch player turn
             };
-
             setGameState(updatedGameState);
           }
         }
