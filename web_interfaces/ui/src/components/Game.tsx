@@ -39,7 +39,11 @@ const createPieces = (color: PieceColor, row: number): ChessPiece[] =>
     createPiece(
       color,
       new BoardLocation(row, column),
-      column === 3 ? "queen" : column === 4 ? "king" : createPiecesOrder()[column],
+      column === 3
+        ? "queen"
+        : column === 4
+        ? "king"
+        : createPiecesOrder()[column],
       column
     )
   );
@@ -177,6 +181,13 @@ export const ChessGame: React.FC = () => {
     return moveResults;
   };
 
+  const findLegalCastleMoves = (
+    movingPiece: IChessPiece,
+    gameState: GameState
+  ): MoveResult[] => {
+    return [];
+  };
+
   const executeCommand = (
     cmd: GameCommand,
     gameState: GameState
@@ -193,6 +204,26 @@ export const ChessGame: React.FC = () => {
         if (moving_piece) {
           switch (moving_piece.rank) {
             case "pawn":
+              return findLegalPawnMoves(moving_piece, gameState).filter(
+                (result) => result.destination.isEqual(cmd.destination)
+              )[0];
+            case "castle":
+              return findLegalCastleMoves(moving_piece, gameState).filter(
+                (result) => result.destination.isEqual(cmd.destination)
+              )[0];
+            case "knight":
+              return findLegalPawnMoves(moving_piece, gameState).filter(
+                (result) => result.destination.isEqual(cmd.destination)
+              )[0];
+            case "bishop":
+              return findLegalPawnMoves(moving_piece, gameState).filter(
+                (result) => result.destination.isEqual(cmd.destination)
+              )[0];
+            case "queen":
+              return findLegalPawnMoves(moving_piece, gameState).filter(
+                (result) => result.destination.isEqual(cmd.destination)
+              )[0];
+            case "king":
               return findLegalPawnMoves(moving_piece, gameState).filter(
                 (result) => result.destination.isEqual(cmd.destination)
               )[0];
