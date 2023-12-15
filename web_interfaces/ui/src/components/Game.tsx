@@ -4,7 +4,12 @@ import { DndProvider } from "react-dnd";
 import React, { useEffect, useState } from "react";
 import Board from "./Board";
 import { Rank, ChessPiece, IChessPiece } from "./Piece";
-import { GameCommand, BoardLocation } from "./GameCommand";
+import {
+  GameCommand,
+  BoardLocation,
+  MoveCommand,
+  ResignCommand,
+} from "./GameCommand";
 import "./Game.css";
 import isTouchDevice from "is-touch-device";
 import { TouchBackend } from "react-dnd-touch-backend";
@@ -421,7 +426,7 @@ export const ChessGame: React.FC = () => {
     }
   };
 
-  const executeCommand = (
+  const attemptCommand = (
     cmd: GameCommand,
     gameState: GameState
   ): CommandResult => {
@@ -456,46 +461,60 @@ export const ChessGame: React.FC = () => {
     return null;
   };
 
+  const applyMoveCommand = (
+    newCommand: MoveCommand,
+    gameState: GameState
+  ): GameState => {
+    console.log(`[Game] New Command: ${newCommand.command}`);
+
+    const updatedBoard = [...gameState.board.map((row) => [...row])];
+    const cmdResult = attemptCommand(newCommand, gameState);
+
+    if (cmdResult) {
+      console.log(
+        `[cmdResult move]: ${cmdResult.destination.row}-${cmdResult.destination.col}`
+      );
+
+      const { takenPiece, movingPiece } = cmdResult;
+
+      // Remove taken piece
+      if (takenPiece) {
+        updatedBoard[takenPiece.position.row][takenPiece.position.col] = null;
+      }
+
+      // Update moving piece
+      if (movingPiece) {
+        movingPiece.position = cmdResult.destination;
+        movingPiece.firstMove = false;
+        updatedBoard[newCommand.source.row][newCommand.source.col] = null;
+        updatedBoard[movingPiece.position.row][movingPiece.position.col] =
+          movingPiece;
+      }
+
+      // Push Latest Command Result
+      gameState.commands.push(cmdResult);
+
+      // Update GameState
+      gameState = {
+        board: updatedBoard,
+        currentPlayer: gameState.currentPlayer === "white" ? "black" : "white",
+        commands: gameState.commands,
+      };
+    }
+    return gameState;
+  };
+
+  const handleResignCommand = (newCommand: ResignCommand) => {
+    console.log(`[Game] New Command: ${newCommand.command}`);
+  };
+
   const sendGameCommand = (newCommand: GameCommand) => {
     switch (newCommand.command) {
       case "move":
-        console.log(`[Game] New Command: ${newCommand.command}`);
-        const updatedBoard = [...gameState.board.map((row) => [...row])];
-        const cmdResult: CommandResult = executeCommand(newCommand, gameState);
-        if (cmdResult) {
-          console.log(
-            `[cmdResult move]: ${cmdResult.destination.row}-${cmdResult.destination.col}`
-          );
-          // Remove taken piece
-          let takenPiece = cmdResult.takenPiece;
-          if (takenPiece) {
-            updatedBoard[takenPiece.position.row][takenPiece.position.col] =
-              null;
-            takenPiece = null;
-          }
-          // Update moving piece
-          const movingPiece = cmdResult.movingPiece;
-          if (movingPiece) {
-            movingPiece.position = cmdResult.destination;
-            movingPiece.firstMove = false;
-            updatedBoard[newCommand.source.row][newCommand.source.col] = null;
-            updatedBoard[movingPiece.position.row][movingPiece.position.col] =
-              movingPiece;
-          }
-          // Push Latest Command Result
-          gameState.commands.push(cmdResult);
-          // Update GameState
-          const updatedGameState: GameState = {
-            board: updatedBoard,
-            currentPlayer:
-              gameState.currentPlayer === "white" ? "black" : "white",
-            commands: gameState.commands,
-          };
-          setGameState(updatedGameState);
-        }
+        setGameState(applyMoveCommand(newCommand, gameState));
         break;
       case "resign":
-        console.log(`[Game] New Command: ${newCommand.command}`);
+        handleResignCommand(newCommand);
         break;
       default:
         console.warn(`[Game] Unknown command`);
