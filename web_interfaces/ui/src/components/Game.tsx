@@ -1,7 +1,7 @@
 // Game.tsx
 
 import { DndProvider } from "react-dnd";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Board from "./Board";
 import { Rank, ChessPiece, IChessPiece } from "./Piece";
 import { GameCommand, BoardLocation } from "./GameCommand";
@@ -96,17 +96,27 @@ export const ChessGame: React.FC = () => {
     currentPlayer: "white",
     commands: [],
   });
+  useEffect(() => {
+    if (gameState.currentPlayer === "black") {
+      randomMove(gameState, "black");
+    }
+  });
 
   const isOOB = (r: number, c: number) => r < 0 || r > 7 || c < 0 || c > 7;
   const isSquareEmpty = (r: number, c: number, b: ChessBoard) =>
     !isOOB(r, c) && b[r][c] == null;
-  const isSquareAttackable = (
+  const squareEntry = (
     r: number,
     c: number,
     b: ChessBoard,
     mP: IChessPiece
-  ): ChessPiece | null =>
-    !isOOB(r, c) && b[r][c]?.color !== mP.color ? b[r][c] : null;
+  ): ChessPiece => {
+    if (!isOOB(r, c) && b[r][c] !== null) {
+      return b[r][c];
+    } else {
+      return null;
+    }
+  };
 
   const findLegalPawnMoves = (
     movingPiece: IChessPiece,
@@ -132,13 +142,15 @@ export const ChessGame: React.FC = () => {
     const attackableCol = (column_offset: number) =>
       movingPieceCurrentCol + column_offset;
     const attackableRow = nextRow;
+    const possiblePieceRight = squareEntry(
+      attackableRow,
+      attackableCol(1),
+      currentBoard,
+      movingPiece
+    );
     if (
-      isSquareAttackable(
-        attackableRow,
-        attackableCol(1),
-        currentBoard,
-        movingPiece
-      )
+      possiblePieceRight !== null &&
+      possiblePieceRight?.color !== movingPiece.color
     ) {
       moveResults.push({
         destination: new BoardLocation(attackableRow, attackableCol(1)),
@@ -146,13 +158,15 @@ export const ChessGame: React.FC = () => {
         takenPiece: currentBoard[attackableRow][attackableCol(1)],
       });
     }
+    const possiblePieceLeft = squareEntry(
+      attackableRow,
+      attackableCol(-1),
+      currentBoard,
+      movingPiece
+    );
     if (
-      isSquareAttackable(
-        attackableRow,
-        attackableCol(-1),
-        currentBoard,
-        movingPiece
-      )
+      possiblePieceLeft !== null &&
+      possiblePieceLeft?.color !== movingPiece.color
     ) {
       moveResults.push({
         destination: new BoardLocation(attackableRow, attackableCol(-1)),
@@ -179,13 +193,18 @@ export const ChessGame: React.FC = () => {
     // En Passant
     const lastCommand = gameState.commands[gameState.commands.length - 1];
     if (gameState.commands.length > 0 && lastCommand?.enPassantPossible) {
-      const enPassantAttackable = (column_offset: number) =>
-        isSquareAttackable(
+      const enPassantAttackable = (column_offset: number) => {
+        const possiblePiece = squareEntry(
           movingPieceCurrentRow,
           movingPieceCurrentCol + column_offset,
           currentBoard,
           movingPiece
-        )?.rank === "pawn";
+        );
+        return (
+          possiblePiece?.rank === "pawn" &&
+          possiblePiece?.color !== movingPiece.color
+        );
+      };
       if (enPassantAttackable(-1)) {
         moveResults.push({
           destination: new BoardLocation(attackableRow, attackableCol(-1)),
@@ -203,7 +222,6 @@ export const ChessGame: React.FC = () => {
         });
       }
     }
-
     return moveResults;
   };
 
@@ -222,7 +240,8 @@ export const ChessGame: React.FC = () => {
     let newCol = col + colOffset;
 
     let count = 0;
-    while (!isOOB(newRow, newCol) && count < maximumDistance) {
+    let shouldExit = false;
+    while (!isOOB(newRow, newCol) && count < maximumDistance && !shouldExit) {
       count += 1;
       if (isSquareEmpty(newRow, newCol, currentBoard)) {
         moveResults.push({
@@ -232,26 +251,26 @@ export const ChessGame: React.FC = () => {
         });
       }
 
-      const attackedPiece = isSquareAttackable(
+      const possiblePiece = squareEntry(
         newRow,
         newCol,
         currentBoard,
         movingPiece
       );
 
-      if (attackedPiece) {
-        moveResults.push({
-          destination: new BoardLocation(newRow, newCol),
-          movingPiece,
-          takenPiece: attackedPiece,
-        });
-        break;
+      if (possiblePiece) {
+        if (possiblePiece?.color !== movingPiece.color) {
+          moveResults.push({
+            destination: new BoardLocation(newRow, newCol),
+            movingPiece,
+            takenPiece: possiblePiece,
+          });
+        }
+        shouldExit = true;
       }
-
       newRow += rowOffset;
       newCol += colOffset;
     }
-
     return moveResults;
   };
 
@@ -356,6 +375,52 @@ export const ChessGame: React.FC = () => {
     return moveResults;
   };
 
+  const moveFunctions = {
+    pawn: findLegalPawnMoves,
+    castle: findLegalCastleMoves,
+    knight: findLegalKnightMoves,
+    bishop: findLegalBishopMoves,
+    queen: findLegalQueenMoves,
+    king: findLegalKingMoves,
+  };
+
+  const randomMove = (gameState: GameState, color: string) => {
+    console.log(`[random move]`);
+    let possibleMoves = [];
+    const pieces = gameState.board
+      .flat()
+      .filter((p) => p !== null && p.color === color);
+    const randomPiece = pieces[Math.floor(Math.random() * pieces.length)];
+    if (randomPiece) {
+      console.log(`[random move]: ${randomPiece.id}`);
+      possibleMoves = moveFunctions[randomPiece?.rank](randomPiece, gameState);
+      if (possibleMoves.length > 0) {
+        const randomMove =
+          possibleMoves.flat()[
+            Math.floor(Math.random() * possibleMoves.flat().length)
+          ];
+        const moveCommand: GameCommand = {
+          command: "move",
+          pieceId: randomPiece.id,
+          source: new BoardLocation(
+            randomPiece.position.row,
+            randomPiece.position.col
+          ),
+          destination: new BoardLocation(
+            randomMove.destination.row,
+            randomMove.destination.col
+          ),
+        };
+        console.log(
+          `[random move]: ${moveCommand.destination.row}-${moveCommand.destination.col}`
+        );
+        sendGameCommand(moveCommand);
+      } else {
+        randomMove(gameState, color);
+      }
+    }
+  };
+
   const executeCommand = (
     cmd: GameCommand,
     gameState: GameState
@@ -368,17 +433,9 @@ export const ChessGame: React.FC = () => {
           .find((p) => p?.id === cmd.pieceId);
 
         if (gameState.currentPlayer !== moving_piece?.color || !moving_piece) {
+          console.log("Team not in play");
           return null;
         }
-
-        const moveFunctions = {
-          pawn: findLegalPawnMoves,
-          castle: findLegalCastleMoves,
-          knight: findLegalKnightMoves,
-          bishop: findLegalBishopMoves,
-          queen: findLegalQueenMoves,
-          king: findLegalKingMoves,
-        };
 
         const moveFunction = moveFunctions[moving_piece.rank];
         if (moveFunction) {
@@ -403,9 +460,12 @@ export const ChessGame: React.FC = () => {
     switch (newCommand.command) {
       case "move":
         console.log(`[Game] New Command: ${newCommand.command}`);
-        const updatedBoard = [...gameState.board.map((row) => [...row])]; // Create a copy of the board
+        const updatedBoard = [...gameState.board.map((row) => [...row])];
         const cmdResult: CommandResult = executeCommand(newCommand, gameState);
         if (cmdResult) {
+          console.log(
+            `[cmdResult move]: ${cmdResult.destination.row}-${cmdResult.destination.col}`
+          );
           // Remove taken piece
           let takenPiece = cmdResult.takenPiece;
           if (takenPiece) {
