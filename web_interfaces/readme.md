@@ -17,6 +17,9 @@ npx create-react-app my-react-app --template typescript
 ## Adding drag and drop
 ```
 npm install react-dnd react-dnd-html5-backend react-dnd-preview
+npm install react-dnd-touch-backend
+npm install is-touch-device
+npm i --save-dev @types/is-touch-device
 ```
 
 # Github.io
