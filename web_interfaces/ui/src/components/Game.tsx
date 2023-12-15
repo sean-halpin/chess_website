@@ -209,7 +209,8 @@ export const ChessGame: React.FC = () => {
     movingPiece: IChessPiece,
     gameState: GameState,
     rowOffset: number,
-    colOffset: number
+    colOffset: number,
+    maximumDistance: number = 8
   ): MoveResult[] => {
     const moveResults: MoveResult[] = [];
     const currentBoard = gameState.board;
@@ -218,7 +219,9 @@ export const ChessGame: React.FC = () => {
     let newRow = row + rowOffset;
     let newCol = col + colOffset;
 
-    while (!isOOB(newRow, newCol)) {
+    let count = 0;
+    while (!isOOB(newRow, newCol) && count < maximumDistance) {
+      count += 1;
       if (isSquareEmpty(newRow, newCol, currentBoard)) {
         moveResults.push({
           destination: new BoardLocation(newRow, newCol),
@@ -252,17 +255,46 @@ export const ChessGame: React.FC = () => {
 
   const findHorVerMoves = (
     movingPiece: IChessPiece,
-    gameState: GameState
+    gameState: GameState,
+    maximumDistance: number = 8
   ): MoveResult[] => {
     const moveResults: MoveResult[] = [];
 
-    // Horizontal moves
-    moveResults.push(...findMovesInDirection(movingPiece, gameState, 0, 1));
-    moveResults.push(...findMovesInDirection(movingPiece, gameState, 0, -1));
+    moveResults.push(
+      ...findMovesInDirection(movingPiece, gameState, 0, 1, maximumDistance)
+    );
+    moveResults.push(
+      ...findMovesInDirection(movingPiece, gameState, 0, -1, maximumDistance)
+    );
+    moveResults.push(
+      ...findMovesInDirection(movingPiece, gameState, 1, 0, maximumDistance)
+    );
+    moveResults.push(
+      ...findMovesInDirection(movingPiece, gameState, -1, 0, maximumDistance)
+    );
 
-    // Vertical moves
-    moveResults.push(...findMovesInDirection(movingPiece, gameState, 1, 0));
-    moveResults.push(...findMovesInDirection(movingPiece, gameState, -1, 0));
+    return moveResults;
+  };
+
+  const findDiagonalMoves = (
+    movingPiece: IChessPiece,
+    gameState: GameState,
+    maximumDistance: number = 8
+  ): MoveResult[] => {
+    const moveResults: MoveResult[] = [];
+
+    moveResults.push(
+      ...findMovesInDirection(movingPiece, gameState, 1, 1, maximumDistance)
+    );
+    moveResults.push(
+      ...findMovesInDirection(movingPiece, gameState, 1, -1, maximumDistance)
+    );
+    moveResults.push(
+      ...findMovesInDirection(movingPiece, gameState, -1, 1, maximumDistance)
+    );
+    moveResults.push(
+      ...findMovesInDirection(movingPiece, gameState, -1, -1, maximumDistance)
+    );
 
     return moveResults;
   };
@@ -272,6 +304,54 @@ export const ChessGame: React.FC = () => {
     gameState: GameState
   ): MoveResult[] => {
     return findHorVerMoves(movingPiece, gameState);
+  };
+
+  const findLegalBishopMoves = (
+    movingPiece: IChessPiece,
+    gameState: GameState
+  ): MoveResult[] => {
+    return findDiagonalMoves(movingPiece, gameState);
+  };
+
+  const findLegalQueenMoves = (
+    movingPiece: IChessPiece,
+    gameState: GameState
+  ): MoveResult[] => {
+    return [
+      ...findHorVerMoves(movingPiece, gameState),
+      ...findDiagonalMoves(movingPiece, gameState),
+    ];
+  };
+
+  const findLegalKingMoves = (
+    movingPiece: IChessPiece,
+    gameState: GameState
+  ): MoveResult[] => {
+    return [
+      ...findHorVerMoves(movingPiece, gameState, 1),
+      ...findDiagonalMoves(movingPiece, gameState, 1),
+    ];
+  };
+
+  const findLegalKnightMoves = (
+    movingPiece: IChessPiece,
+    gameState: GameState
+  ): MoveResult[] => {
+    const moveResults: MoveResult[] = [];
+    moveResults.push(...findMovesInDirection(movingPiece, gameState, 1, 2, 1));
+    moveResults.push(...findMovesInDirection(movingPiece, gameState, 1, -2, 1));
+    moveResults.push(...findMovesInDirection(movingPiece, gameState, -1, 2, 1));
+    moveResults.push(
+      ...findMovesInDirection(movingPiece, gameState, -1, -2, 1)
+    );
+    moveResults.push(...findMovesInDirection(movingPiece, gameState, 2, 1, 1));
+    moveResults.push(...findMovesInDirection(movingPiece, gameState, 2, -1, 1));
+    moveResults.push(...findMovesInDirection(movingPiece, gameState, -2, 1, 1));
+    moveResults.push(
+      ...findMovesInDirection(movingPiece, gameState, -2, -1, 1)
+    );
+
+    return moveResults;
   };
 
   const executeCommand = (
@@ -284,40 +364,33 @@ export const ChessGame: React.FC = () => {
           .flat()
           .filter((p) => p != null)
           .find((p) => p?.id === cmd.pieceId);
-        if (gameState.currentPlayer !== moving_piece?.color) {
+
+        if (gameState.currentPlayer !== moving_piece?.color || !moving_piece) {
           return null;
         }
-        if (moving_piece) {
-          switch (moving_piece.rank) {
-            case "pawn":
-              return findLegalPawnMoves(moving_piece, gameState).filter(
-                (result) => result.destination.isEqual(cmd.destination)
-              )[0];
-            case "castle":
-              return findLegalCastleMoves(moving_piece, gameState).filter(
-                (result) => result.destination.isEqual(cmd.destination)
-              )[0];
-            case "knight":
-              return findLegalPawnMoves(moving_piece, gameState).filter(
-                (result) => result.destination.isEqual(cmd.destination)
-              )[0];
-            case "bishop":
-              return findLegalPawnMoves(moving_piece, gameState).filter(
-                (result) => result.destination.isEqual(cmd.destination)
-              )[0];
-            case "queen":
-              return findLegalPawnMoves(moving_piece, gameState).filter(
-                (result) => result.destination.isEqual(cmd.destination)
-              )[0];
-            case "king":
-              return findLegalPawnMoves(moving_piece, gameState).filter(
-                (result) => result.destination.isEqual(cmd.destination)
-              )[0];
-          }
+
+        const moveFunctions = {
+          pawn: findLegalPawnMoves,
+          castle: findLegalCastleMoves,
+          knight: findLegalKnightMoves,
+          bishop: findLegalBishopMoves,
+          queen: findLegalQueenMoves,
+          king: findLegalKingMoves,
+        };
+
+        const moveFunction = moveFunctions[moving_piece.rank];
+        if (moveFunction) {
+          const moves = moveFunction(moving_piece, gameState);
+          const validMove = moves.find((result) =>
+            result.destination.isEqual(cmd.destination)
+          );
+          if (validMove) return validMove;
         }
         break;
+
       case "resign":
         break;
+
       default:
         break;
     }
