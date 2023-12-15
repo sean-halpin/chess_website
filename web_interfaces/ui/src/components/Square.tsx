@@ -57,8 +57,8 @@ const Square: React.FC<SquareProps> = ({
   });
 
   const squareStyle: React.CSSProperties = {
-    width: `${size}px`,
-    height: `${size}px`,
+    width: `12%`,
+    height: '50px',
     backgroundColor: `${color}`,
     border: "1px solid #000",
   };

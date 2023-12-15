@@ -1,12 +1,14 @@
 // Game.tsx
 
 import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
 import React, { useState } from "react";
 import Board from "./Board";
 import { Rank, ChessPiece, IChessPiece } from "./Piece";
 import { GameCommand, BoardLocation } from "./GameCommand";
 import "./Game.css";
+import isTouchDevice from "is-touch-device";
+import { TouchBackend } from "react-dnd-touch-backend";
+import { HTML5Backend } from "react-dnd-html5-backend";
 
 type PieceColor = "white" | "black";
 
@@ -443,17 +445,31 @@ export const ChessGame: React.FC = () => {
 
   if (gameState) {
     console.log(gameState.board.flat());
-    return (
-      <div>
-        <h1>Chess Game</h1>
-        <DndProvider backend={HTML5Backend}>
-          <Board
-            pieces={gameState.board.flat()}
-            sendGameCommand={sendGameCommand}
-          />
-        </DndProvider>
-      </div>
-    );
+    if (isTouchDevice()) {
+      return (
+        <div>
+          <h1>Chess Game</h1>
+          <DndProvider backend={TouchBackend}>
+            <Board
+              pieces={gameState.board.flat()}
+              sendGameCommand={sendGameCommand}
+            />
+          </DndProvider>
+        </div>
+      );
+    } else {
+      return (
+        <div>
+          <h1>Chess Game</h1>
+          <DndProvider backend={HTML5Backend}>
+            <Board
+              pieces={gameState.board.flat()}
+              sendGameCommand={sendGameCommand}
+            />
+          </DndProvider>
+        </div>
+      );
+    }
   } else {
     return <></>;
   }
