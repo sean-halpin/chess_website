@@ -102,6 +102,7 @@ export interface GameState {
   currentPlayer: "white" | "black";
   winner?: "white" | "black" | "draw";
   commands: CommandResult[];
+  counter: number;
 }
 
 const CopyGameState = (state: GameState): GameState => {
@@ -122,8 +123,10 @@ export const ChessGame: React.FC = () => {
     board: initialBoard,
     currentPlayer: "white",
     commands: [],
+    counter: 0,
   });
   useEffect(() => {
+    console.log(`[Game] Next move ${gameState.currentPlayer}`);
     if (gameState.currentPlayer === "black") {
       randomMove(gameState, "black");
     }
@@ -382,33 +385,6 @@ export const ChessGame: React.FC = () => {
     return findDiagonalMoves(movingPiece, gameState);
   };
 
-  const isKingChecked = (gameState: GameState, color: string): Boolean => {
-    return (
-      gameState.board
-        .flat()
-        .filter((piece) => piece != null && piece.color !== color)
-        .map((enemyPiece) => {
-          if (enemyPiece) {
-            return moveFunctions[enemyPiece?.rank](enemyPiece, gameState);
-          } else {
-            return [];
-          }
-        })
-        .flat()
-        .filter((moveResult) => moveResult.takenPiece?.rank === "king").length >
-      0
-    );
-  };
-
-  const doesMoveCheckKing = (
-    move: MoveResult,
-    gs: GameState,
-    color: string
-  ) => {
-    const updatedGameState = applyMoveCommand(move.toMoveCommand(), gs);
-    return isKingChecked(updatedGameState, color);
-  };
-
   const findLegalQueenMoves = (
     movingPiece: IChessPiece,
     gameState: GameState
@@ -468,13 +444,7 @@ export const ChessGame: React.FC = () => {
     const randomPiece = pieces[Math.floor(Math.random() * pieces.length)];
     if (randomPiece) {
       console.log(`[random move]: ${randomPiece.id}`);
-      possibleMoves = moveFunctions[randomPiece?.rank](
-        randomPiece,
-        gameState
-      ).filter(
-        (move) =>
-          !doesMoveCheckKing(move, CopyGameState(gameState), randomPiece.color)
-      );
+      possibleMoves = moveFunctions[randomPiece?.rank](randomPiece, gameState);
       if (possibleMoves.length > 0) {
         const randomMove: MoveResult =
           possibleMoves.flat()[
@@ -549,7 +519,10 @@ export const ChessGame: React.FC = () => {
 
     const clonedGameState = CopyGameState(gameState);
     const updatedBoard = clonedGameState.board;
-    const cmdResult: CommandResult = attemptCommand(newCommand, gameState);
+    const cmdResult: CommandResult = attemptCommand(
+      newCommand,
+      clonedGameState
+    );
 
     if (cmdResult) {
       console.log(
@@ -573,26 +546,88 @@ export const ChessGame: React.FC = () => {
       }
 
       // Push Latest Command Result
-      gameState.commands.push(cmdResult);
+      clonedGameState.commands.push(cmdResult);
 
-      // Update GameState
-      gameState = {
+      // Return New GameState
+      return {
         board: updatedBoard,
-        currentPlayer: gameState.currentPlayer === "white" ? "black" : "white",
-        commands: gameState.commands,
+        currentPlayer:
+          clonedGameState.currentPlayer === "white" ? "black" : "white",
+        commands: clonedGameState.commands,
+        counter: clonedGameState.counter,
       };
     }
-    return gameState;
+    return clonedGameState;
   };
 
   const handleResignCommand = (newCommand: ResignCommand) => {
     console.log(`[Game] New Command: ${newCommand.command}`);
   };
 
+  const isKingInCheck = (
+    gameState: GameState,
+    playerColor: PieceColor,
+    moveCommand: MoveCommand
+  ): boolean => {
+    // Make a copy of the current game state
+    const clonedGameState = CopyGameState(gameState);
+
+    // Apply the move command to the copied game state
+    const updatedGameState = applyMoveCommand(moveCommand, clonedGameState);
+
+    // Find the current player's king on the updated board
+    const king = updatedGameState.board
+      .flat()
+      .find(
+        (piece) => piece?.color === playerColor && piece?.rank === "king"
+      ) as IChessPiece;
+
+    // Check if the king is under threat after the move
+    const opponentColor = playerColor === "white" ? "black" : "white";
+    const opponentPieces = updatedGameState.board
+      .flat()
+      .filter((piece) => piece?.color === opponentColor)
+      .map((piece) => piece as IChessPiece);
+
+    for (const opponentPiece of opponentPieces) {
+      const opponentMoves = moveFunctions[opponentPiece.rank](
+        opponentPiece,
+        updatedGameState
+      );
+
+      for (const moveResult of opponentMoves) {
+        if (moveResult.destination.isEqual(king.position)) {
+          // The king is in check after the move
+          return true;
+        }
+      }
+    }
+
+    // The king is not in check after the move
+    return false;
+  };
+
   const sendGameCommand = (newCommand: GameCommand) => {
     switch (newCommand.command) {
       case "move":
-        setGameState(applyMoveCommand(newCommand, gameState));
+        const clonedState = CopyGameState(gameState);
+        const ownKingChecked = !isKingInCheck(
+          clonedState,
+          clonedState.currentPlayer,
+          newCommand
+        );
+        const updatedState = ownKingChecked
+          ? applyMoveCommand(newCommand, clonedState)
+          : clonedState;
+
+        setGameState({
+          ...updatedState,
+          counter: clonedState.counter + 1,
+        });
+
+        if (!ownKingChecked) {
+          console.warn("Invalid move: puts own king in check");
+        }
         break;
       case "resign":
         handleResignCommand(newCommand);
