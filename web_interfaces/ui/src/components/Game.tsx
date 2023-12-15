@@ -1,7 +1,7 @@
 // Game.tsx
 
 import { DndProvider } from "react-dnd";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Board from "./Board";
 import { Rank, ChessPiece, IChessPiece } from "./Piece";
 import {
@@ -14,6 +14,7 @@ import "./Game.css";
 import isTouchDevice from "is-touch-device";
 import { TouchBackend } from "react-dnd-touch-backend";
 import { HTML5Backend } from "react-dnd-html5-backend";
+import AudioPlayer from "./AudioPlayer";
 
 type PieceColor = "white" | "black";
 
@@ -110,6 +111,13 @@ const CopyGameState = (state: GameState): GameState => {
 };
 
 export const ChessGame: React.FC = () => {
+  const audioPlayerRef = useRef<AudioPlayer>(null);
+
+  const playAudio = () => {
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.play();
+    }
+  };
   const pieces: ChessPiece[] = [...createPawns(), ...placeBackRow()];
   const initialBoard: ChessBoard = Array.from({ length: 8 }, () =>
     Array(8).fill(null)
@@ -125,11 +133,17 @@ export const ChessGame: React.FC = () => {
     commands: [],
     counter: 0,
   });
+
   useEffect(() => {
-    console.log(`[Game] Next move ${gameState.currentPlayer}`);
-    if (gameState.currentPlayer === "black") {
-      randomMove(gameState, "black");
-    }
+    const waitOneSecond = async () => {
+      console.log("Start");
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log(`[Game] Next move ${gameState.currentPlayer}`);
+      if (gameState.currentPlayer === "black") {
+        randomMove(gameState, "black");
+      }
+    };
+    waitOneSecond();
   });
 
   const isOOB = (r: number, c: number) => r < 0 || r > 7 || c < 0 || c > 7;
@@ -611,12 +625,12 @@ export const ChessGame: React.FC = () => {
     switch (newCommand.command) {
       case "move":
         const clonedState = CopyGameState(gameState);
-        const ownKingChecked = !isKingInCheck(
+        const ownKingChecked = isKingInCheck(
           clonedState,
           clonedState.currentPlayer,
           newCommand
         );
-        const updatedState = ownKingChecked
+        const updatedState = !ownKingChecked
           ? applyMoveCommand(newCommand, clonedState)
           : clonedState;
 
@@ -625,8 +639,10 @@ export const ChessGame: React.FC = () => {
           counter: clonedState.counter + 1,
         });
 
-        if (!ownKingChecked) {
+        if (ownKingChecked) {
           console.warn("Invalid move: puts own king in check");
+        } else {
+          playAudio();
         }
         break;
       case "resign":
@@ -650,6 +666,7 @@ export const ChessGame: React.FC = () => {
               sendGameCommand={sendGameCommand}
             />
           </DndProvider>
+          <AudioPlayer ref={audioPlayerRef} />
         </div>
       );
     } else {
@@ -662,6 +679,7 @@ export const ChessGame: React.FC = () => {
               sendGameCommand={sendGameCommand}
             />
           </DndProvider>
+          <AudioPlayer ref={audioPlayerRef} />
         </div>
       );
     }
