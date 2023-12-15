@@ -655,7 +655,7 @@ export const ChessGame: React.FC = () => {
     } else {
       return (
         <div>
-          <h1>Chess Game</h1>
+          <h1>Chess</h1>
           <DndProvider backend={HTML5Backend}>
             <Board
               pieces={gameState.board.flat()}
