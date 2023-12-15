@@ -643,7 +643,7 @@ export const ChessGame: React.FC = () => {
     if (isTouchDevice()) {
       return (
         <div>
-          <h1>Chess Game</h1>
+          <h1>Chess</h1>
           <DndProvider backend={TouchBackend}>
             <Board
               pieces={gameState.board.flat()}
