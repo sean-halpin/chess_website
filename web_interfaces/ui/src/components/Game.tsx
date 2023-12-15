@@ -71,12 +71,30 @@ const placeBackRow = (): ChessPiece[] => [
 ];
 
 type ChessBoard = ChessPiece[][];
-interface MoveResult {
+interface IMoveResult {
   destination: BoardLocation;
-  movingPiece: ChessPiece;
+  movingPiece: IChessPiece;
   takenPiece: ChessPiece;
   enPassantPossible?: Boolean;
 }
+
+class MoveResult implements IMoveResult {
+  constructor(
+    public destination: BoardLocation,
+    public movingPiece: IChessPiece,
+    public takenPiece: ChessPiece,
+    public enPassantPossible: Boolean
+  ) {}
+  toMoveCommand(): MoveCommand {
+    return {
+      command: "move",
+      pieceId: this.movingPiece.id,
+      source: this.movingPiece.position,
+      destination: this.destination,
+    };
+  }
+}
+
 type CommandResult = MoveResult | null;
 
 export interface GameState {
@@ -85,6 +103,10 @@ export interface GameState {
   winner?: "white" | "black" | "draw";
   commands: CommandResult[];
 }
+
+const CopyGameState = (state: GameState): GameState => {
+  return JSON.parse(JSON.stringify(state));
+};
 
 export const ChessGame: React.FC = () => {
   const pieces: ChessPiece[] = [...createPawns(), ...placeBackRow()];
@@ -136,11 +158,14 @@ export const ChessGame: React.FC = () => {
     // Pawn advance 1
     const nextRow = movingPieceCurrentRow + 1 * teamDirection;
     if (isSquareEmpty(nextRow, movingPieceCurrentCol, currentBoard)) {
-      moveResults.push({
-        destination: new BoardLocation(nextRow, movingPieceCurrentCol),
-        movingPiece,
-        takenPiece: null,
-      });
+      moveResults.push(
+        new MoveResult(
+          new BoardLocation(nextRow, movingPieceCurrentCol),
+          movingPiece,
+          null,
+          false
+        )
+      );
     }
 
     // Pawn sideways attack
@@ -157,11 +182,14 @@ export const ChessGame: React.FC = () => {
       possiblePieceRight !== null &&
       possiblePieceRight?.color !== movingPiece.color
     ) {
-      moveResults.push({
-        destination: new BoardLocation(attackableRow, attackableCol(1)),
-        movingPiece,
-        takenPiece: currentBoard[attackableRow][attackableCol(1)],
-      });
+      moveResults.push(
+        new MoveResult(
+          new BoardLocation(attackableRow, attackableCol(1)),
+          movingPiece,
+          currentBoard[attackableRow][attackableCol(1)],
+          false
+        )
+      );
     }
     const possiblePieceLeft = squareEntry(
       attackableRow,
@@ -173,11 +201,14 @@ export const ChessGame: React.FC = () => {
       possiblePieceLeft !== null &&
       possiblePieceLeft?.color !== movingPiece.color
     ) {
-      moveResults.push({
-        destination: new BoardLocation(attackableRow, attackableCol(-1)),
-        movingPiece,
-        takenPiece: currentBoard[attackableRow][attackableCol(-1)],
-      });
+      moveResults.push(
+        new MoveResult(
+          new BoardLocation(attackableRow, attackableCol(-1)),
+          movingPiece,
+          currentBoard[attackableRow][attackableCol(-1)],
+          false
+        )
+      );
     }
 
     // Pawn advance 2 on first move
@@ -187,12 +218,14 @@ export const ChessGame: React.FC = () => {
       isSquareEmpty(doubleMoveRow, movingPieceCurrentCol, currentBoard) &&
       isSquareEmpty(nextRow, movingPieceCurrentCol, currentBoard)
     ) {
-      moveResults.push({
-        destination: new BoardLocation(doubleMoveRow, movingPieceCurrentCol),
-        movingPiece,
-        takenPiece: null,
-        enPassantPossible: true,
-      });
+      moveResults.push(
+        new MoveResult(
+          new BoardLocation(doubleMoveRow, movingPieceCurrentCol),
+          movingPiece,
+          null,
+          true
+        )
+      );
     }
 
     // En Passant
@@ -211,20 +244,24 @@ export const ChessGame: React.FC = () => {
         );
       };
       if (enPassantAttackable(-1)) {
-        moveResults.push({
-          destination: new BoardLocation(attackableRow, attackableCol(-1)),
-          movingPiece,
-          takenPiece:
+        moveResults.push(
+          new MoveResult(
+            new BoardLocation(attackableRow, attackableCol(-1)),
+            movingPiece,
             currentBoard[movingPieceCurrentRow][movingPieceCurrentCol - 1],
-        });
+            false
+          )
+        );
       }
       if (enPassantAttackable(1)) {
-        moveResults.push({
-          destination: new BoardLocation(attackableRow, attackableCol(1)),
-          movingPiece,
-          takenPiece:
+        moveResults.push(
+          new MoveResult(
+            new BoardLocation(attackableRow, attackableCol(1)),
+            movingPiece,
             currentBoard[movingPieceCurrentRow][movingPieceCurrentCol + 1],
-        });
+            false
+          )
+        );
       }
     }
     return moveResults;
@@ -249,11 +286,14 @@ export const ChessGame: React.FC = () => {
     while (!isOOB(newRow, newCol) && count < maximumDistance && !shouldExit) {
       count += 1;
       if (isSquareEmpty(newRow, newCol, currentBoard)) {
-        moveResults.push({
-          destination: new BoardLocation(newRow, newCol),
-          movingPiece,
-          takenPiece: null,
-        });
+        moveResults.push(
+          new MoveResult(
+            new BoardLocation(newRow, newCol),
+            movingPiece,
+            null,
+            false
+          )
+        );
       }
 
       const possiblePiece = squareEntry(
@@ -265,11 +305,14 @@ export const ChessGame: React.FC = () => {
 
       if (possiblePiece) {
         if (possiblePiece?.color !== movingPiece.color) {
-          moveResults.push({
-            destination: new BoardLocation(newRow, newCol),
-            movingPiece,
-            takenPiece: possiblePiece,
-          });
+          moveResults.push(
+            new MoveResult(
+              new BoardLocation(newRow, newCol),
+              movingPiece,
+              possiblePiece,
+              false
+            )
+          );
         }
         shouldExit = true;
       }
@@ -339,6 +382,33 @@ export const ChessGame: React.FC = () => {
     return findDiagonalMoves(movingPiece, gameState);
   };
 
+  const isKingChecked = (gameState: GameState, color: string): Boolean => {
+    return (
+      gameState.board
+        .flat()
+        .filter((piece) => piece != null && piece.color !== color)
+        .map((enemyPiece) => {
+          if (enemyPiece) {
+            return moveFunctions[enemyPiece?.rank](enemyPiece, gameState);
+          } else {
+            return [];
+          }
+        })
+        .flat()
+        .filter((moveResult) => moveResult.takenPiece?.rank === "king").length >
+      0
+    );
+  };
+
+  const doesMoveCheckKing = (
+    move: MoveResult,
+    gs: GameState,
+    color: string
+  ) => {
+    const updatedGameState = applyMoveCommand(move.toMoveCommand(), gs);
+    return isKingChecked(updatedGameState, color);
+  };
+
   const findLegalQueenMoves = (
     movingPiece: IChessPiece,
     gameState: GameState
@@ -398,9 +468,15 @@ export const ChessGame: React.FC = () => {
     const randomPiece = pieces[Math.floor(Math.random() * pieces.length)];
     if (randomPiece) {
       console.log(`[random move]: ${randomPiece.id}`);
-      possibleMoves = moveFunctions[randomPiece?.rank](randomPiece, gameState);
+      possibleMoves = moveFunctions[randomPiece?.rank](
+        randomPiece,
+        gameState
+      ).filter(
+        (move) =>
+          !doesMoveCheckKing(move, CopyGameState(gameState), randomPiece.color)
+      );
       if (possibleMoves.length > 0) {
-        const randomMove =
+        const randomMove: MoveResult =
           possibleMoves.flat()[
             Math.floor(Math.random() * possibleMoves.flat().length)
           ];
@@ -432,23 +508,27 @@ export const ChessGame: React.FC = () => {
   ): CommandResult => {
     switch (cmd.command) {
       case "move":
-        let moving_piece = gameState.board
+        const moving_piece = gameState.board
           .flat()
           .filter((p) => p != null)
           .find((p) => p?.id === cmd.pieceId);
+        if (moving_piece) {
+          if (
+            gameState.currentPlayer !== moving_piece?.color ||
+            !moving_piece
+          ) {
+            console.log("Team not in play");
+            return null;
+          }
 
-        if (gameState.currentPlayer !== moving_piece?.color || !moving_piece) {
-          console.log("Team not in play");
-          return null;
-        }
-
-        const moveFunction = moveFunctions[moving_piece.rank];
-        if (moveFunction) {
-          const moves = moveFunction(moving_piece, gameState);
-          const validMove = moves.find((result) =>
-            result.destination.isEqual(cmd.destination)
-          );
-          if (validMove) return validMove;
+          const moveFunction = moveFunctions[moving_piece.rank];
+          if (moveFunction) {
+            const moves = moveFunction(moving_piece, gameState);
+            const chosenMove = moves.find((result) =>
+              result.destination.isEqual(cmd.destination)
+            );
+            if (chosenMove) return chosenMove;
+          }
         }
         break;
 
@@ -467,8 +547,9 @@ export const ChessGame: React.FC = () => {
   ): GameState => {
     console.log(`[Game] New Command: ${newCommand.command}`);
 
-    const updatedBoard = [...gameState.board.map((row) => [...row])];
-    const cmdResult = attemptCommand(newCommand, gameState);
+    const clonedGameState = CopyGameState(gameState);
+    const updatedBoard = clonedGameState.board;
+    const cmdResult: CommandResult = attemptCommand(newCommand, gameState);
 
     if (cmdResult) {
       console.log(
