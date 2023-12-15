@@ -95,6 +95,17 @@ export const ChessGame: React.FC = () => {
     commands: [],
   });
 
+  const isOOB = (r: number, c: number) => r < 0 || r > 7 || c < 0 || c > 7;
+  const isSquareEmpty = (r: number, c: number, b: ChessBoard) =>
+    !isOOB(r, c) && b[r][c] == null;
+  const isSquareAttackable = (
+    r: number,
+    c: number,
+    b: ChessBoard,
+    mP: IChessPiece
+  ): ChessPiece | null =>
+    !isOOB(r, c) && b[r][c]?.color !== mP.color ? b[r][c] : null;
+
   const findLegalPawnMoves = (
     movingPiece: IChessPiece,
     gameState: GameState
@@ -102,81 +113,156 @@ export const ChessGame: React.FC = () => {
     const moveResults: MoveResult[] = [];
     const currentBoard = gameState.board;
     const teamDirection = movingPiece.color === "white" ? 1 : -1;
-    const { row, col } = movingPiece.position;
+    const { row: movingPieceCurrentRow, col: movingPieceCurrentCol } =
+      movingPiece.position;
 
-    const isOOB = (r: number, c: number) => {
-      return r < 0 || r > 7 || c < 0 || c > 7;
-    };
-    const isSquareEmpty = (r: number, c: number) => {
-      return !isOOB(r, c) && currentBoard[r][c] == null;
-    };
-    const isSquareAttackable = (r: number, c: number): ChessPiece | null => {
-      if (
-        !isOOB(r, c) &&
-        currentBoard[r][c] != null &&
-        currentBoard[r][c]?.color !== movingPiece.color
-      ) {
-        return currentBoard[r][c];
-      } else {
-        return null;
-      }
-    };
     // Pawn advance 1
-    if (isSquareEmpty(row + 1 * teamDirection, col)) {
+    const nextRow = movingPieceCurrentRow + 1 * teamDirection;
+    if (isSquareEmpty(nextRow, movingPieceCurrentCol, currentBoard)) {
       moveResults.push({
-        destination: new BoardLocation(row + 1 * teamDirection, col),
-        movingPiece: movingPiece,
+        destination: new BoardLocation(nextRow, movingPieceCurrentCol),
+        movingPiece,
         takenPiece: null,
       });
     }
+
     // Pawn sideways attack
-    if (isSquareAttackable(row + 1 * teamDirection, col + 1)) {
-      moveResults.push({
-        destination: new BoardLocation(row + 1 * teamDirection, col + 1),
-        takenPiece: currentBoard[row + 1 * teamDirection][col + 1],
-        movingPiece: movingPiece,
-      });
-    }
-    if (isSquareAttackable(row + 1 * teamDirection, col - 1)) {
-      moveResults.push({
-        destination: new BoardLocation(row + 1 * teamDirection, col - 1),
-        takenPiece: currentBoard[row + 1 * teamDirection][col - 1],
-        movingPiece: movingPiece,
-      });
-    }
-    // Pawn advance 2 on first move
+    const attackableCol = (column_offset: number) =>
+      movingPieceCurrentCol + column_offset;
+    const attackableRow = nextRow;
     if (
-      movingPiece.firstMove &&
-      isSquareEmpty(row + 2 * teamDirection, col) &&
-      isSquareEmpty(row + 1 * teamDirection, col)
+      isSquareAttackable(
+        attackableRow,
+        attackableCol(1),
+        currentBoard,
+        movingPiece
+      )
     ) {
       moveResults.push({
-        destination: new BoardLocation(row + 2 * teamDirection, col),
-        movingPiece: movingPiece,
+        destination: new BoardLocation(attackableRow, attackableCol(1)),
+        movingPiece,
+        takenPiece: currentBoard[attackableRow][attackableCol(1)],
+      });
+    }
+    if (
+      isSquareAttackable(
+        attackableRow,
+        attackableCol(-1),
+        currentBoard,
+        movingPiece
+      )
+    ) {
+      moveResults.push({
+        destination: new BoardLocation(attackableRow, attackableCol(-1)),
+        movingPiece,
+        takenPiece: currentBoard[attackableRow][attackableCol(-1)],
+      });
+    }
+
+    // Pawn advance 2 on first move
+    const doubleMoveRow = nextRow + 1 * teamDirection;
+    if (
+      movingPiece.firstMove &&
+      isSquareEmpty(doubleMoveRow, movingPieceCurrentCol, currentBoard) &&
+      isSquareEmpty(nextRow, movingPieceCurrentCol, currentBoard)
+    ) {
+      moveResults.push({
+        destination: new BoardLocation(doubleMoveRow, movingPieceCurrentCol),
+        movingPiece,
         takenPiece: null,
         enPassantPossible: true,
       });
     }
+
     // En Passant
-    if (
-      gameState.commands.length > 0 &&
-      gameState.commands[gameState.commands.length - 1]?.enPassantPossible
-    ) {
-      if (isSquareAttackable(row, col - 1)?.rank === "pawn") {
+    const lastCommand = gameState.commands[gameState.commands.length - 1];
+    if (gameState.commands.length > 0 && lastCommand?.enPassantPossible) {
+      const enPassantAttackable = (column_offset: number) =>
+        isSquareAttackable(
+          movingPieceCurrentRow,
+          movingPieceCurrentCol + column_offset,
+          currentBoard,
+          movingPiece
+        )?.rank === "pawn";
+      if (enPassantAttackable(-1)) {
         moveResults.push({
-          destination: new BoardLocation(row + 1 * teamDirection, col - 1),
-          movingPiece: movingPiece,
-          takenPiece: currentBoard[row][col - 1],
+          destination: new BoardLocation(attackableRow, attackableCol(-1)),
+          movingPiece,
+          takenPiece:
+            currentBoard[movingPieceCurrentRow][movingPieceCurrentCol - 1],
         });
       }
-      if (isSquareAttackable(row, col + 1)?.rank === "pawn") {
+      if (enPassantAttackable(1)) {
         moveResults.push({
-          destination: new BoardLocation(row + 1 * teamDirection, col + 1),
-          movingPiece: movingPiece,
-          takenPiece: currentBoard[row][col + 1],
+          destination: new BoardLocation(attackableRow, attackableCol(1)),
+          movingPiece,
+          takenPiece:
+            currentBoard[movingPieceCurrentRow][movingPieceCurrentCol + 1],
         });
       }
     }
+
+    return moveResults;
+  };
+
+  const findMovesInDirection = (
+    movingPiece: IChessPiece,
+    gameState: GameState,
+    rowOffset: number,
+    colOffset: number
+  ): MoveResult[] => {
+    const moveResults: MoveResult[] = [];
+    const currentBoard = gameState.board;
+    const { row, col } = movingPiece.position;
+
+    let newRow = row + rowOffset;
+    let newCol = col + colOffset;
+
+    while (!isOOB(newRow, newCol)) {
+      if (isSquareEmpty(newRow, newCol, currentBoard)) {
+        moveResults.push({
+          destination: new BoardLocation(newRow, newCol),
+          movingPiece,
+          takenPiece: null,
+        });
+      }
+
+      const attackedPiece = isSquareAttackable(
+        newRow,
+        newCol,
+        currentBoard,
+        movingPiece
+      );
+
+      if (attackedPiece) {
+        moveResults.push({
+          destination: new BoardLocation(newRow, newCol),
+          movingPiece,
+          takenPiece: attackedPiece,
+        });
+        break;
+      }
+
+      newRow += rowOffset;
+      newCol += colOffset;
+    }
+
+    return moveResults;
+  };
+
+  const findHorVerMoves = (
+    movingPiece: IChessPiece,
+    gameState: GameState
+  ): MoveResult[] => {
+    const moveResults: MoveResult[] = [];
+
+    // Horizontal moves
+    moveResults.push(...findMovesInDirection(movingPiece, gameState, 0, 1));
+    moveResults.push(...findMovesInDirection(movingPiece, gameState, 0, -1));
+
+    // Vertical moves
+    moveResults.push(...findMovesInDirection(movingPiece, gameState, 1, 0));
+    moveResults.push(...findMovesInDirection(movingPiece, gameState, -1, 0));
 
     return moveResults;
   };
@@ -185,7 +271,7 @@ export const ChessGame: React.FC = () => {
     movingPiece: IChessPiece,
     gameState: GameState
   ): MoveResult[] => {
-    return [];
+    return findHorVerMoves(movingPiece, gameState);
   };
 
   const executeCommand = (
