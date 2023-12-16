@@ -3,7 +3,8 @@ h1 {
     display: flex;
 }
 
-h3 {
-    justify-content: center;
+.infoBox {
     display: flex;
+    flex-direction: column;
+    align-items: center;
 }
