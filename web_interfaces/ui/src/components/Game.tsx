@@ -15,6 +15,7 @@ import isTouchDevice from "is-touch-device";
 import { TouchBackend } from "react-dnd-touch-backend";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import AudioPlayer from "./AudioPlayer";
+import { TextComponent } from "./TextComponent";
 
 type PieceColor = "white" | "black";
 
@@ -104,6 +105,7 @@ export interface GameState {
   winner?: "white" | "black" | "draw";
   commands: CommandResult[];
   counter: number;
+  displayText: string;
 }
 
 const CopyGameState = (state: GameState): GameState => {
@@ -132,13 +134,21 @@ export const ChessGame: React.FC = () => {
     currentPlayer: "white",
     commands: [],
     counter: 0,
+    displayText: ""
   });
 
+  const curr_player = gameState.currentPlayer;
+  const capitalized_player = curr_player.charAt(0).toUpperCase() + curr_player.slice(1);
+  gameState.displayText = `${capitalized_player} to move`
+
   useEffect(() => {
+    const curr_player = gameState.currentPlayer;
+    const capitalized_player = curr_player.charAt(0).toUpperCase() + curr_player.slice(1);
+    gameState.displayText = `${capitalized_player} to move`
     const waitOneSecond = async () => {
       console.log("Start");
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log(`[Game] Next move ${gameState.currentPlayer}`);
+      console.log(`[Game] Next move ${capitalized_player}`);
       if (gameState.currentPlayer === "black") {
         randomMove(gameState, "black");
       }
@@ -569,6 +579,7 @@ export const ChessGame: React.FC = () => {
           clonedGameState.currentPlayer === "white" ? "black" : "white",
         commands: clonedGameState.commands,
         counter: clonedGameState.counter,
+        displayText: clonedGameState.displayText
       };
     }
     return clonedGameState;
@@ -633,7 +644,7 @@ export const ChessGame: React.FC = () => {
         const updatedState = !ownKingChecked
           ? applyMoveCommand(newCommand, clonedState)
           : clonedState;
-
+        
         setGameState({
           ...updatedState,
           counter: clonedState.counter + 1,
@@ -666,6 +677,7 @@ export const ChessGame: React.FC = () => {
               sendGameCommand={sendGameCommand}
             />
           </DndProvider>
+          <TextComponent text={gameState.displayText} />
           <AudioPlayer ref={audioPlayerRef} />
         </div>
       );
@@ -679,6 +691,7 @@ export const ChessGame: React.FC = () => {
               sendGameCommand={sendGameCommand}
             />
           </DndProvider>
+          <TextComponent text={gameState.displayText} />
           <AudioPlayer ref={audioPlayerRef} />
         </div>
       );
