@@ -40,7 +40,7 @@ const Square: React.FC<SquareProps> = ({
     accept: "PIECE", // Make sure it matches the type used in useDrag
     drop: (piece: ChessPiece) => {
       if (piece) {
-        let info = `Dropped ${piece.color} ${piece.rank} from ${piece.position.row}-${piece.position.col} to ${position.row}-${position.col}`;
+        let info = `[Square] Dropped ${piece.color} ${piece.rank} from ${piece.position.row}-${piece.position.col} to ${position.row}-${position.col}`;
         console.log(info);
         const moveCommand: GameCommand = {
           command: "move",

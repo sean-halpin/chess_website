@@ -102,7 +102,7 @@ type CommandResult = MoveResult | null;
 export interface GameState {
   board: ChessBoard;
   currentPlayer: "white" | "black";
-  winner?: "white" | "black" | "draw";
+  winner: "white" | "black" | "draw" | null;
   commands: CommandResult[];
   counter: number;
   displayText: string;
@@ -134,22 +134,26 @@ export const ChessGame: React.FC = () => {
     currentPlayer: "white",
     commands: [],
     counter: 0,
-    displayText: ""
+    displayText: "",
+    winner: null,
   });
 
-  const curr_player = gameState.currentPlayer;
-  const capitalized_player = curr_player.charAt(0).toUpperCase() + curr_player.slice(1);
-  gameState.displayText = `${capitalized_player} to move`
+  const initial_player = gameState.currentPlayer;
+  const capitalized_initial_player =
+    initial_player.charAt(0).toUpperCase() + initial_player.slice(1);
+  gameState.displayText = `${capitalized_initial_player} to move`;
 
   useEffect(() => {
-    const curr_player = gameState.currentPlayer;
-    const capitalized_player = curr_player.charAt(0).toUpperCase() + curr_player.slice(1);
-    gameState.displayText = `${capitalized_player} to move`
+    if (gameState.winner === null) {
+      const curr_player = gameState.currentPlayer;
+      const capitalized_player =
+        curr_player.charAt(0).toUpperCase() + curr_player.slice(1);
+      gameState.displayText = `${capitalized_player} to move`;
+    }
     const waitOneSecond = async () => {
-      console.log("Start");
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log(`[Game] Next move ${capitalized_player}`);
-      if (gameState.currentPlayer === "black") {
+      console.log(`[Game] Next move ${capitalized_initial_player}`);
+      if (gameState.winner === null && gameState.currentPlayer === "black") {
         randomMove(gameState, "black");
       }
     };
@@ -460,14 +464,12 @@ export const ChessGame: React.FC = () => {
   };
 
   const randomMove = (gameState: GameState, color: string) => {
-    console.log(`[random move]`);
     let possibleMoves = [];
     const pieces = gameState.board
       .flat()
       .filter((p) => p !== null && p.color === color);
     const randomPiece = pieces[Math.floor(Math.random() * pieces.length)];
     if (randomPiece) {
-      console.log(`[random move]: ${randomPiece.id}`);
       possibleMoves = moveFunctions[randomPiece?.rank](randomPiece, gameState);
       if (possibleMoves.length > 0) {
         const randomMove: MoveResult =
@@ -486,9 +488,6 @@ export const ChessGame: React.FC = () => {
             randomMove.destination.col
           ),
         };
-        console.log(
-          `[random move]: ${moveCommand.destination.row}-${moveCommand.destination.col}`
-        );
         sendGameCommand(moveCommand);
       } else {
         randomMove(gameState, color);
@@ -511,7 +510,7 @@ export const ChessGame: React.FC = () => {
             gameState.currentPlayer !== moving_piece?.color ||
             !moving_piece
           ) {
-            console.log("Team not in play");
+            console.log("[Game] Team not in play");
             return null;
           }
 
@@ -539,7 +538,7 @@ export const ChessGame: React.FC = () => {
     newCommand: MoveCommand,
     gameState: GameState
   ): GameState => {
-    console.log(`[Game] New Command: ${newCommand.command}`);
+    // console.log(`[Game] New Command: ${newCommand.command}`);
 
     const clonedGameState = CopyGameState(gameState);
     const updatedBoard = clonedGameState.board;
@@ -549,10 +548,6 @@ export const ChessGame: React.FC = () => {
     );
 
     if (cmdResult) {
-      console.log(
-        `[cmdResult move]: ${cmdResult.destination.row}-${cmdResult.destination.col}`
-      );
-
       const { takenPiece, movingPiece } = cmdResult;
 
       // Remove taken piece
@@ -579,7 +574,8 @@ export const ChessGame: React.FC = () => {
           clonedGameState.currentPlayer === "white" ? "black" : "white",
         commands: clonedGameState.commands,
         counter: clonedGameState.counter,
-        displayText: clonedGameState.displayText
+        displayText: clonedGameState.displayText,
+        winner: null,
       };
     }
     return clonedGameState;
@@ -632,16 +628,61 @@ export const ChessGame: React.FC = () => {
     return false;
   };
 
+  const isCheckmate = (
+    gameState: GameState,
+    opponentColor: PieceColor,
+    moveCommand: MoveCommand
+  ): boolean => {
+    // Check if the king is in check
+    const inCheck = isKingInCheck(gameState, opponentColor, moveCommand);
+
+    if (!inCheck) {
+      // The king is not in check, so it's not checkmate
+      return false;
+    }
+
+    // Check if there are any legal moves to get out of check
+    const playerPieces = gameState.board
+      .flat()
+      .filter((piece) => piece?.color === opponentColor)
+      .map((piece) => piece as IChessPiece);
+
+    for (const piece of playerPieces) {
+      const moves = moveFunctions[piece.rank](piece, gameState);
+
+      for (const moveResult of moves) {
+        const updatedGameState = applyMoveCommand(
+          moveResult.toMoveCommand(),
+          CopyGameState(gameState)
+        );
+
+        if (
+          !isKingInCheck(
+            updatedGameState,
+            opponentColor,
+            moveResult.toMoveCommand()
+          )
+        ) {
+          // There is at least one legal move to get out of check
+          return false;
+        }
+      }
+    }
+
+    // No legal moves available, it's checkmate
+    return true;
+  };
+
   const sendGameCommand = (newCommand: GameCommand) => {
     switch (newCommand.command) {
       case "move":
         const clonedState = CopyGameState(gameState);
-        const ownKingChecked = isKingInCheck(
+                const ownKingChecked = isKingInCheck(
           clonedState,
           clonedState.currentPlayer,
-          newCommand
+                    newCommand
         );
-        const updatedState = !ownKingChecked
+const updatedState = !ownKingChecked
           ? applyMoveCommand(newCommand, clonedState)
           : clonedState;
         
@@ -652,9 +693,9 @@ export const ChessGame: React.FC = () => {
 
         if (ownKingChecked) {
           console.warn("Invalid move: puts own king in check");
-        } else {
+                } else {
           playAudio();
-        }
+                  }
         break;
       case "resign":
         handleResignCommand(newCommand);
@@ -666,7 +707,7 @@ export const ChessGame: React.FC = () => {
   };
 
   if (gameState) {
-    console.log(gameState.board.flat());
+    // console.log(${gameState.board.flat()});
     if (isTouchDevice()) {
       return (
         <div>

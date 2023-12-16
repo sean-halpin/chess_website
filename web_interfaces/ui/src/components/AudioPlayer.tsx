@@ -14,7 +14,7 @@ class AudioPlayer extends React.Component<AudioPlayerProps, AudioPlayerState> {
 
   play = () => {
     if (this.audioRef.current) {
-      console.log("play audio");
+      console.log("[AudioPlayer] Play audio.");
       this.audioRef.current.play();
     }
   };
