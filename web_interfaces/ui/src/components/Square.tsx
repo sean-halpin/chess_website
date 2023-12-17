@@ -1,9 +1,11 @@
 // Square.tsx
 
 import React from "react";
-import { Piece, MaybeChessPiece } from "./Piece";
+import { Piece } from "./Piece";
+import { MaybeChessPiece } from "../game/ChessGameLogic";
 import { useDrop } from "react-dnd";
-import { GameCommand, BoardLocation } from "./GameCommand";
+import { GameCommand } from "../game/GameCommand";
+import { BoardLocation } from "../game/ChessGameLogic";
 
 interface SquareProps {
   size: number;

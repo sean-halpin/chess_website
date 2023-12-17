@@ -3,112 +3,26 @@
 import { DndProvider } from "react-dnd";
 import React, { useEffect, useState, useRef } from "react";
 import Board from "./Board";
-import { Rank, MaybeChessPiece, IChessPiece, Team } from "./Piece";
-import {
-  GameCommand,
-  BoardLocation,
-  MoveCommand,
-  ResignCommand,
-} from "./GameCommand";
+import { MaybeChessPiece } from "../game/ChessGameLogic";
+import { ChessPiece } from "../game/ChessGameLogic";
+import { Team } from "../game/ChessGameLogic";
+import { Rank } from "../game/ChessGameLogic";
+import { GameCommand, MoveCommand, ResignCommand } from "../game/GameCommand";
+import { BoardLocation } from "../game/ChessGameLogic";
 import "./Game.css";
 import isTouchDevice from "is-touch-device";
 import { TouchBackend } from "react-dnd-touch-backend";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import AudioPlayer from "./AudioPlayer";
 import { TextComponent } from "./TextComponent";
-
-const createPiece = (
-  team: Team,
-  position: BoardLocation,
-  rank: Rank,
-  i: number
-): MaybeChessPiece => ({
-  id: `${team}-${rank}-${i}`,
-  rank,
-  team: team,
-  position,
-  firstMove: true,
-});
-
-const createPiecesOrder = (): Rank[] => [
-  Rank.Castle,
-  Rank.Knight,
-  Rank.Bishop,
-  Rank.Queen,
-  Rank.King,
-  Rank.Bishop,
-  Rank.Knight,
-  Rank.Castle,
-];
-
-const createPieces = (team: Team, row: number): MaybeChessPiece[] =>
-  Array.from({ length: 8 }, (_, column) =>
-    createPiece(
-      team,
-      new BoardLocation(row, column),
-      column === 3
-        ? Rank.Queen
-        : column === 4
-        ? Rank.King
-        : createPiecesOrder()[column],
-      column
-    )
-  );
-
-const createPawns = (): MaybeChessPiece[] =>
-  Array.from({ length: 16 }, (_, column) =>
-    createPiece(
-      column < 8 ? Team.White : Team.Black,
-      new BoardLocation(column < 8 ? 1 : 6, column % 8),
-      Rank.Pawn,
-      column % 8
-    )
-  );
-
-const placeBackRow = (): MaybeChessPiece[] => [
-  ...createPieces(Team.White, 0),
-  ...createPieces(Team.Black, 7),
-];
-
-type ChessBoard = MaybeChessPiece[][];
-interface IMoveResult {
-  destination: BoardLocation;
-  movingPiece: IChessPiece;
-  takenPiece: MaybeChessPiece;
-  enPassantPossible?: Boolean;
-}
-
-class MoveResult implements IMoveResult {
-  constructor(
-    public destination: BoardLocation,
-    public movingPiece: IChessPiece,
-    public takenPiece: MaybeChessPiece,
-    public enPassantPossible: Boolean
-  ) {}
-  toMoveCommand(): MoveCommand {
-    return {
-      command: "move",
-      pieceId: this.movingPiece.id,
-      source: this.movingPiece.position,
-      destination: this.destination,
-    };
-  }
-}
-
-type CommandResult = MoveResult | null;
-
-export interface GameState {
-  board: ChessBoard;
-  currentPlayer: Team.White | Team.Black;
-  winner: Team.White | Team.Black | "draw" | null;
-  commands: CommandResult[];
-  counter: number;
-  displayText: string;
-}
-
-const CopyGameState = (state: GameState): GameState => {
-  return JSON.parse(JSON.stringify(state));
-};
+import { ChessGameLogic } from "../game/ChessGameLogic";
+import { ChessBoard } from "../game/ChessGameLogic";
+import { MoveResult } from "../game/ChessGameLogic";
+import {
+  GameState,
+  CommandResult,
+  CopyGameState,
+} from "../game/ChessGameLogic";
 
 export const ChessGame: React.FC = () => {
   const audioPlayerRef = useRef<AudioPlayer>(null);
@@ -118,23 +32,10 @@ export const ChessGame: React.FC = () => {
       audioPlayerRef.current.play();
     }
   };
-  const pieces: MaybeChessPiece[] = [...createPawns(), ...placeBackRow()];
-  const initialBoard: ChessBoard = Array.from({ length: 8 }, () =>
-    Array(8).fill(null)
+
+  const [gameState, setGameState] = useState<GameState>(
+    new ChessGameLogic().getGameState()
   );
-  pieces.forEach((p) => {
-    if (p) {
-      initialBoard[p.position.row][p.position.col] = p;
-    }
-  });
-  const [gameState, setGameState] = useState<GameState>({
-    board: initialBoard,
-    currentPlayer: Team.White,
-    commands: [],
-    counter: 0,
-    displayText: "",
-    winner: null,
-  });
 
   const initial_player = gameState.currentPlayer;
   const capitalized_initial_player =
@@ -174,7 +75,7 @@ export const ChessGame: React.FC = () => {
   };
 
   const findLegalPawnMoves = (
-    movingPiece: IChessPiece,
+    movingPiece: ChessPiece,
     gameState: GameState
   ): MoveResult[] => {
     const moveResults: MoveResult[] = [];
@@ -293,7 +194,7 @@ export const ChessGame: React.FC = () => {
   };
 
   const findMovesInDirection = (
-    movingPiece: IChessPiece,
+    movingPiece: ChessPiece,
     gameState: GameState,
     rowOffset: number,
     colOffset: number,
@@ -343,7 +244,7 @@ export const ChessGame: React.FC = () => {
   };
 
   const findHorVerMoves = (
-    movingPiece: IChessPiece,
+    movingPiece: ChessPiece,
     gameState: GameState,
     maximumDistance: number = 8
   ): MoveResult[] => {
@@ -366,7 +267,7 @@ export const ChessGame: React.FC = () => {
   };
 
   const findDiagonalMoves = (
-    movingPiece: IChessPiece,
+    movingPiece: ChessPiece,
     gameState: GameState,
     maximumDistance: number = 8
   ): MoveResult[] => {
@@ -389,21 +290,21 @@ export const ChessGame: React.FC = () => {
   };
 
   const findLegalCastleMoves = (
-    movingPiece: IChessPiece,
+    movingPiece: ChessPiece,
     gameState: GameState
   ): MoveResult[] => {
     return findHorVerMoves(movingPiece, gameState);
   };
 
   const findLegalBishopMoves = (
-    movingPiece: IChessPiece,
+    movingPiece: ChessPiece,
     gameState: GameState
   ): MoveResult[] => {
     return findDiagonalMoves(movingPiece, gameState);
   };
 
   const findLegalQueenMoves = (
-    movingPiece: IChessPiece,
+    movingPiece: ChessPiece,
     gameState: GameState
   ): MoveResult[] => {
     return [
@@ -413,7 +314,7 @@ export const ChessGame: React.FC = () => {
   };
 
   const findLegalKingMoves = (
-    movingPiece: IChessPiece,
+    movingPiece: ChessPiece,
     gameState: GameState
   ): MoveResult[] => {
     return [
@@ -423,7 +324,7 @@ export const ChessGame: React.FC = () => {
   };
 
   const findLegalKnightMoves = (
-    movingPiece: IChessPiece,
+    movingPiece: ChessPiece,
     gameState: GameState
   ): MoveResult[] => {
     const moveResults: MoveResult[] = [];
@@ -524,8 +425,6 @@ export const ChessGame: React.FC = () => {
     newCommand: MoveCommand,
     gameState: GameState
   ): GameState => {
-    // console.log(`[Game] New Command: ${newCommand.command}`);
-
     const clonedGameState = CopyGameState(gameState);
     const updatedBoard = clonedGameState.board;
     const cmdResult: CommandResult = attemptCommand(
@@ -589,14 +488,14 @@ export const ChessGame: React.FC = () => {
       .flat()
       .find(
         (piece) => piece?.team === playerColor && piece?.rank === Rank.King
-      ) as IChessPiece;
+      ) as ChessPiece;
 
     // Check if the king is under threat after the move
     const opponentColor = playerColor === Team.White ? Team.Black : Team.White;
     const opponentPieces = updatedGameState.board
       .flat()
       .filter((piece) => piece?.team === opponentColor)
-      .map((piece) => piece as IChessPiece);
+      .map((piece) => piece as ChessPiece);
 
     for (const opponentPiece of opponentPieces) {
       const opponentMoves = moveFunctions[opponentPiece.rank](
@@ -633,7 +532,7 @@ export const ChessGame: React.FC = () => {
     const playerPieces = gameState.board
       .flat()
       .filter((piece) => piece?.team === opponentColor)
-      .map((piece) => piece as IChessPiece);
+      .map((piece) => piece as ChessPiece);
 
     for (const piece of playerPieces) {
       const moves = moveFunctions[piece.rank](piece, gameState);
@@ -695,7 +594,7 @@ export const ChessGame: React.FC = () => {
   };
 
   if (gameState) {
-    // console.log(${gameState.board.flat()});
+    console.log(gameState.board.flat());
     if (isTouchDevice()) {
       return (
         <div>

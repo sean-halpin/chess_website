@@ -2,8 +2,8 @@
 
 import React from "react";
 import Square from "./Square";
-import { MaybeChessPiece } from "./Piece";
-import { GameCommand } from "./GameCommand";
+import { MaybeChessPiece } from "../game/ChessGameLogic";
+import { GameCommand } from "../game/GameCommand";
 
 interface BoardProps {
   pieces: MaybeChessPiece[];
