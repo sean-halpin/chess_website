@@ -1,5 +1,6 @@
 // ChessGameLogic.ts
 
+import { fenPieceToTeam, fenToRank, fenToTeam } from "./FenNotation";
 import { MoveCommand } from "./GameCommand";
 import {
   findLegalBishopMoves,
@@ -53,73 +54,66 @@ export class ChessGameLogic {
     this.gameState = this.initializeGameState(fen);
   }
 
-  private initializeGameState(fen?: string): ChessGame {
-    const createPiece = (
-      team: Team,
-      position: BoardLocation,
-      rank: Rank,
-      i: number
-    ): ChessPiece => ({
+  private createPiece(
+    team: Team,
+    position: BoardLocation,
+    rank: Rank,
+    i: number
+  ): ChessPiece {
+    return {
       id: `${team}-${rank}-${i}`,
       rank,
       team: team,
       position,
       firstMove: true,
+    };
+  }
+
+  private initializeGameState(
+    fen: string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+  ): ChessGame {
+    const [
+      piecePlacement,
+      activeColor,
+      castlingAvailability,
+      enPassant,
+      halfmoveClock,
+      fullmoveNumber,
+    ] = fen.split(" ");
+
+    const fenRows = piecePlacement.split("/");
+
+    let index = 0;
+    let pieces: MaybeChessPiece[] = [];
+    fenRows.forEach((row) => {
+      row.split("").forEach((fenInstruction) => {
+        if (!isNaN(Number(fenInstruction))) {
+          index += Number(fenInstruction);
+        } else {
+          pieces.push(
+            this.createPiece(
+              fenPieceToTeam(fenInstruction),
+              new BoardLocation(7 - Math.floor(index / 8), index % 8),
+              fenToRank(fenInstruction),
+              index
+            )
+          );
+          index += 1;
+        }
+      });
     });
-
-    const createPiecesOrder = (): Rank[] => [
-      Rank.Castle,
-      Rank.Knight,
-      Rank.Bishop,
-      Rank.Pawn,
-      Rank.Pawn,
-      Rank.Bishop,
-      Rank.Knight,
-      Rank.Castle,
-    ];
-
-    const createPawns = (): MaybeChessPiece[] =>
-      Array.from({ length: 16 }, (_, column) =>
-        createPiece(
-          column < 8 ? Team.White : Team.Black,
-          new BoardLocation(column < 8 ? 1 : 6, column % 8),
-          Rank.Pawn,
-          column % 8
-        )
-      );
-
-    const createPieces = (team: Team, row: number): MaybeChessPiece[] =>
-      Array.from({ length: 8 }, (_, column) =>
-        createPiece(
-          team,
-          new BoardLocation(row, column),
-          column === 3
-            ? Rank.Queen
-            : column === 4
-            ? Rank.King
-            : createPiecesOrder()[column],
-          column
-        )
-      );
-
-    const placeBackRow = (): MaybeChessPiece[] => [
-      ...createPieces(Team.White, 0),
-      ...createPieces(Team.Black, 7),
-    ];
-
-    const pieces: MaybeChessPiece[] = [...createPawns(), ...placeBackRow()];
     const initialBoard: ChessBoard = Array.from({ length: 8 }, () =>
       Array(8).fill(null)
     );
-    pieces.forEach((p) => {
-      if (p) {
-        initialBoard[p.position.row][p.position.col] = p;
+    pieces.forEach((piece) => {
+      if (piece) {
+        initialBoard[piece.position.row][piece.position.col] = piece;
       }
     });
 
     const initialState: ChessGame = {
       board: initialBoard,
-      currentPlayer: Team.White,
+      currentPlayer: fenToTeam(activeColor),
       commands: [],
       counter: 0,
       displayText: "",
@@ -146,6 +140,8 @@ export class ChessGameLogic {
         if (ownKingChecked) {
           console.warn("Invalid move: puts own king in check");
         } else {
+          console.log(`[${ChessGameLogic.name}]`);
+          console.log(this.gameState.board);
           return { success: true, data: this };
         }
         break;
