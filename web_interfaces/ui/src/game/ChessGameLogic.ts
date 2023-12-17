@@ -181,3 +181,17 @@ export interface GameState {
 export const CopyGameState = (state: GameState): GameState => {
   return JSON.parse(JSON.stringify(state));
 };
+export const isOOB = (r: number, c: number) => r < 0 || r > 7 || c < 0 || c > 7;
+export const isSquareEmpty = (r: number, c: number, b: ChessBoard) =>
+  !isOOB(r, c) && b[r][c] == null;
+export const squareEntry = (
+  r: number,
+  c: number,
+  b: ChessBoard
+): MaybeChessPiece => {
+  if (!isOOB(r, c) && b[r][c] !== null) {
+    return b[r][c];
+  } else {
+    return null;
+  }
+};
