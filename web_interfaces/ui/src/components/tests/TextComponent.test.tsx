@@ -6,6 +6,7 @@ import userEvent from "@testing-library/user-event";
 describe("TextComponent", () => {
   const defaultProps: TextProps = {
     text: "Hello, World!",
+    textLow: ""
   };
 
   it("renders component with initial state", () => {
@@ -29,7 +30,7 @@ describe("TextComponent", () => {
   it("cleanup function calls clearInterval", async () => {
     jest.useFakeTimers(); // Mock the timers API
     const clearIntervalMock = jest.spyOn(window, "clearInterval");
-    const { unmount } = render(<TextComponent text={"Hello"} />);
+    const { unmount } = render(<TextComponent text={"Hello"} textLow="" />);
 
     // eslint-disable-next-line testing-library/no-wait-for-empty-callback
     await waitFor(() => {}, { timeout: 1 });

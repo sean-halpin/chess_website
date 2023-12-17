@@ -1,6 +1,6 @@
 // ChessGameLogic.ts
 
-import { fenPieceToTeam, fenToRank, fenToTeam } from "./FenNotation";
+import { gameToFEN, fenPieceToTeam, fenToRank, fenToTeam } from "./FenNotation";
 import { MoveCommand } from "./GameCommand";
 import {
   findLegalBishopMoves,
@@ -12,7 +12,7 @@ import {
 } from "./PieceLogic";
 
 export enum Rank {
-  Castle = "castle",
+  Rook = "rook",
   Knight = "knight",
   Bishop = "bishop",
   Queen = "queen",
@@ -33,7 +33,7 @@ export class ChessGameLogic {
   private gameState: ChessGame;
   private moveFunctions = {
     pawn: findLegalPawnMoves,
-    castle: findLegalCastleMoves,
+    rook: findLegalCastleMoves,
     knight: findLegalKnightMoves,
     bishop: findLegalBishopMoves,
     queen: findLegalQueenMoves,
@@ -150,6 +150,10 @@ export class ChessGameLogic {
         break;
     }
     return { success: false, error: "" };
+  }
+
+  getCurrentFen() {
+    return gameToFEN(this.gameState);
   }
 
   private attemptCommand = (

@@ -12,10 +12,12 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import AudioPlayer from "./AudioPlayer";
 import { TextComponent } from "./TextComponent";
 import { ChessGameLogic } from "../game/ChessGameLogic";
+import { stat } from "fs";
 
 export interface GameProps {
   game: ChessGameLogic;
   displayText: string;
+  fen: string;
 }
 
 export const Game: React.FC = () => {
@@ -30,12 +32,8 @@ export const Game: React.FC = () => {
   const [state, setState] = useState<GameProps>({
     game: new ChessGameLogic(),
     displayText: "",
+    fen: "",
   });
-
-  const initial_player = state.game.currentPlayer;
-  const capitalized_initial_player =
-    initial_player.charAt(0).toUpperCase() + initial_player.slice(1);
-  state.displayText = `${capitalized_initial_player} to move`;
 
   async function executeCpuMoves(team: Team) {
     let success = false;
@@ -58,6 +56,12 @@ export const Game: React.FC = () => {
       }
     }
   }
+
+  const initial_player = state.game.currentPlayer;
+  const capitalized_initial_player =
+    initial_player.charAt(0).toUpperCase() + initial_player.slice(1);
+  state.displayText = `${capitalized_initial_player} to move`;
+  state.fen = state.game.getCurrentFen();
 
   useEffect(() => {
     if (state.game.winner === null) {
@@ -101,29 +105,37 @@ export const Game: React.FC = () => {
     if (isTouchDevice()) {
       return (
         <div>
-          <h1>Chess</h1>
-          <DndProvider backend={TouchBackend}>
-            <Board
-              pieces={state.game.pieces}
-              sendMoveCommand={sendMoveCommand}
-            />
-          </DndProvider>
-          <TextComponent text={state.displayText} />
-          <AudioPlayer ref={audioPlayerRef} />
+          <div className="chessBox">
+            <h1>Chess</h1>
+            <DndProvider backend={TouchBackend}>
+              <Board
+                pieces={state.game.pieces}
+                sendMoveCommand={sendMoveCommand}
+              />
+            </DndProvider>
+          </div>
+          <div>
+            <TextComponent text={state.displayText} textLow={state.fen} />
+            <AudioPlayer ref={audioPlayerRef} />
+          </div>
         </div>
       );
     } else {
       return (
         <div>
-          <h1>Chess</h1>
-          <DndProvider backend={HTML5Backend}>
-            <Board
-              pieces={state.game.pieces}
-              sendMoveCommand={sendMoveCommand}
-            />
-          </DndProvider>
-          <TextComponent text={state.displayText} />
-          <AudioPlayer ref={audioPlayerRef} />
+          <div className="chessBox">
+            <h1>Chess</h1>
+            <DndProvider backend={HTML5Backend}>
+              <Board
+                pieces={state.game.pieces}
+                sendMoveCommand={sendMoveCommand}
+              />
+            </DndProvider>
+          </div>
+          <div>
+            <TextComponent text={state.displayText} textLow={state.fen} />
+            <AudioPlayer ref={audioPlayerRef} />
+          </div>
         </div>
       );
     }
