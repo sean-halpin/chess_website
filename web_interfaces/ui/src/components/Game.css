@@ -1,6 +1,7 @@
-h1 {
-    justify-content: center;
+.chessBox {
     display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .infoBox {
