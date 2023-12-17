@@ -1,6 +1,14 @@
 // ChessGameLogic.ts
 
-import { MoveCommand } from "./GameCommand";
+import { GameCommand, MoveCommand } from "./GameCommand";
+import {
+  findLegalBishopMoves,
+  findLegalCastleMoves,
+  findLegalKingMoves,
+  findLegalKnightMoves,
+  findLegalPawnMoves,
+  findLegalQueenMoves,
+} from "./PieceLogic";
 
 export enum Rank {
   Castle = "castle",
@@ -16,14 +24,36 @@ export enum Team {
   Black = "black",
 }
 
+type ExecuteResult<T, E> =
+  | { success: true; data: T }
+  | { success: false; error: E };
+
 export class ChessGameLogic {
-  private gameState: GameState;
+  private gameState: ChessGame;
+  private moveFunctions = {
+    pawn: findLegalPawnMoves,
+    castle: findLegalCastleMoves,
+    knight: findLegalKnightMoves,
+    bishop: findLegalBishopMoves,
+    queen: findLegalQueenMoves,
+    king: findLegalKingMoves,
+  };
+
+  public get currentPlayer(): string {
+    return this.gameState.currentPlayer;
+  }
+  public get winner(): Team | "draw" | null {
+    return this.gameState.winner;
+  }
+  public get pieces(): MaybeChessPiece[] {
+    return this.gameState.board.flat();
+  }
 
   constructor(fen?: string) {
     this.gameState = this.initializeGameState(fen);
   }
 
-  private initializeGameState(fen?: string): GameState {
+  private initializeGameState(fen?: string): ChessGame {
     const createPiece = (
       team: Team,
       position: BoardLocation,
@@ -87,7 +117,7 @@ export class ChessGameLogic {
       }
     });
 
-    const initialState: GameState = {
+    const initialState: ChessGame = {
       board: initialBoard,
       currentPlayer: Team.White,
       commands: [],
@@ -98,15 +128,170 @@ export class ChessGameLogic {
     return initialState;
   }
 
-  movePiece(fromSquare: string, toSquare: string): void {
-    // Implement logic to move a chess piece from one square to another
-    // Update the game state accordingly
-    // Throw an error if the move is invalid
+  executeCommand(cmd: GameCommand): ExecuteResult<ChessGameLogic, string> {
+    switch (cmd.command) {
+      case "move":
+        const clonedState = CopyGameState(this.gameState);
+        const ownKingChecked = this.isKingInCheck(
+          clonedState,
+          clonedState.currentPlayer,
+          cmd
+        );
+        let updatedState = !ownKingChecked
+          ? this.applyMoveCommand(cmd, clonedState)
+          : clonedState;
+
+        this.gameState = { ...updatedState, counter: clonedState.counter + 1 };
+
+        if (ownKingChecked) {
+          console.warn("Invalid move: puts own king in check");
+        } else {
+          return { success: true, data: this };
+        }
+        break;
+      case "resign":
+        break;
+      default:
+        console.warn(`[${ChessGameLogic.name}] Unknown command`);
+        break;
+    }
+    return { success: false, error: "" };
   }
 
-  // You can add more methods for other chess game interactions
+  attemptCommand = (cmd: GameCommand, gameState: ChessGame): CommandResult => {
+    switch (cmd.command) {
+      case "move":
+        const moving_piece = gameState.board
+          .flat()
+          .filter((p) => p != null)
+          .find((p) => p?.id === cmd.pieceId);
+        if (moving_piece) {
+          if (gameState.currentPlayer !== moving_piece?.team || !moving_piece) {
+            console.log("[Game] Team not in play");
+            return null;
+          }
 
-  getGameState(): GameState {
+          const moveFunction = this.moveFunctions[moving_piece.rank];
+          if (moveFunction) {
+            const moves = moveFunction(moving_piece, gameState);
+            const chosenMove = moves.find((result) =>
+              result.destination.isEqual(cmd.destination)
+            );
+            if (chosenMove) return chosenMove;
+          }
+        }
+        break;
+
+      case "resign":
+        break;
+
+      default:
+        break;
+    }
+    return null;
+  };
+
+  applyMoveCommand = (
+    newCommand: MoveCommand,
+    gameState: ChessGame
+  ): ChessGame => {
+    const clonedGameState = CopyGameState(gameState);
+    const updatedBoard = clonedGameState.board;
+    const cmdResult: CommandResult = this.attemptCommand(
+      newCommand,
+      clonedGameState
+    );
+
+    if (cmdResult) {
+      const { takenPiece, movingPiece } = cmdResult;
+
+      // Remove taken piece
+      if (takenPiece) {
+        updatedBoard[takenPiece.position.row][takenPiece.position.col] = null;
+      }
+
+      // Update moving piece
+      if (movingPiece) {
+        movingPiece.position = cmdResult.destination;
+        movingPiece.firstMove = false;
+        updatedBoard[newCommand.source.row][newCommand.source.col] = null;
+        updatedBoard[movingPiece.position.row][movingPiece.position.col] =
+          movingPiece;
+      }
+
+      // Push Latest Command Result
+      clonedGameState.commands.push(cmdResult);
+
+      // Return New GameState
+      return {
+        board: updatedBoard,
+        currentPlayer:
+          clonedGameState.currentPlayer === Team.White
+            ? Team.Black
+            : Team.White,
+        commands: clonedGameState.commands,
+        counter: clonedGameState.counter,
+        displayText: clonedGameState.displayText,
+        winner: null,
+      };
+    }
+    return clonedGameState;
+  };
+
+  isKingInCheck = (
+    gameState: ChessGame,
+    playerColor: Team,
+    moveCommand: MoveCommand
+  ): boolean => {
+    // Make a copy of the current game state
+    const clonedGameState = CopyGameState(gameState);
+
+    // Apply the move command to the copied game state
+    const updatedGameState = this.applyMoveCommand(
+      moveCommand,
+      clonedGameState
+    );
+
+    // Find the current player's king on the updated board
+    const king = updatedGameState.board
+      .flat()
+      .find(
+        (piece) => piece?.team === playerColor && piece?.rank === Rank.King
+      ) as ChessPiece;
+
+    // Check if the king is under threat after the move
+    const opponentColor = playerColor === Team.White ? Team.Black : Team.White;
+    const opponentPieces = updatedGameState.board
+      .flat()
+      .filter((piece) => piece?.team === opponentColor)
+      .map((piece) => piece as ChessPiece);
+
+    for (const opponentPiece of opponentPieces) {
+      const opponentMoves = this.moveFunctions[opponentPiece.rank](
+        opponentPiece,
+        updatedGameState
+      );
+
+      for (const moveResult of opponentMoves) {
+        if (moveResult.destination.isEqual(king.position)) {
+          // The king is in check after the move
+          return true;
+        }
+      }
+    }
+
+    // The king is not in check after the move
+    return false;
+  };
+
+  movePiece(
+    fromSquare: string,
+    toSquare: string
+  ): ExecuteResult<string, string> {
+    return { success: true, data: "" };
+  }
+
+  getGameState(): ChessGame {
     return this.gameState;
   }
 }
@@ -170,15 +355,15 @@ export class MoveResult implements IMoveResult {
 
 export type CommandResult = MoveResult | null;
 
-export interface GameState {
+export interface ChessGame {
   board: ChessBoard;
   currentPlayer: Team.White | Team.Black;
-  winner: Team.White | Team.Black | "draw" | null;
+  winner: Team | "draw" | null;
   commands: CommandResult[];
   counter: number;
   displayText: string;
 }
-export const CopyGameState = (state: GameState): GameState => {
+export const CopyGameState = (state: ChessGame): ChessGame => {
   return JSON.parse(JSON.stringify(state));
 };
 export const isOOB = (r: number, c: number) => r < 0 || r > 7 || c < 0 || c > 7;
