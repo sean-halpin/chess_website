@@ -2,11 +2,11 @@
 
 import React from "react";
 import Square from "./Square";
-import { ChessPiece } from "./Piece";
+import { MaybeChessPiece } from "./Piece";
 import { GameCommand } from "./GameCommand";
 
 interface BoardProps {
-  pieces: ChessPiece[];
+  pieces: MaybeChessPiece[];
   sendGameCommand: (command: GameCommand) => void;
 }
 

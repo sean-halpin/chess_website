@@ -5,25 +5,46 @@ import "./Piece.css";
 import { useDrag } from "react-dnd";
 import { BoardLocation } from "./GameCommand";
 
-export type Rank =
-  | "castle"
-  | "knight"
-  | "bishop"
-  | "queen"
-  | "king"
-  | "pawn";
+export enum Rank {
+  Castle = "castle",
+  Knight = "knight",
+  Bishop = "bishop",
+  Queen = "queen",
+  King = "king",
+  Pawn = "pawn",
+}
+
+export enum Team {
+  White = "white",
+  Black = "black",
+}
 
 export interface IChessPiece {
   id: string;
-  color: "white" | "black";
+  team: Team;
   rank: Rank;
   position: BoardLocation;
-  firstMove: boolean;
+  firstMove?: boolean;
 }
 
-export type ChessPiece = IChessPiece | null;
+export class ChessPiece implements IChessPiece {
+    constructor(
+      public readonly id: string,
+      public readonly team: Team,
+      public readonly rank: Rank,
+      public readonly position: BoardLocation,
+      public readonly firstMove: boolean = true
+    ) {}
+  }
 
-export const Piece: React.FC<IChessPiece> = ({ id, color, rank, position }) => {
+export type MaybeChessPiece = IChessPiece | null;
+
+export const Piece: React.FC<IChessPiece> = ({
+  id,
+  team: color,
+  rank,
+  position,
+}) => {
   const [{ isDragging }, drag] = useDrag({
     type: "PIECE",
     item: { id, color, rank, position },

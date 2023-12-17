@@ -1,24 +1,24 @@
 // Square.tsx
 
 import React from "react";
-import { Piece, ChessPiece } from "./Piece";
+import { Piece, MaybeChessPiece } from "./Piece";
 import { useDrop } from "react-dnd";
 import { GameCommand, BoardLocation } from "./GameCommand";
 
 interface SquareProps {
   size: number;
   color: string;
-  piece: ChessPiece;
+  piece: MaybeChessPiece;
   position: { row: number; col: number };
   sendGameCommand: (command: GameCommand) => void;
 }
 
-function maybePiece(piece: ChessPiece) {
+function maybePiece(piece: MaybeChessPiece) {
   if (piece) {
     return (
       <Piece
         id={piece.id}
-        color={piece.color}
+        team={piece.team}
         rank={piece.rank}
         position={piece.position}
         firstMove={piece.firstMove}
@@ -38,9 +38,9 @@ const Square: React.FC<SquareProps> = ({
 }) => {
   const [{ isOver }, drop] = useDrop({
     accept: "PIECE", // Make sure it matches the type used in useDrag
-    drop: (piece: ChessPiece) => {
+    drop: (piece: MaybeChessPiece) => {
       if (piece) {
-        let info = `[Square] Dropped ${piece.color} ${piece.rank} from ${piece.position.row}-${piece.position.col} to ${position.row}-${position.col}`;
+        let info = `[Square] Dropped ${piece.team} ${piece.rank} from ${piece.position.row}-${piece.position.col} to ${position.row}-${position.col}`;
         console.log(info);
         const moveCommand: GameCommand = {
           command: "move",

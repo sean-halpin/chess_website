@@ -3,17 +3,17 @@
 export type CommandType = "move" | "resign";
 
 export interface ILocation {
-    row: number; 
-    col: number
+  readonly row: number;
+  readonly col: number;
 }
 
 export class BoardLocation implements ILocation {
-    constructor(public row: number, public col: number) {}
-  
-    isEqual(otherLocation: ILocation): boolean {
-      return this.row === otherLocation.row && this.col === otherLocation.col;
-    }
+  constructor(public readonly row: number, public readonly col: number) {}
+
+  isEqual(otherLocation: ILocation): boolean {
+    return this.row === otherLocation.row && this.col === otherLocation.col;
   }
+}
 
 export interface MoveCommand {
   command: "move";

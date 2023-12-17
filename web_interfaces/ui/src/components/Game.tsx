@@ -3,7 +3,7 @@
 import { DndProvider } from "react-dnd";
 import React, { useEffect, useState, useRef } from "react";
 import Board from "./Board";
-import { Rank, ChessPiece, IChessPiece } from "./Piece";
+import { Rank, MaybeChessPiece, IChessPiece, Team } from "./Piece";
 import {
   GameCommand,
   BoardLocation,
@@ -17,66 +17,64 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import AudioPlayer from "./AudioPlayer";
 import { TextComponent } from "./TextComponent";
 
-type PieceColor = "white" | "black";
-
 const createPiece = (
-  color: PieceColor,
+  team: Team,
   position: BoardLocation,
   rank: Rank,
   i: number
-): ChessPiece => ({
-  id: `${color}-${rank}-${i}`,
+): MaybeChessPiece => ({
+  id: `${team}-${rank}-${i}`,
   rank,
-  color,
+  team: team,
   position,
   firstMove: true,
 });
 
 const createPiecesOrder = (): Rank[] => [
-  "castle",
-  "knight",
-  "bishop",
-  "queen",
-  "king",
-  "bishop",
-  "knight",
-  "castle",
+  Rank.Castle,
+  Rank.Knight,
+  Rank.Bishop,
+  Rank.Queen,
+  Rank.King,
+  Rank.Bishop,
+  Rank.Knight,
+  Rank.Castle,
 ];
 
-const createPieces = (color: PieceColor, row: number): ChessPiece[] =>
+const createPieces = (team: Team, row: number): MaybeChessPiece[] =>
   Array.from({ length: 8 }, (_, column) =>
     createPiece(
-      color,
+      team,
       new BoardLocation(row, column),
       column === 3
-        ? "queen"
+        ? Rank.Queen
         : column === 4
-        ? "king"
+        ? Rank.King
         : createPiecesOrder()[column],
       column
     )
   );
 
-const createPawns = (): ChessPiece[] =>
+const createPawns = (): MaybeChessPiece[] =>
   Array.from({ length: 16 }, (_, column) =>
     createPiece(
-      column < 8 ? "white" : "black",
+      column < 8 ? Team.White : Team.Black,
       new BoardLocation(column < 8 ? 1 : 6, column % 8),
-      "pawn",
+      Rank.Pawn,
       column % 8
     )
   );
 
-const placeBackRow = (): ChessPiece[] => [
-  ...createPieces("white", 0),
-  ...createPieces("black", 7),
+const placeBackRow = (): MaybeChessPiece[] => [
+  ...createPieces(Team.White, 0),
+  ...createPieces(Team.Black, 7),
 ];
 
-type ChessBoard = ChessPiece[][];
+type ChessBoard = MaybeChessPiece[][];
 interface IMoveResult {
   destination: BoardLocation;
   movingPiece: IChessPiece;
-  takenPiece: ChessPiece;
+  takenPiece: MaybeChessPiece;
   enPassantPossible?: Boolean;
 }
 
@@ -84,7 +82,7 @@ class MoveResult implements IMoveResult {
   constructor(
     public destination: BoardLocation,
     public movingPiece: IChessPiece,
-    public takenPiece: ChessPiece,
+    public takenPiece: MaybeChessPiece,
     public enPassantPossible: Boolean
   ) {}
   toMoveCommand(): MoveCommand {
@@ -101,8 +99,8 @@ type CommandResult = MoveResult | null;
 
 export interface GameState {
   board: ChessBoard;
-  currentPlayer: "white" | "black";
-  winner: "white" | "black" | "draw" | null;
+  currentPlayer: Team.White | Team.Black;
+  winner: Team.White | Team.Black | "draw" | null;
   commands: CommandResult[];
   counter: number;
   displayText: string;
@@ -120,7 +118,7 @@ export const ChessGame: React.FC = () => {
       audioPlayerRef.current.play();
     }
   };
-  const pieces: ChessPiece[] = [...createPawns(), ...placeBackRow()];
+  const pieces: MaybeChessPiece[] = [...createPawns(), ...placeBackRow()];
   const initialBoard: ChessBoard = Array.from({ length: 8 }, () =>
     Array(8).fill(null)
   );
@@ -131,7 +129,7 @@ export const ChessGame: React.FC = () => {
   });
   const [gameState, setGameState] = useState<GameState>({
     board: initialBoard,
-    currentPlayer: "white",
+    currentPlayer: Team.White,
     commands: [],
     counter: 0,
     displayText: "",
@@ -153,8 +151,8 @@ export const ChessGame: React.FC = () => {
     const waitOneSecond = async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       console.log(`[Game] Next move ${capitalized_initial_player}`);
-      if (gameState.winner === null && gameState.currentPlayer === "black") {
-        randomMove(gameState, "black");
+      if (gameState.winner === null && gameState.currentPlayer === Team.Black) {
+        randomMove(gameState, Team.Black);
       }
     };
     waitOneSecond();
@@ -166,9 +164,8 @@ export const ChessGame: React.FC = () => {
   const squareEntry = (
     r: number,
     c: number,
-    b: ChessBoard,
-    mP: IChessPiece
-  ): ChessPiece => {
+    b: ChessBoard
+  ): MaybeChessPiece => {
     if (!isOOB(r, c) && b[r][c] !== null) {
       return b[r][c];
     } else {
@@ -182,7 +179,7 @@ export const ChessGame: React.FC = () => {
   ): MoveResult[] => {
     const moveResults: MoveResult[] = [];
     const currentBoard = gameState.board;
-    const teamDirection = movingPiece.color === "white" ? 1 : -1;
+    const teamDirection = movingPiece.team === Team.White ? 1 : -1;
     const { row: movingPieceCurrentRow, col: movingPieceCurrentCol } =
       movingPiece.position;
 
@@ -206,12 +203,11 @@ export const ChessGame: React.FC = () => {
     const possiblePieceRight = squareEntry(
       attackableRow,
       attackableCol(1),
-      currentBoard,
-      movingPiece
+      currentBoard
     );
     if (
       possiblePieceRight !== null &&
-      possiblePieceRight?.color !== movingPiece.color
+      possiblePieceRight?.team !== movingPiece.team
     ) {
       moveResults.push(
         new MoveResult(
@@ -225,12 +221,11 @@ export const ChessGame: React.FC = () => {
     const possiblePieceLeft = squareEntry(
       attackableRow,
       attackableCol(-1),
-      currentBoard,
-      movingPiece
+      currentBoard
     );
     if (
       possiblePieceLeft !== null &&
-      possiblePieceLeft?.color !== movingPiece.color
+      possiblePieceLeft?.team !== movingPiece.team
     ) {
       moveResults.push(
         new MoveResult(
@@ -266,12 +261,11 @@ export const ChessGame: React.FC = () => {
         const possiblePiece = squareEntry(
           movingPieceCurrentRow,
           movingPieceCurrentCol + column_offset,
-          currentBoard,
-          movingPiece
+          currentBoard
         );
         return (
-          possiblePiece?.rank === "pawn" &&
-          possiblePiece?.color !== movingPiece.color
+          possiblePiece?.rank === Rank.Pawn &&
+          possiblePiece?.team !== movingPiece.team
         );
       };
       if (enPassantAttackable(-1)) {
@@ -327,15 +321,10 @@ export const ChessGame: React.FC = () => {
         );
       }
 
-      const possiblePiece = squareEntry(
-        newRow,
-        newCol,
-        currentBoard,
-        movingPiece
-      );
+      const possiblePiece = squareEntry(newRow, newCol, currentBoard);
 
       if (possiblePiece) {
-        if (possiblePiece?.color !== movingPiece.color) {
+        if (possiblePiece?.team !== movingPiece.team) {
           moveResults.push(
             new MoveResult(
               new BoardLocation(newRow, newCol),
@@ -467,7 +456,7 @@ export const ChessGame: React.FC = () => {
     let possibleMoves = [];
     const pieces = gameState.board
       .flat()
-      .filter((p) => p !== null && p.color === color);
+      .filter((p) => p !== null && p.team === color);
     const randomPiece = pieces[Math.floor(Math.random() * pieces.length)];
     if (randomPiece) {
       possibleMoves = moveFunctions[randomPiece?.rank](randomPiece, gameState);
@@ -506,10 +495,7 @@ export const ChessGame: React.FC = () => {
           .filter((p) => p != null)
           .find((p) => p?.id === cmd.pieceId);
         if (moving_piece) {
-          if (
-            gameState.currentPlayer !== moving_piece?.color ||
-            !moving_piece
-          ) {
+          if (gameState.currentPlayer !== moving_piece?.team || !moving_piece) {
             console.log("[Game] Team not in play");
             return null;
           }
@@ -571,7 +557,9 @@ export const ChessGame: React.FC = () => {
       return {
         board: updatedBoard,
         currentPlayer:
-          clonedGameState.currentPlayer === "white" ? "black" : "white",
+          clonedGameState.currentPlayer === Team.White
+            ? Team.Black
+            : Team.White,
         commands: clonedGameState.commands,
         counter: clonedGameState.counter,
         displayText: clonedGameState.displayText,
@@ -587,7 +575,7 @@ export const ChessGame: React.FC = () => {
 
   const isKingInCheck = (
     gameState: GameState,
-    playerColor: PieceColor,
+    playerColor: Team,
     moveCommand: MoveCommand
   ): boolean => {
     // Make a copy of the current game state
@@ -600,14 +588,14 @@ export const ChessGame: React.FC = () => {
     const king = updatedGameState.board
       .flat()
       .find(
-        (piece) => piece?.color === playerColor && piece?.rank === "king"
+        (piece) => piece?.team === playerColor && piece?.rank === Rank.King
       ) as IChessPiece;
 
     // Check if the king is under threat after the move
-    const opponentColor = playerColor === "white" ? "black" : "white";
+    const opponentColor = playerColor === Team.White ? Team.Black : Team.White;
     const opponentPieces = updatedGameState.board
       .flat()
-      .filter((piece) => piece?.color === opponentColor)
+      .filter((piece) => piece?.team === opponentColor)
       .map((piece) => piece as IChessPiece);
 
     for (const opponentPiece of opponentPieces) {
@@ -630,7 +618,7 @@ export const ChessGame: React.FC = () => {
 
   const isCheckmate = (
     gameState: GameState,
-    opponentColor: PieceColor,
+    opponentColor: Team,
     moveCommand: MoveCommand
   ): boolean => {
     // Check if the king is in check
@@ -644,7 +632,7 @@ export const ChessGame: React.FC = () => {
     // Check if there are any legal moves to get out of check
     const playerPieces = gameState.board
       .flat()
-      .filter((piece) => piece?.color === opponentColor)
+      .filter((piece) => piece?.team === opponentColor)
       .map((piece) => piece as IChessPiece);
 
     for (const piece of playerPieces) {
@@ -677,15 +665,15 @@ export const ChessGame: React.FC = () => {
     switch (newCommand.command) {
       case "move":
         const clonedState = CopyGameState(gameState);
-                const ownKingChecked = isKingInCheck(
+        const ownKingChecked = isKingInCheck(
           clonedState,
           clonedState.currentPlayer,
-                    newCommand
+          newCommand
         );
-const updatedState = !ownKingChecked
+        const updatedState = !ownKingChecked
           ? applyMoveCommand(newCommand, clonedState)
           : clonedState;
-        
+
         setGameState({
           ...updatedState,
           counter: clonedState.counter + 1,
@@ -693,9 +681,9 @@ const updatedState = !ownKingChecked
 
         if (ownKingChecked) {
           console.warn("Invalid move: puts own king in check");
-                } else {
+        } else {
           playAudio();
-                  }
+        }
         break;
       case "resign":
         handleResignCommand(newCommand);
