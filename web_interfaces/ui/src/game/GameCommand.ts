@@ -1,8 +1,6 @@
-// GameCommand.tsx
+// MoveCommand.tsx
 
 import { BoardLocation } from "./ChessGameLogic";
-
-export type CommandType = "move" | "resign";
 
 export interface MoveCommand {
   command: "move";
@@ -10,9 +8,3 @@ export interface MoveCommand {
   source: BoardLocation;
   destination: BoardLocation;
 }
-
-export interface ResignCommand {
-  command: "resign";
-}
-
-export type GameCommand = MoveCommand | ResignCommand;

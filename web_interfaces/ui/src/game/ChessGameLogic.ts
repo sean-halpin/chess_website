@@ -1,6 +1,6 @@
 // ChessGameLogic.ts
 
-import { GameCommand, MoveCommand } from "./GameCommand";
+import { MoveCommand } from "./GameCommand";
 import {
   findLegalBishopMoves,
   findLegalCastleMoves,
@@ -128,7 +128,7 @@ export class ChessGameLogic {
     return initialState;
   }
 
-  executeCommand(cmd: GameCommand): ExecuteResult<ChessGameLogic, string> {
+  executeCommand(cmd: MoveCommand): ExecuteResult<ChessGameLogic, string> {
     switch (cmd.command) {
       case "move":
         const clonedState = CopyGameState(this.gameState);
@@ -149,8 +149,6 @@ export class ChessGameLogic {
           return { success: true, data: this };
         }
         break;
-      case "resign":
-        break;
       default:
         console.warn(`[${ChessGameLogic.name}] Unknown command`);
         break;
@@ -158,7 +156,10 @@ export class ChessGameLogic {
     return { success: false, error: "" };
   }
 
-  attemptCommand = (cmd: GameCommand, gameState: ChessGame): CommandResult => {
+  private attemptCommand = (
+    cmd: MoveCommand,
+    gameState: ChessGame
+  ): CommandResult => {
     switch (cmd.command) {
       case "move":
         const moving_piece = gameState.board
@@ -181,17 +182,13 @@ export class ChessGameLogic {
           }
         }
         break;
-
-      case "resign":
-        break;
-
       default:
         break;
     }
     return null;
   };
 
-  applyMoveCommand = (
+  private applyMoveCommand = (
     newCommand: MoveCommand,
     gameState: ChessGame
   ): ChessGame => {
@@ -238,7 +235,7 @@ export class ChessGameLogic {
     return clonedGameState;
   };
 
-  isKingInCheck = (
+  private isKingInCheck = (
     gameState: ChessGame,
     playerColor: Team,
     moveCommand: MoveCommand
@@ -284,29 +281,56 @@ export class ChessGameLogic {
     return false;
   };
 
-  movePiece(
-    fromSquare: string,
-    toSquare: string
-  ): ExecuteResult<string, string> {
-    return { success: true, data: "" };
+  getGameState(): ChessGame {
+    return CopyGameState(this.gameState);
   }
 
-  getGameState(): ChessGame {
-    return this.gameState;
+  cpuMove(team: Team): ExecuteResult<ChessGameLogic, string> {
+    const clonedGameState = CopyGameState(this.gameState);
+    let possibleMoves = [];
+    const pieces = this.pieces.filter((p) => p !== null && p.team === team);
+    const randomPiece = pieces[Math.floor(Math.random() * pieces.length)];
+
+    if (randomPiece) {
+      possibleMoves = this.moveFunctions[randomPiece?.rank](
+        randomPiece,
+        clonedGameState
+      );
+
+      if (possibleMoves.length > 0) {
+        const randomMove: MoveResult =
+          possibleMoves.flat()[
+            Math.floor(Math.random() * possibleMoves.flat().length)
+          ];
+
+        const moveCommand: MoveCommand = {
+          command: "move",
+          pieceId: randomPiece.id,
+          source: new BoardLocation(
+            randomPiece.position.row,
+            randomPiece.position.col
+          ),
+          destination: new BoardLocation(
+            randomMove.destination.row,
+            randomMove.destination.col
+          ),
+        };
+
+        return this.executeCommand(moveCommand);
+      } else {
+        return { success: false, error: "No possible moves" };
+      }
+    }
+    return { success: false, error: "No pieces to move" };
   }
 }
 
-export class BoardLocation implements ILocation {
+export class BoardLocation {
   constructor(public readonly row: number, public readonly col: number) {}
 
-  isEqual(otherLocation: ILocation): boolean {
+  isEqual(otherLocation: BoardLocation): boolean {
     return this.row === otherLocation.row && this.col === otherLocation.col;
   }
-}
-
-export interface ILocation {
-  readonly row: number;
-  readonly col: number;
 }
 
 export interface IChessPiece {

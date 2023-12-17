@@ -4,7 +4,7 @@ import { DndProvider } from "react-dnd";
 import React, { useEffect, useState, useRef } from "react";
 import Board from "./Board";
 import { Team } from "../game/ChessGameLogic";
-import { GameCommand } from "../game/GameCommand";
+import { MoveCommand } from "../game/GameCommand";
 import "./Game.css";
 import isTouchDevice from "is-touch-device";
 import { TouchBackend } from "react-dnd-touch-backend";
@@ -37,6 +37,28 @@ export const Game: React.FC = () => {
     initial_player.charAt(0).toUpperCase() + initial_player.slice(1);
   state.displayText = `${capitalized_initial_player} to move`;
 
+  async function executeCpuMoves(team: Team) {
+    let success = false;
+
+    while (!success) {
+      try {
+        const result = await state.game.cpuMove(team);
+
+        if (result.success) {
+          success = true;
+          playAudio();
+          setState({
+            ...state,
+            game: result.data,
+          });
+        }
+      } catch (error) {
+        console.error("Error during CPU move:", error);
+        break;
+      }
+    }
+  }
+
   useEffect(() => {
     if (state.game.winner === null) {
       const curr_player = state.game.currentPlayer;
@@ -47,58 +69,27 @@ export const Game: React.FC = () => {
     const waitOneSecond = async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       console.log(`[Game] Next move ${capitalized_initial_player}`);
-      if (state.game.winner === null && state.game.currentPlayer === Team.Black) {
-        // randomMove(gameState, Team.Black);
+      if (
+        state.game.winner === null &&
+        state.game.currentPlayer === Team.Black
+      ) {
+        executeCpuMoves(Team.Black);
       }
     };
     waitOneSecond();
   });
 
-  //   const randomMove = (gameState: GameState, color: string) => {
-  //     let possibleMoves = [];
-  //     const pieces = gameState.board
-  //       .flat()
-  //       .filter((p) => p !== null && p.team === color);
-  //     const randomPiece = pieces[Math.floor(Math.random() * pieces.length)];
-  //     if (randomPiece) {
-  //       possibleMoves = moveFunctions[randomPiece?.rank](randomPiece, gameState);
-  //       if (possibleMoves.length > 0) {
-  //         const randomMove: MoveResult =
-  //           possibleMoves.flat()[
-  //             Math.floor(Math.random() * possibleMoves.flat().length)
-  //           ];
-  //         const moveCommand: GameCommand = {
-  //           command: "move",
-  //           pieceId: randomPiece.id,
-  //           source: new BoardLocation(
-  //             randomPiece.position.row,
-  //             randomPiece.position.col
-  //           ),
-  //           destination: new BoardLocation(
-  //             randomMove.destination.row,
-  //             randomMove.destination.col
-  //           ),
-  //         };
-  //         sendGameCommand(moveCommand);
-  //       } else {
-  //         randomMove(gameState, color);
-  //       }
-  //     }
-  //   };
-
-  const sendGameCommand = (newCommand: GameCommand) => {
+  const sendMoveCommand = (newCommand: MoveCommand) => {
     switch (newCommand.command) {
       case "move":
         const result = state.game.executeCommand(newCommand);
         if (result.success) {
-            playAudio();
-            setState({
-                ...state,
-                game: result.data
-            });
+          playAudio();
+          setState({
+            ...state,
+            game: result.data,
+          });
         }
-        break;
-      case "resign":
         break;
       default:
         console.warn(`[Game] Unknown command`);
@@ -114,7 +105,7 @@ export const Game: React.FC = () => {
           <DndProvider backend={TouchBackend}>
             <Board
               pieces={state.game.pieces}
-              sendGameCommand={sendGameCommand}
+              sendMoveCommand={sendMoveCommand}
             />
           </DndProvider>
           <TextComponent text={state.displayText} />
@@ -128,7 +119,7 @@ export const Game: React.FC = () => {
           <DndProvider backend={HTML5Backend}>
             <Board
               pieces={state.game.pieces}
-              sendGameCommand={sendGameCommand}
+              sendMoveCommand={sendMoveCommand}
             />
           </DndProvider>
           <TextComponent text={state.displayText} />

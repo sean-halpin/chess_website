@@ -3,14 +3,14 @@
 import React from "react";
 import Square from "./Square";
 import { MaybeChessPiece } from "../game/ChessGameLogic";
-import { GameCommand } from "../game/GameCommand";
+import { MoveCommand } from "../game/GameCommand";
 
 interface BoardProps {
   pieces: MaybeChessPiece[];
-  sendGameCommand: (command: GameCommand) => void;
+  sendMoveCommand: (command: MoveCommand) => void;
 }
 
-const Board: React.FC<BoardProps> = ({ pieces, sendGameCommand }) => {
+const Board: React.FC<BoardProps> = ({ pieces, sendMoveCommand }) => {
   const squareSize = 50;
 
   const renderSquare = (row: number, col: number): JSX.Element => {
@@ -32,7 +32,7 @@ const Board: React.FC<BoardProps> = ({ pieces, sendGameCommand }) => {
         color={color}
         piece={piece}
         position={{ row: row, col: col }}
-        sendGameCommand={sendGameCommand}
+        sendMoveCommand={sendMoveCommand}
       />
     );
   };
