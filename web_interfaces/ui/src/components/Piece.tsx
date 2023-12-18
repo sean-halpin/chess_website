@@ -3,14 +3,9 @@
 import React from "react";
 import "./Piece.css";
 import { useDrag } from "react-dnd";
-import { IChessPiece } from "../game/ChessGameTypes";
+import { IChessPiece, Team } from "../game/ChessGameTypes";
 
-export const Piece: React.FC<IChessPiece> = ({
-  id,
-  team,
-  rank,
-  position,
-}) => {
+export const Piece: React.FC<IChessPiece> = ({ id, team, rank, position }) => {
   const [{ isDragging }, drag] = useDrag({
     type: "PIECE",
     item: { id, team, rank, position },
@@ -23,9 +18,17 @@ export const Piece: React.FC<IChessPiece> = ({
     process.env.PUBLIC_URL || ""
   }/images/${team}-${rank.toLowerCase()}.png`;
 
-  return (
-    <div ref={drag} style={{ opacity: isDragging ? 0.5 : 1 }}>
-      <img src={imagePath} alt={`${team} ${rank}`} className="piece" />
-    </div>
-  );
+  if (team === Team.White) {
+    return (
+      <div ref={drag} style={{ opacity: isDragging ? 0.5 : 1 }}>
+        <img src={imagePath} alt={`${team} ${rank}`} className="piece" />
+      </div>
+    );
+  } else {
+    return (
+      <div>
+        <img src={imagePath} alt={`${team} ${rank}`} className="piece" />
+      </div>
+    );
+  }
 };

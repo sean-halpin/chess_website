@@ -11,7 +11,7 @@ import {
   findLegalQueenMoves,
 } from "./PieceLogic";
 import { Result } from "../types/Result";
-import { Rank } from "./ChessGameTypes";
+import { Rank, rankValue } from "./ChessGameTypes";
 import { Team } from "./ChessGameTypes";
 import { None, Some, isSome, unwrap, Option, isNone } from "../types/Option";
 import {
@@ -167,7 +167,11 @@ export class ChessGameLogic {
       .flat()
       .filter(isSome)
       .map(unwrap)
-      .find((piece) => piece.position.row === newCommand.source.row && piece.position.col === newCommand.source.col) as ChessPiece;
+      .find(
+        (piece) =>
+          piece.position.row === newCommand.source.row &&
+          piece.position.col === newCommand.source.col
+      ) as ChessPiece;
     console.log(movingPiece.id);
     const moveResult: MoveResult[] = this.moveFunctions[movingPiece.rank](
       movingPiece,
@@ -175,7 +179,8 @@ export class ChessGameLogic {
     ).filter(
       (move) =>
         move.destination.isEqual(newCommand.destination) &&
-        move.movingPiece.position.row === newCommand.source.row && move.movingPiece.position.col === newCommand.source.col
+        move.movingPiece.position.row === newCommand.source.row &&
+        move.movingPiece.position.col === newCommand.source.col
     );
     if (moveResult.length > 0) {
       const move = moveResult[0];
@@ -287,12 +292,28 @@ export class ChessGameLogic {
       possibleMoves = this.findLegalMoves(clonedGameState, team);
 
       if (possibleMoves.length > 0) {
-        const randomMove: MoveCommand =
+        const rankVValueFromOption = (piece: Option<ChessPiece>) => {
+          if (isSome(piece)) {
+            return rankValue(unwrap(piece).rank);
+          } else {
+            return 0;
+          }
+        };
+        const randomMove =
           possibleMoves.flat()[
             Math.floor(Math.random() * possibleMoves.flat().length)
           ];
-
-        return this.executeCommand(randomMove);
+        const maxMove: MoveCommand = possibleMoves.reduce((max, move) => {
+          return rankVValueFromOption(
+            clonedGameState.board[move.destination.row][move.destination.col]
+          ) >
+            rankVValueFromOption(
+              clonedGameState.board[max.destination.row][max.destination.col]
+            )
+            ? move
+            : max;
+        }, randomMove);
+        return this.executeCommand(maxMove);
       } else {
         return { success: false, error: "No possible moves" };
       }
