@@ -56,19 +56,18 @@ export const Game: React.FC = () => {
     }
   }
 
-  const initial_player = state.game.currentPlayer;
-  const capitalized_initial_player =
-    initial_player.charAt(0).toUpperCase() + initial_player.slice(1);
-  state.displayText = `${capitalized_initial_player} to move`;
+  if (state.game.winner === null) {
+    const curr_player = state.game.currentPlayer;
+    const capitalized_player =
+      curr_player.charAt(0).toUpperCase() + curr_player.slice(1);
+
+    state.displayText = `${capitalized_player} to move`;
+  } else {
+    state.displayText = `${state.game.winner}`;
+  }
   state.fen = state.game.getCurrentFen();
 
   useEffect(() => {
-    if (state.game.winner === null) {
-      const curr_player = state.game.currentPlayer;
-      const capitalized_player =
-        curr_player.charAt(0).toUpperCase() + curr_player.slice(1);
-      state.displayText = `${capitalized_player} to move`;
-    }
     const waitOneSecond = async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       if (
@@ -78,7 +77,15 @@ export const Game: React.FC = () => {
         executeCpuMoves(Team.Black);
       }
     };
-    waitOneSecond();
+    if (state.game.winner === null) {
+      const curr_player = state.game.currentPlayer;
+      const capitalized_player =
+        curr_player.charAt(0).toUpperCase() + curr_player.slice(1);
+      state.displayText = `${capitalized_player} to move`;
+      waitOneSecond();
+    } else {
+      state.displayText = `${state.game.winner}`;
+    }
   });
 
   const sendMoveCommand = (newCommand: MoveCommand) => {
