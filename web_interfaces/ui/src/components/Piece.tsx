@@ -3,7 +3,7 @@
 import React from "react";
 import "./Piece.css";
 import { useDrag } from "react-dnd";
-import { IChessPiece } from "../game/ChessGameLogic";
+import { IChessPiece } from "../game/ChessGameTypes";
 
 export const Piece: React.FC<IChessPiece> = ({
   id,

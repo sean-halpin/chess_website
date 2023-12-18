@@ -2,11 +2,12 @@
 
 import React from "react";
 import Square from "./Square";
-import { MaybeChessPiece } from "../game/ChessGameLogic";
-import { MoveCommand } from "../game/GameCommand";
+import { MoveCommand } from "../game/GameCommands";
+import { ChessPiece } from "../game/ChessGameTypes";
+import { None, Some } from "../types/Option";
 
 interface BoardProps {
-  pieces: MaybeChessPiece[];
+  pieces: ChessPiece[];
   sendMoveCommand: (command: MoveCommand) => void;
 }
 
@@ -17,20 +18,15 @@ const Board: React.FC<BoardProps> = ({ pieces, sendMoveCommand }) => {
     const isEven = (row + col) % 2 === 1;
     const color = isEven ? "silver" : "saddlebrown";
 
-    const piece =
-      pieces
-        .filter((p) => p !== null)
-        .find((p) => {
-          return p
-            ? p.position.row === row && p.position.col === col
-            : false;
-        }) || null;
+    const piece = pieces.find((p) => {
+      return p ? p.position.row === row && p.position.col === col : false;
+    });
     return (
       <Square
         key={`${row}-${col}`}
         size={squareSize}
         color={color}
-        piece={piece}
+        piece={piece !== undefined ? Some(piece) : None}
         position={{ row: row, col: col }}
         sendMoveCommand={sendMoveCommand}
       />
