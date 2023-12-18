@@ -1,6 +1,6 @@
 // MoveCommand.tsx
 
-import { BoardLocation } from "./ChessGameLogic";
+import { BoardLocation } from "./ChessGameTypes";
 
 export interface MoveCommand {
   command: "move";

@@ -1,4 +1,7 @@
-import { ChessBoard, ChessGame, Rank, Team } from "./ChessGameLogic";
+import { isNone, unwrap } from "../types/Option";
+import { ChessGame } from "./ChessGameLogic";
+import { Team } from "./ChessGameTypes";
+import { Rank } from "./ChessGameTypes";
 
 export function fenToRank(fenChar: string): Rank {
   switch (fenChar.toLowerCase()) {
@@ -62,9 +65,10 @@ export function gameToFEN(game: ChessGame): string {
     let emptySquares = 0;
     for (let col = 0; col < 8; col++) {
       const piece = game.board[row][col];
-      if (piece === null) {
+      if (isNone(piece)) {
         emptySquares++;
       } else {
+        const piece = unwrap(game.board[row][col]);
         if (emptySquares > 0) {
           fen += emptySquares.toString();
           emptySquares = 0;
