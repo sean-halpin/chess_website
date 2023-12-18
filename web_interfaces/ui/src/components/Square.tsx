@@ -47,7 +47,6 @@ const Square: React.FC<SquareProps> = ({
         console.log(info);
         const moveCommand: MoveCommand = {
           command: "move",
-          pieceId: piece.id,
           source: new BoardLocation(piece.position.row, piece.position.col),
           destination: new BoardLocation(position.row, position.col),
         };

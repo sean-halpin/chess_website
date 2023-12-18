@@ -53,7 +53,7 @@ export class ChessGameLogic {
     i: number
   ): ChessPiece {
     return {
-      id: rank === Rank.Pawn ? `${team}-${rank}-${i}` : `${team}-${rank}`,
+      id: `${team}-${rank}-${i}`,
       rank,
       team: team,
       position,
@@ -126,13 +126,16 @@ export class ChessGameLogic {
         const draw = !enemyKingChecked && noLegalFollowingMoves;
 
         if (checkMate) {
+          console.log("Checkmate");
           updatedState = {
             ...updatedState,
             winner: `Checkmate, ${clonedState.currentPlayer as Team} wins`,
           };
         } else if (draw) {
+          console.log("Draw");
           updatedState = { ...updatedState, winner: "Draw" };
         } else if (enemyKingChecked) {
+          console.log("Check");
           updatedState = { ...updatedState, winner: "Check" };
         }
         // Lastly update the game state
@@ -164,16 +167,16 @@ export class ChessGameLogic {
       .flat()
       .filter(isSome)
       .map(unwrap)
-      .find((piece) => piece?.id === newCommand.pieceId) as ChessPiece;
+      .find((piece) => piece.position.row === newCommand.source.row && piece.position.col === newCommand.source.col) as ChessPiece;
+    console.log(movingPiece.id);
     const moveResult: MoveResult[] = this.moveFunctions[movingPiece.rank](
       movingPiece,
       clonedGameState
     ).filter(
       (move) =>
         move.destination.isEqual(newCommand.destination) &&
-        move.movingPiece.id === newCommand.pieceId
+        move.movingPiece.position.row === newCommand.source.row && move.movingPiece.position.col === newCommand.source.col
     );
-
     if (moveResult.length > 0) {
       const move = moveResult[0];
       // Remove taken piece
@@ -182,7 +185,6 @@ export class ChessGameLogic {
           unwrap(move.takenPiece).position.col
         ] = None;
       }
-
       // Update moving piece
       if (movingPiece) {
         movingPiece.position = move.destination;

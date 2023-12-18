@@ -56,7 +56,10 @@ export const Game: React.FC = () => {
     }
   }
 
-  if (state.game.winner === null) {
+  if (
+    !state.game.winner?.includes("Checkmate") &&
+    !state.game.winner?.includes("Draw")
+  ) {
     const curr_player = state.game.currentPlayer;
     const capitalized_player =
       curr_player.charAt(0).toUpperCase() + curr_player.slice(1);
@@ -69,15 +72,15 @@ export const Game: React.FC = () => {
 
   useEffect(() => {
     const waitOneSecond = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      if (
-        state.game.winner === null &&
-        state.game.currentPlayer === Team.Black
-      ) {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      if (state.game.currentPlayer === Team.Black) {
         executeCpuMoves(Team.Black);
       }
     };
-    if (state.game.winner === null) {
+    if (
+      !state.game.winner?.includes("Checkmate") &&
+      !state.game.winner?.includes("Draw")
+    ) {
       const curr_player = state.game.currentPlayer;
       const capitalized_player =
         curr_player.charAt(0).toUpperCase() + curr_player.slice(1);

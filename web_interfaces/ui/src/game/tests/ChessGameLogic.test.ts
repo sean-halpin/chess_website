@@ -1,7 +1,7 @@
 // ChessGameLogic.test.ts
 
 import { ChessGameLogic } from "../ChessGameLogic";
-import { BoardLocation, Team } from "../ChessGameTypes";
+import { BoardLocation, Rank, Team } from "../ChessGameTypes";
 import { MoveCommand } from "../GameCommands";
 
 describe("ChessGameLogic", () => {
@@ -18,32 +18,30 @@ describe("ChessGameLogic", () => {
     const expected_dest = new BoardLocation(6, 5);
     const cmd: MoveCommand = {
       command: "move",
-      pieceId: "white-queen",
       source: new BoardLocation(4, 7),
       destination: expected_dest,
     };
     const result = initialGame.executeCommand(cmd);
     const updatedState = result.success ? result.data : initialGame;
-    const q = updatedState.pieces.find((p) => p.id === "white-queen");
+    const q = updatedState.pieces.find((p) => p.rank === Rank.Queen && p.team === Team.White);
     expect(q?.position).toEqual(expected_dest);
     expect(updatedState.currentPlayer).toEqual(Team.Black);
     expect(updatedState.winner).toEqual("Checkmate, white wins");
   });
 
   it("should initialize from a non default FEN string and update via move command", () => {
-    const defaultFEN =
+    const checkMateInOne =
       "rnbqkbnr/2pppppp/pp2P3/7Q/8/8/PPPP1PPP/RNB1KBNR w KQkq - 0 1";
-    const initialGame: ChessGameLogic = new ChessGameLogic(defaultFEN);
+    const initialGame: ChessGameLogic = new ChessGameLogic(checkMateInOne);
     const expected_dest = new BoardLocation(5, 7);
     const cmd: MoveCommand = {
       command: "move",
-      pieceId: "white-queen",
       source: new BoardLocation(4, 7),
       destination: expected_dest,
     };
     const result = initialGame.executeCommand(cmd);
     const updatedState = result.success ? result.data : initialGame;
-    const q = updatedState.pieces.find((p) => p.id === "white-queen");
+    const q = updatedState.pieces.find((p) => p.rank === Rank.Queen && p.team === Team.White);
     expect(q?.position).toEqual(expected_dest);
     expect(updatedState.currentPlayer).toEqual(Team.Black);
   });
@@ -74,7 +72,6 @@ describe("ChessGameLogic", () => {
   it("should execute a valid move command", () => {
     const moveCommand: MoveCommand = {
       command: "move",
-      pieceId: "white-pawn-51",
       source: new BoardLocation(1, 3),
       destination: new BoardLocation(3, 3),
     };
@@ -84,7 +81,6 @@ describe("ChessGameLogic", () => {
   xit("should handle invalid move commands", () => {
     const invalidMoveCommand: MoveCommand = {
       command: "move",
-      pieceId: "white-pawn-51",
       source: new BoardLocation(5, 0),
       destination: new BoardLocation(2, 0),
     };

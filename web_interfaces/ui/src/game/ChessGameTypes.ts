@@ -56,7 +56,6 @@ export class MoveResult implements IMoveResult {
   toMoveCommand(): MoveCommand {
     return {
       command: "move",
-      pieceId: this.movingPiece.id,
       source: this.movingPiece.position,
       destination: this.destination,
     };
