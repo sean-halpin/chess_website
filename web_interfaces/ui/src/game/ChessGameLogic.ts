@@ -125,12 +125,6 @@ export class ChessGameLogic {
         const checkMate = enemyKingChecked && noLegalFollowingMoves;
         const draw = !enemyKingChecked && noLegalFollowingMoves;
 
-        console.log(`ownKingChecked: ${ownKingChecked}`);
-        console.log(`enemyKingChecked: ${enemyKingChecked}`);
-        console.log(`noLegalFollowingMoves: ${noLegalFollowingMoves}`);
-        console.log(`checkMate: ${checkMate}`);
-        console.log(`draw: ${draw}`);
-
         if (checkMate) {
           updatedState = {
             ...updatedState,
@@ -141,8 +135,6 @@ export class ChessGameLogic {
         } else if (enemyKingChecked) {
           updatedState = { ...updatedState, winner: "Check" };
         }
-
-        console.log(`[${ChessGameLogic.name}] Winner: ${updatedState.winner}}`);
         // Lastly update the game state
         this.gameState = {
           ...updatedState,
@@ -166,7 +158,6 @@ export class ChessGameLogic {
     gameState: ChessGame
   ): ChessGame => {
     const clonedGameState = CopyGameState(gameState);
-    console.log(clonedGameState);
     const updatedBoard = clonedGameState.board;
 
     const movingPiece: ChessPiece = updatedBoard
@@ -183,7 +174,6 @@ export class ChessGameLogic {
         move.movingPiece.id === newCommand.pieceId
     );
 
-    console.log(`MoveResult Len: ${moveResult.length}`);
     if (moveResult.length > 0) {
       const move = moveResult[0];
       // Remove taken piece
