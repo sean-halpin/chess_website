@@ -172,7 +172,6 @@ export class ChessGameLogic {
           piece.position.row === newCommand.source.row &&
           piece.position.col === newCommand.source.col
       ) as ChessPiece;
-    console.log(movingPiece.id);
     const moveResult: MoveResult[] = this.moveFunctions[movingPiece.rank](
       movingPiece,
       clonedGameState
@@ -192,6 +191,13 @@ export class ChessGameLogic {
       }
       // Update moving piece
       if (movingPiece) {
+        // Handle Pawn Promotion to Queen by default
+        if (
+          movingPiece.rank === Rank.Pawn &&
+          (move.destination.row === 0 || move.destination.row === 7)
+        ) {
+          movingPiece.rank = Rank.Queen;
+        }
         movingPiece.position = move.destination;
         movingPiece.firstMove = false;
         updatedBoard[newCommand.source.row][newCommand.source.col] = None;

@@ -46,6 +46,22 @@ describe("ChessGameLogic", () => {
     expect(updatedState.currentPlayer).toEqual(Team.Black);
   });
 
+  it('should promote pawn to Queen', () => {
+    const checkMateInOne = '3R4/2P2pkp/6n1/6p1/4p3/6P1/2Q4P/4K2R w KQkq - 0 1';
+    const initialGame: ChessGameLogic = new ChessGameLogic(checkMateInOne);
+    const expected_dest = new BoardLocation(7, 2);
+    const cmd: MoveCommand = {
+      command: 'move',
+      source: new BoardLocation(6, 2),
+      destination: expected_dest,
+    };
+    const result = initialGame.executeCommand(cmd);
+    const updatedState = result.success ? result.data : initialGame;
+    const q = updatedState.pieces.find(p => p.rank === Rank.Queen && p.id.includes('pawn') && p.team === Team.White);
+    expect(q?.position).toEqual(expected_dest);
+    expect(updatedState.currentPlayer).toEqual(Team.Black);
+  });
+
   it("should initialize from a default FEN string", () => {
     const defaultFEN =
       "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";

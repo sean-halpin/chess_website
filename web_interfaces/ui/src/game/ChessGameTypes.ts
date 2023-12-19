@@ -51,7 +51,7 @@ export class ChessPiece {
   constructor(
     public readonly id: string,
     public readonly team: Team,
-    public readonly rank: Rank,
+    public rank: Rank,
     public position: BoardLocation,
     public firstMove: boolean = true
   ) {}
