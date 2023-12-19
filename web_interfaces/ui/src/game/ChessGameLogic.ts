@@ -292,7 +292,7 @@ export class ChessGameLogic {
       possibleMoves = this.findLegalMoves(clonedGameState, team);
 
       if (possibleMoves.length > 0) {
-        const rankVValueFromOption = (piece: Option<ChessPiece>) => {
+        const rankValueFromOption = (piece: Option<ChessPiece>) => {
           if (isSome(piece)) {
             return rankValue(unwrap(piece).rank);
           } else {
@@ -304,10 +304,10 @@ export class ChessGameLogic {
             Math.floor(Math.random() * possibleMoves.flat().length)
           ];
         const maxMove: MoveCommand = possibleMoves.reduce((max, move) => {
-          return rankVValueFromOption(
+          return rankValueFromOption(
             clonedGameState.board[move.destination.row][move.destination.col]
           ) >
-            rankVValueFromOption(
+            rankValueFromOption(
               clonedGameState.board[max.destination.row][max.destination.col]
             )
             ? move
