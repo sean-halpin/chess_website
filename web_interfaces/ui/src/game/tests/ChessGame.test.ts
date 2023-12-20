@@ -95,7 +95,7 @@ describe("ChessGameLogic", () => {
     expect(result.success).toBeTruthy();
   });
 
-  xit("should initialize from a FEN string move the king and assert king and queen side rook position", () => {
+  it("should initialize from a FEN string move the king and assert king and queen side rook position", () => {
     const bothSideCastleInOneFen =
       "rn1qkbnr/1b6/pppppppp/8/4PP2/N1PPBN2/PP1QB1PP/R3K2R w KQkq - 2 10";
     const initialGame: ChessGame = new ChessGame(bothSideCastleInOneFen);

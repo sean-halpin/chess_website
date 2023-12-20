@@ -12,8 +12,6 @@ interface BoardProps {
 }
 
 const Board: React.FC<BoardProps> = ({ pieces, sendMoveCommand }) => {
-  const squareSize = 50;
-
   const renderSquare = (row: number, col: number): JSX.Element => {
     const isEven = (row + col) % 2 === 1;
     const color = isEven ? "silver" : "saddlebrown";
@@ -24,7 +22,6 @@ const Board: React.FC<BoardProps> = ({ pieces, sendMoveCommand }) => {
     return (
       <Square
         key={`${row}-${col}`}
-        size={squareSize}
         color={color}
         piece={piece !== undefined ? Some(piece) : None}
         position={{ row: row, col: col }}
