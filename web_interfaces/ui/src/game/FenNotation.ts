@@ -1,5 +1,5 @@
 import { isNone, unwrap } from "../types/Option";
-import { ChessGame } from "./ChessGameLogic";
+import { IChessState } from "./ChessGame";
 import { Team } from "./ChessGameTypes";
 import { Rank } from "./ChessGameTypes";
 
@@ -58,7 +58,7 @@ export function fenPieceToTeam(str: string): Team {
     : Team.White;
 }
 
-export function gameToFEN(game: ChessGame): string {
+export function gameToFEN(game: IChessState): string {
   let fen = "";
 
   for (let row = 7; row >= 0; row--) {

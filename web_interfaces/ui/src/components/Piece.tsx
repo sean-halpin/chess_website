@@ -3,12 +3,19 @@
 import React from "react";
 import "./Piece.css";
 import { useDrag } from "react-dnd";
-import { IChessPiece, Team } from "../game/ChessGameTypes";
+import { BoardLocation, Rank, Team } from "../game/ChessGameTypes";
 
-export const Piece: React.FC<IChessPiece> = ({ id, team, rank, position }) => {
+export interface PieceProps {
+  id: string;
+  team: Team;
+  rank: Rank;
+  position: BoardLocation;
+}
+
+export const Piece: React.FC<PieceProps> = ({ id, team, rank, position }) => {
   const [{ isDragging }, drag] = useDrag({
     type: "PIECE",
-    item: { id, team, rank, position },
+    item: { id, team, rank, position},
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),

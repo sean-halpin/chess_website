@@ -1,20 +1,20 @@
 // ChessGameLogic.test.ts
 
-import { ChessGameLogic } from "../ChessGameLogic";
+import { ChessGame } from "../ChessGame";
 import { BoardLocation, Rank, Team } from "../ChessGameTypes";
 import { MoveCommand } from "../GameCommands";
 
 describe("ChessGameLogic", () => {
-  let chessGameLogic: ChessGameLogic;
+  let chessGameLogic: ChessGame;
 
   beforeEach(() => {
-    chessGameLogic = new ChessGameLogic();
+    chessGameLogic = new ChessGame();
   });
 
   it("should initialize from a FEN string and winner is white", () => {
     const defaultFEN =
       "rnbqkbnr/2pppppp/pp2P3/7Q/8/8/PPPP1PPP/RNB1KBNR w KQkq - 0 1";
-    const initialGame: ChessGameLogic = new ChessGameLogic(defaultFEN);
+    const initialGame: ChessGame = new ChessGame(defaultFEN);
     const expected_dest = new BoardLocation(6, 5);
     const cmd: MoveCommand = {
       command: "move",
@@ -32,7 +32,7 @@ describe("ChessGameLogic", () => {
   it("should initialize from a non default FEN string and update via move command", () => {
     const checkMateInOne =
       "rnbqkbnr/2pppppp/pp2P3/7Q/8/8/PPPP1PPP/RNB1KBNR w KQkq - 0 1";
-    const initialGame: ChessGameLogic = new ChessGameLogic(checkMateInOne);
+    const initialGame: ChessGame = new ChessGame(checkMateInOne);
     const expected_dest = new BoardLocation(5, 7);
     const cmd: MoveCommand = {
       command: "move",
@@ -48,7 +48,7 @@ describe("ChessGameLogic", () => {
 
   it('should promote pawn to Queen', () => {
     const checkMateInOne = '3R4/2P2pkp/6n1/6p1/4p3/6P1/2Q4P/4K2R w KQkq - 0 1';
-    const initialGame: ChessGameLogic = new ChessGameLogic(checkMateInOne);
+    const initialGame: ChessGame = new ChessGame(checkMateInOne);
     const expected_dest = new BoardLocation(7, 2);
     const cmd: MoveCommand = {
       command: 'move',
@@ -65,7 +65,7 @@ describe("ChessGameLogic", () => {
   it("should initialize from a default FEN string", () => {
     const defaultFEN =
       "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    const initialGame: ChessGameLogic = new ChessGameLogic(defaultFEN);
+    const initialGame: ChessGame = new ChessGame(defaultFEN);
 
     expect(initialGame.currentPlayer).toEqual(Team.White);
     expect(initialGame.winner).toBeNull();
@@ -74,7 +74,7 @@ describe("ChessGameLogic", () => {
   it("should initialize from a non default FEN string", () => {
     const defaultFEN =
       "rnbqkbnr/2pppppp/pp2P3/7Q/8/8/PPPP1PPP/RNB1KBNR w KQkq - 0 1";
-    const initialGame: ChessGameLogic = new ChessGameLogic(defaultFEN);
+    const initialGame: ChessGame = new ChessGame(defaultFEN);
 
     expect(initialGame.currentPlayer).toEqual(Team.White);
     expect(initialGame.winner).toBeNull();

@@ -11,10 +11,10 @@ import { TouchBackend } from "react-dnd-touch-backend";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import AudioPlayer from "./AudioPlayer";
 import { TextComponent } from "./TextComponent";
-import { ChessGameLogic } from "../game/ChessGameLogic";
+import { ChessGame } from "../game/ChessGame";
 
 export interface GameProps {
-  game: ChessGameLogic;
+  game: ChessGame;
   displayText: string;
   fen: string;
 }
@@ -29,7 +29,7 @@ export const Game: React.FC = () => {
   };
 
   const [state, setState] = useState<GameProps>({
-    game: new ChessGameLogic(),
+    game: new ChessGame(),
     displayText: "",
     fen: "",
   });

@@ -24,7 +24,6 @@ function maybePiece(piece: Option<ChessPiece>) {
         team={p.team}
         rank={p.rank}
         position={p.position}
-        firstMove={p.firstMove}
       />
     );
   } else {
