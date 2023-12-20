@@ -1,12 +1,12 @@
 import { None, isSome, unwrap } from "../types/Option";
-import { ChessGame, isOOB, isSquareEmpty, squareEntry } from "./ChessGameLogic";
+import { IChessState, isOOB, isSquareEmpty, squareEntry } from "./ChessGame";
 import { BoardLocation, ChessPiece, MoveResult } from "./ChessGameTypes";
 import { Team } from "./ChessGameTypes";
 import { Rank } from "./ChessGameTypes";
 
 const findMovesInDirection = (
   movingPiece: ChessPiece,
-  gameState: ChessGame,
+  gameState: IChessState,
   rowOffset: number,
   colOffset: number,
   maximumDistance: number = 8
@@ -54,7 +54,7 @@ const findMovesInDirection = (
 
 const findHorVerMoves = (
   movingPiece: ChessPiece,
-  gameState: ChessGame,
+  gameState: IChessState,
   maximumDistance: number = 8
 ): MoveResult[] => {
   const moveResults: MoveResult[] = [];
@@ -77,7 +77,7 @@ const findHorVerMoves = (
 
 const findDiagonalMoves = (
   movingPiece: ChessPiece,
-  gameState: ChessGame,
+  gameState: IChessState,
   maximumDistance: number = 8
 ): MoveResult[] => {
   const moveResults: MoveResult[] = [];
@@ -100,7 +100,7 @@ const findDiagonalMoves = (
 
 export const findLegalPawnMoves = (
   movingPiece: ChessPiece,
-  gameState: ChessGame
+  gameState: IChessState
 ): MoveResult[] => {
   const moveResults: MoveResult[] = [];
   const currentBoard = gameState.board;
@@ -220,21 +220,21 @@ export const findLegalPawnMoves = (
 
 export const findLegalCastleMoves = (
   movingPiece: ChessPiece,
-  gameState: ChessGame
+  gameState: IChessState
 ): MoveResult[] => {
   return findHorVerMoves(movingPiece, gameState);
 };
 
 export const findLegalBishopMoves = (
   movingPiece: ChessPiece,
-  gameState: ChessGame
+  gameState: IChessState
 ): MoveResult[] => {
   return findDiagonalMoves(movingPiece, gameState);
 };
 
 export const findLegalQueenMoves = (
   movingPiece: ChessPiece,
-  gameState: ChessGame
+  gameState: IChessState
 ): MoveResult[] => {
   return [
     ...findHorVerMoves(movingPiece, gameState),
@@ -244,7 +244,7 @@ export const findLegalQueenMoves = (
 
 export const findLegalKingMoves = (
   movingPiece: ChessPiece,
-  gameState: ChessGame
+  gameState: IChessState
 ): MoveResult[] => {
   return [
     ...findHorVerMoves(movingPiece, gameState, 1),
@@ -254,7 +254,7 @@ export const findLegalKingMoves = (
 
 export const findLegalKnightMoves = (
   movingPiece: ChessPiece,
-  gameState: ChessGame
+  gameState: IChessState
 ): MoveResult[] => {
   const moveResults: MoveResult[] = [];
   moveResults.push(...findMovesInDirection(movingPiece, gameState, 1, 2, 1));
