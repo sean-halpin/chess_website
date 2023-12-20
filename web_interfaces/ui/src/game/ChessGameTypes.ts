@@ -1,5 +1,5 @@
 import { MoveCommand } from "./GameCommands";
-import { Option } from "../types/Option";
+import { None, Option, Some } from "../types/Option";
 
 export enum Rank {
   Rook = "rook",
@@ -33,6 +33,23 @@ export enum Team {
 }
 export class BoardLocation {
   constructor(public readonly row: number, public readonly col: number) {}
+  static fromNotation(notation: string): Option<BoardLocation> {
+    const column = notation.charCodeAt(0) - 65; // Convert letter to column index (A=0, B=1, ...)
+    const row = parseInt(notation.charAt(1)) - 1; // Convert number to row index (1=0, 2=1, ...)
+
+    if (
+      isNaN(row) ||
+      isNaN(column) ||
+      row < 0 ||
+      row > 7 ||
+      column < 0 ||
+      column > 7
+    ) {
+      return None; // Invalid notation
+    }
+
+    return Some(new BoardLocation(row, column));
+  }
 
   isEqual(otherLocation: BoardLocation): boolean {
     return this.row === otherLocation.row && this.col === otherLocation.col;

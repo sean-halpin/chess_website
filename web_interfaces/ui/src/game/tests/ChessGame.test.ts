@@ -94,6 +94,25 @@ describe("ChessGameLogic", () => {
     const result = chessGameLogic.executeCommand(moveCommand);
     expect(result.success).toBeTruthy();
   });
+
+  xit("should initialize from a FEN string move the king and assert king and queen side rook position", () => {
+    const bothSideCastleInOneFen =
+      "rn1qkbnr/1b6/pppppppp/8/4PP2/N1PPBN2/PP1QB1PP/R3K2R w KQkq - 2 10";
+    const initialGame: ChessGame = new ChessGame(bothSideCastleInOneFen);
+    const expected_dest = new BoardLocation(6, 5);
+    const cmd: MoveCommand = {
+      command: "move",
+      source: new BoardLocation(4, 7),
+      destination: expected_dest,
+    };
+    const result = initialGame.executeCommand(cmd);
+    const updatedState = result.success ? result.data : initialGame;
+    const q = updatedState.pieces.find((p) => p.rank === Rank.Queen && p.team === Team.White);
+    expect(q?.position).toEqual(expected_dest);
+    expect(updatedState.currentPlayer).toEqual(Team.Black);
+    expect(updatedState.winner).toEqual("Checkmate, white wins");    
+  });
+
   xit("should handle invalid move commands", () => {
     const invalidMoveCommand: MoveCommand = {
       command: "move",
