@@ -39,14 +39,6 @@ export class BoardLocation {
   }
 }
 
-export interface IChessPiece {
-  id: string;
-  team: Team;
-  rank: Rank;
-  position: BoardLocation;
-  firstMove?: boolean;
-}
-
 export class ChessPiece {
   constructor(
     public readonly id: string,
