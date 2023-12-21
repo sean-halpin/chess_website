@@ -1,0 +1,23 @@
+.container {
+    position: relative;
+}
+
+.box {
+    position: absolute;
+}
+
+#box1 {
+    top: 17px;
+    z-index: 3;
+}
+
+#box2 {
+    top: -17px;
+    left: 42px;
+    z-index: 2;
+}
+
+#box3 {
+    top: 0px;
+    z-index: 1;
+}

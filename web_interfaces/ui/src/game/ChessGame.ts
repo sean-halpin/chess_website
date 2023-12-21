@@ -1,7 +1,7 @@
 // ChessGameLogic.ts
 
 import { gameToFEN, fenPieceToTeam, fenToRank, fenToTeam } from "./FenNotation";
-import _ from 'lodash';
+import _ from "lodash";
 import { MoveCommand } from "./GameCommands";
 import {
   findLegalBishopMoves,
@@ -15,12 +15,7 @@ import { Result } from "../types/Result";
 import { Rank, rankValue } from "./ChessGameTypes";
 import { Team } from "./ChessGameTypes";
 import { None, Some, isSome, unwrap, Option, isNone } from "../types/Option";
-import {
-  BoardLocation,
-  ChessPiece,
-  ChessBoard,
-  MoveResult,
-} from "./ChessGameTypes";
+import { Loc, ChessPiece, ChessBoard, MoveResult } from "./ChessGameTypes";
 
 export class ChessGame {
   // #region Properties (5)
@@ -32,7 +27,7 @@ export class ChessGame {
     const clonedGameState = CopyGameState(gameState);
     const updatedBoard = clonedGameState.board;
 
-    const movingPiece: ChessPiece = updatedBoard
+    const movingPiece: ChessPiece = updatedBoard.pieces
       .flat()
       .filter(isSome)
       .map(unwrap)
@@ -54,9 +49,10 @@ export class ChessGame {
       const move = moveResult[0];
       // Remove taken piece
       if (isSome(move.takenPiece)) {
-        updatedBoard[unwrap(move.takenPiece).position.row][
-          unwrap(move.takenPiece).position.col
-        ] = None;
+        updatedBoard.updatePieceFromLoc(
+          move.takenPiece.unwrap().position,
+          None
+        );
       }
       // Update moving piece
       if (movingPiece) {
@@ -67,11 +63,28 @@ export class ChessGame {
         ) {
           movingPiece.rank = Rank.Queen;
         }
+        // Handle Castle
+        if (move.rookSrcDestCastling.isSome()) {
+          const castlingRookSrcDest = move.rookSrcDestCastling.unwrap();
+          const castlingRook = updatedBoard.pieceFromLoc(
+            castlingRookSrcDest.src
+          );
+          updatedBoard.updatePieceFromLoc(
+            castlingRookSrcDest.src,
+            None
+          );
+          updatedBoard.updatePieceFromLoc(
+            castlingRookSrcDest.dest,
+            castlingRook
+          );
+        }
         movingPiece.position = move.destination;
         movingPiece.firstMove = false;
-        updatedBoard[newCommand.source.row][newCommand.source.col] = None;
-        updatedBoard[move.destination.row][move.destination.col] =
-          Some(movingPiece);
+        updatedBoard.updatePieceFromLoc(newCommand.source, None);
+        updatedBoard.updatePieceFromLoc(
+          newCommand.destination,
+          Some(movingPiece)
+        );
       }
 
       // Push Latest Command Result
@@ -100,7 +113,7 @@ export class ChessGame {
     const clonedState = CopyGameState(gameState);
     // Apply the move command to the copied game state
 
-    const pieces = clonedState.board
+    const pieces = clonedState.board.pieces
       .flat()
       .filter(isSome)
       .map(unwrap)
@@ -116,12 +129,21 @@ export class ChessGame {
     );
   };
   private gameState: IChessState;
+  private moveFunctions = {
+    pawn: findLegalPawnMoves,
+    rook: findLegalCastleMoves,
+    knight: findLegalKnightMoves,
+    bishop: findLegalBishopMoves,
+    queen: findLegalQueenMoves,
+    king: findLegalKingMoves,
+  };
+
   private isKingInCheck = (gameState: IChessState, team: Team): boolean => {
     // Make a copy of the current game state
     const clonedGameState = CopyGameState(gameState);
 
     // Find the player's king on the updated board
-    const king = clonedGameState.board
+    const king = clonedGameState.board.pieces
       .flat()
       .filter(isSome)
       .map(unwrap)
@@ -131,7 +153,7 @@ export class ChessGame {
 
     // Check if the king is under threat after the move
     const opponentColor = team === Team.White ? Team.Black : Team.White;
-    const opponentPieces = clonedGameState.board
+    const opponentPieces = clonedGameState.board.pieces
       .flat()
       .filter(isSome)
       .map(unwrap)
@@ -155,14 +177,6 @@ export class ChessGame {
     // The king is not in check after the move
     return false;
   };
-  private moveFunctions = {
-    pawn: findLegalPawnMoves,
-    rook: findLegalCastleMoves,
-    knight: findLegalKnightMoves,
-    bishop: findLegalBishopMoves,
-    queen: findLegalQueenMoves,
-    king: findLegalKingMoves,
-  };
 
   // #endregion Properties (5)
 
@@ -181,7 +195,7 @@ export class ChessGame {
   }
 
   public get pieces(): ChessPiece[] {
-    return this.gameState.board.flat().filter(isSome).map(unwrap);
+    return this.gameState.board.pieces.flat().filter(isSome).map(unwrap);
   }
 
   public get winner(): Team | "Check" | "Checkmate" | "Draw" | null {
@@ -215,10 +229,10 @@ export class ChessGame {
           ];
         const maxMove: MoveCommand = possibleMoves.reduce((max, move) => {
           return rankValueFromOption(
-            clonedGameState.board[move.destination.row][move.destination.col]
+            clonedGameState.board.pieceFromLoc(move.destination)
           ) >
             rankValueFromOption(
-              clonedGameState.board[max.destination.row][max.destination.col]
+              clonedGameState.board.pieceFromLoc(max.destination)
             )
             ? move
             : max;
@@ -289,7 +303,7 @@ export class ChessGame {
 
   private createPiece(
     team: Team,
-    position: BoardLocation,
+    position: Loc,
     rank: Rank,
     i: number
   ): ChessPiece {
@@ -319,7 +333,7 @@ export class ChessGame {
           pieces.push(
             this.createPiece(
               fenPieceToTeam(fenInstruction),
-              new BoardLocation(7 - Math.floor(index / 8), index % 8),
+              new Loc(7 - Math.floor(index / 8), index % 8),
               fenToRank(fenInstruction),
               index
             )
@@ -328,11 +342,11 @@ export class ChessGame {
         }
       });
     });
-    const initialBoard: ChessBoard = Array.from({ length: 8 }, () =>
-      Array(8).fill(None)
+    const initialBoard: ChessBoard = new ChessBoard(
+      Array.from({ length: 8 }, () => Array(8).fill(None))
     );
     pieces.forEach((piece) => {
-      initialBoard[piece.position.row][piece.position.col] = Some(piece);
+      initialBoard.updatePieceFromLoc(piece.position, Some(piece));
     });
 
     const initialState: IChessState = {
@@ -366,7 +380,12 @@ export const CopyGameState = (state: IChessState): IChessState => {
 
 export const isOOB = (r: number, c: number) => r < 0 || r > 7 || c < 0 || c > 7;
 export const isSquareEmpty = (r: number, c: number, b: ChessBoard) => {
-  return !isOOB(r, c) && isNone(b[r][c]);
+  return !isOOB(r, c) && isNone(b.pieceFromRowCol(r, c));
+};
+export const isSquareEmptyNotation = (notation: string, b: ChessBoard) => {
+  const c = notation.toLowerCase().charCodeAt(0) - 97; // Convert letter to column index (A=0, B=1, ...)
+  const r = parseInt(notation.charAt(1)) - 1; // Convert number to row index (1=0, 2=1, ...)
+  return !isOOB(r, c) && isNone(b.pieceFromRowCol(r, c));
 };
 export const squareEntry = (
   r: number,
@@ -374,7 +393,7 @@ export const squareEntry = (
   b: ChessBoard
 ): Option<ChessPiece> => {
   if (!isOOB(r, c)) {
-    return b[r][c];
+    return b.pieceFromRowCol(r, c);
   } else {
     return None;
   }

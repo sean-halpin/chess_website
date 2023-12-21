@@ -5,7 +5,7 @@ import { ChessBoard, MoveResult } from "./ChessGameTypes";
 export class GameState {
   // #region Properties (5)
 
-  private _board: ChessBoard = [];
+  private _board: ChessBoard;
   private _commands: MoveResult[] = [];
   private _counter: number = 0;
   private _currentPlayer: Team.White | Team.Black = Team.White;
@@ -66,7 +66,7 @@ export class GameState {
   }
 
   public get pieces(): ChessPiece[] {
-    return this.board
+    return this.board.pieces
       .flat()
       .filter(isSome)
       .map(unwrap);
@@ -86,7 +86,7 @@ export class GameState {
 
   // a function which creates a deep copy the current state
   public clone(): GameState {
-    const clonedBoard: ChessBoard = this._board.map((row) => [...row]);
+    const clonedBoard: ChessBoard = this._board.clone();
     const clonedCommands: MoveResult[] = [...this._commands];
     const clonedCounter: number = this._counter;
     const clonedCurrentPlayer: Team = this._currentPlayer;

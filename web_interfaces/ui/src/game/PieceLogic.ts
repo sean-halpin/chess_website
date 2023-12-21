@@ -1,6 +1,14 @@
-import { None, isSome, unwrap } from "../types/Option";
-import { IChessState, isOOB, isSquareEmpty, squareEntry } from "./ChessGame";
-import { BoardLocation, ChessPiece, MoveResult } from "./ChessGameTypes";
+import { None, Some, isSome, unwrap } from "../types/Option";
+import {
+  ChessGame,
+  CopyGameState,
+  IChessState,
+  isOOB,
+  isSquareEmpty,
+  isSquareEmptyNotation,
+  squareEntry,
+} from "./ChessGame";
+import { Loc, ChessPiece, MoveResult } from "./ChessGameTypes";
 import { Team } from "./ChessGameTypes";
 import { Rank } from "./ChessGameTypes";
 
@@ -22,27 +30,21 @@ const findMovesInDirection = (
   let shouldExit = false;
   while (!isOOB(newRow, newCol) && count < maximumDistance && !shouldExit) {
     count += 1;
-    const possiblePiece = currentBoard[newRow][newCol];
+    const possiblePiece = currentBoard.pieceFromRowCol(newRow, newCol);
     if (isSome(possiblePiece)) {
       if (unwrap(possiblePiece).team !== movingPiece.team) {
         moveResults.push(
           new MoveResult(
-            new BoardLocation(newRow, newCol),
+            new Loc(newRow, newCol),
             movingPiece,
-            currentBoard[newRow][newCol],
-            false
+            currentBoard.pieceFromRowCol(newRow, newCol)
           )
         );
       }
       shouldExit = true;
     } else {
       moveResults.push(
-        new MoveResult(
-          new BoardLocation(newRow, newCol),
-          movingPiece,
-          None,
-          false
-        )
+        new MoveResult(new Loc(newRow, newCol), movingPiece, None)
       );
     }
 
@@ -112,12 +114,7 @@ export const findLegalPawnMoves = (
   const nextRow = movingPieceCurrentRow + 1 * teamDirection;
   if (isSquareEmpty(nextRow, movingPieceCurrentCol, currentBoard)) {
     moveResults.push(
-      new MoveResult(
-        new BoardLocation(nextRow, movingPieceCurrentCol),
-        movingPiece,
-        None,
-        false
-      )
+      new MoveResult(new Loc(nextRow, movingPieceCurrentCol), movingPiece, None)
     );
   }
 
@@ -136,10 +133,9 @@ export const findLegalPawnMoves = (
   ) {
     moveResults.push(
       new MoveResult(
-        new BoardLocation(attackableRow, attackableCol(1)),
+        new Loc(attackableRow, attackableCol(1)),
         movingPiece,
-        currentBoard[attackableRow][attackableCol(1)],
-        false
+        currentBoard.pieceFromRowCol(attackableRow, attackableCol(1))
       )
     );
   }
@@ -154,10 +150,9 @@ export const findLegalPawnMoves = (
   ) {
     moveResults.push(
       new MoveResult(
-        new BoardLocation(attackableRow, attackableCol(-1)),
+        new Loc(attackableRow, attackableCol(-1)),
         movingPiece,
-        currentBoard[attackableRow][attackableCol(-1)],
-        false
+        currentBoard.pieceFromRowCol(attackableRow, attackableCol(-1))
       )
     );
   }
@@ -171,7 +166,7 @@ export const findLegalPawnMoves = (
   ) {
     moveResults.push(
       new MoveResult(
-        new BoardLocation(doubleMoveRow, movingPieceCurrentCol),
+        new Loc(doubleMoveRow, movingPieceCurrentCol),
         movingPiece,
         None,
         true
@@ -197,20 +192,24 @@ export const findLegalPawnMoves = (
     if (enPassantAttackable(-1)) {
       moveResults.push(
         new MoveResult(
-          new BoardLocation(attackableRow, attackableCol(-1)),
+          new Loc(attackableRow, attackableCol(-1)),
           movingPiece,
-          currentBoard[movingPieceCurrentRow][movingPieceCurrentCol - 1],
-          false
+          currentBoard.pieceFromRowCol(
+            movingPieceCurrentRow,
+            movingPieceCurrentCol - 1
+          )
         )
       );
     }
     if (enPassantAttackable(1)) {
       moveResults.push(
         new MoveResult(
-          new BoardLocation(attackableRow, attackableCol(1)),
+          new Loc(attackableRow, attackableCol(1)),
           movingPiece,
-          currentBoard[movingPieceCurrentRow][movingPieceCurrentCol + 1],
-          false
+          currentBoard.pieceFromRowCol(
+            movingPieceCurrentRow,
+            movingPieceCurrentCol + 1
+          )
         )
       );
     }
@@ -246,10 +245,79 @@ export const findLegalKingMoves = (
   movingPiece: ChessPiece,
   gameState: IChessState
 ): MoveResult[] => {
-  return [
+  const moveResults: MoveResult[] = [];
+  moveResults.push(
     ...findHorVerMoves(movingPiece, gameState, 1),
-    ...findDiagonalMoves(movingPiece, gameState, 1),
-  ];
+    ...findDiagonalMoves(movingPiece, gameState, 1)
+  );
+
+  // Handle Queen side Castling
+  const cP = gameState.currentPlayer;
+  const row = cP === Team.White ? "1" : "8";
+  const kingLoc = Loc.fromNotation(`e${row}`).unwrap();
+  const queenSideRookLoc = Loc.fromNotation(`a${row}`).unwrap();
+  const maybeKing = gameState.board.pieceFromLoc(kingLoc);
+  const maybeQueenSideRook = gameState.board.pieceFromLoc(queenSideRookLoc);
+  if (maybeKing.isSome() && maybeQueenSideRook.isSome()) {
+    const king = maybeKing.unwrap();
+    const rook = maybeQueenSideRook.unwrap();
+    if (king.firstMove && rook.firstMove) {
+      const row = cP === Team.White ? "1" : "8";
+      const isD1Empty = isSquareEmptyNotation(`d${row}`, gameState.board);
+      const isC1Empty = isSquareEmptyNotation(`c${row}`, gameState.board);
+      const isB1Empty = isSquareEmptyNotation(`b${row}`, gameState.board);
+      if (isD1Empty && isC1Empty && isB1Empty) {
+        moveResults.push(
+          new MoveResult(
+            Loc.fromNotation(`c${row}`).unwrap(),
+            king,
+            None,
+            false,
+            Some([
+              Loc.fromNotation(`c${row}`).unwrap(),
+              Loc.fromNotation(`d${row}`).unwrap(),
+            ]),
+            Some({
+              src: Loc.fromNotation(`a${row}`).unwrap(),
+              dest: Loc.fromNotation(`d${row}`).unwrap(),
+            })
+          )
+        );
+      }
+    }
+  }
+  // Handle King side Castling
+  const kingSideRookLoc = Loc.fromNotation(`h${row}`).unwrap();
+  const maybeKingSideRook = gameState.board.pieceFromLoc(kingSideRookLoc);
+  if (maybeKing.isSome() && maybeKingSideRook.isSome()) {
+    const king = maybeKing.unwrap();
+    const rook = maybeKingSideRook.unwrap();
+    if (king.firstMove && rook.firstMove) {
+      const row = cP === Team.White ? "1" : "8";
+      const isG1Empty = isSquareEmptyNotation(`g${row}`, gameState.board);
+      const isF1Empty = isSquareEmptyNotation(`f${row}`, gameState.board);
+      if (isG1Empty && isF1Empty) {
+        moveResults.push(
+          new MoveResult(
+            Loc.fromNotation(`g${row}`).unwrap(),
+            king,
+            None,
+            false,
+            Some([
+              Loc.fromNotation(`g${row}`).unwrap(),
+              Loc.fromNotation(`f${row}`).unwrap(),
+              Loc.fromNotation(`e${row}`).unwrap(),
+            ]),
+            Some({
+              src: Loc.fromNotation(`h${row}`).unwrap(),
+              dest: Loc.fromNotation(`f${row}`).unwrap(),
+            })
+          )
+        );
+      }
+    }
+  }
+  return moveResults;
 };
 
 export const findLegalKnightMoves = (

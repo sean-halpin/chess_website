@@ -4,11 +4,11 @@ import React from "react";
 import { Piece } from "./Piece";
 import { useDrop } from "react-dnd";
 import { MoveCommand } from "../game/GameCommands";
-import { BoardLocation, ChessPiece } from "../game/ChessGameTypes";
+import { Loc, ChessPiece } from "../game/ChessGameTypes";
 import { Option, isSome, unwrap } from "../types/Option";
+import "./Square.css";
 
 interface SquareProps {
-  size: number;
   color: string;
   piece: Option<ChessPiece>;
   position: { row: number; col: number };
@@ -19,20 +19,22 @@ function maybePiece(piece: Option<ChessPiece>) {
   if (isSome(piece)) {
     let p = unwrap(piece);
     return (
-      <Piece
-        id={p.id}
-        team={p.team}
-        rank={p.rank}
-        position={p.position}
-      />
+      <div id="box3" className="box">
+        <Piece id={p.id} team={p.team} rank={p.rank} position={p.position} />
+      </div>
     );
   } else {
     return <></>;
   }
 }
 
+// function that takes a row number and returns the chess alphabet notation
+// for that row. 0 -> a, 1 -> b, etc.
+function colToNotation(row: number): string {
+  return String.fromCharCode(97 + row);
+}
+
 const Square: React.FC<SquareProps> = ({
-  size,
   color,
   piece,
   position,
@@ -46,8 +48,8 @@ const Square: React.FC<SquareProps> = ({
         console.log(info);
         const moveCommand: MoveCommand = {
           command: "move",
-          source: new BoardLocation(piece.position.row, piece.position.col),
-          destination: new BoardLocation(position.row, position.col),
+          source: new Loc(piece.position.row, piece.position.col),
+          destination: new Loc(position.row, position.col),
         };
         sendMoveCommand(moveCommand);
       }
@@ -58,15 +60,43 @@ const Square: React.FC<SquareProps> = ({
   });
 
   const squareStyle: React.CSSProperties = {
-    width: '50px',
-    height: '50px',
+    width: "50px",
+    height: "50px",
     backgroundColor: `${color}`,
     border: "1px solid #000",
   };
 
   return (
-    <div ref={drop} style={{ ...squareStyle, opacity: isOver ? 0.7 : 1 }}>
+    <div
+      className="container"
+      ref={drop}
+      style={{ ...squareStyle, opacity: isOver ? 0.7 : 1 }}
+    >
       {maybePiece(piece)}
+      <p
+        id="box1"
+        className="box"
+        style={{
+          color:
+            (position.col + position.row) % 2
+              ? "rgba(0, 0, 0, 1)"
+              : "rgba(255, 255, 255, 1)",
+        }}
+      >
+        {position.row === 0 ? colToNotation(position.col) : ""}
+      </p>
+      <p
+        id="box2"
+        className="box"
+        style={{
+          color:
+            (position.col + position.row) % 2
+              ? "rgba(0, 0, 0, 1)"
+              : "rgba(255, 255, 255, 1)",
+        }}
+      >
+        {position.col === 7 ? position.row + 1 : ""}
+      </p>
     </div>
   );
 };
