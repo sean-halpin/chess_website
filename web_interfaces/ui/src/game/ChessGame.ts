@@ -65,7 +65,6 @@ export class ChessGame {
         }
         // Handle Castle
         if (move.rookSrcDestCastling.isSome()) {
-          console.log("CASTLING");
           const castlingRookSrcDest = move.rookSrcDestCastling.unwrap();
           const castlingRook = updatedBoard.pieceFromLoc(
             castlingRookSrcDest.src
