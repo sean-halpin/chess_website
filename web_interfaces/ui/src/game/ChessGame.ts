@@ -77,7 +77,6 @@ export class ChessGame {
             castlingRookSrcDest.dest,
             castlingRook
           );
-          console.log(castlingRook.unwrap().rank)
         }
         movingPiece.position = move.destination;
         movingPiece.firstMove = false;
