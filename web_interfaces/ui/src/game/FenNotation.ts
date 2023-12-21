@@ -64,11 +64,11 @@ export function gameToFEN(game: IChessState): string {
   for (let row = 7; row >= 0; row--) {
     let emptySquares = 0;
     for (let col = 0; col < 8; col++) {
-      const piece = game.board[row][col];
+      const piece = game.board.pieceFromRowCol(row,col);
       if (isNone(piece)) {
         emptySquares++;
       } else {
-        const piece = unwrap(game.board[row][col]);
+        const piece = unwrap(game.board.pieceFromRowCol(row,col));
         if (emptySquares > 0) {
           fen += emptySquares.toString();
           emptySquares = 0;

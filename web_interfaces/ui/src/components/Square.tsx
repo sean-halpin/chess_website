@@ -4,7 +4,7 @@ import React from "react";
 import { Piece } from "./Piece";
 import { useDrop } from "react-dnd";
 import { MoveCommand } from "../game/GameCommands";
-import { BoardLocation, ChessPiece } from "../game/ChessGameTypes";
+import { Loc, ChessPiece } from "../game/ChessGameTypes";
 import { Option, isSome, unwrap } from "../types/Option";
 import "./Square.css";
 
@@ -19,7 +19,7 @@ function maybePiece(piece: Option<ChessPiece>) {
   if (isSome(piece)) {
     let p = unwrap(piece);
     return (
-      <div className="box">
+      <div id="box3" className="box">
         <Piece id={p.id} team={p.team} rank={p.rank} position={p.position} />
       </div>
     );
@@ -48,8 +48,8 @@ const Square: React.FC<SquareProps> = ({
         console.log(info);
         const moveCommand: MoveCommand = {
           command: "move",
-          source: new BoardLocation(piece.position.row, piece.position.col),
-          destination: new BoardLocation(position.row, position.col),
+          source: new Loc(piece.position.row, piece.position.col),
+          destination: new Loc(position.row, position.col),
         };
         sendMoveCommand(moveCommand);
       }
@@ -74,6 +74,7 @@ const Square: React.FC<SquareProps> = ({
     >
       {maybePiece(piece)}
       <p
+        id="box1"
         className="box"
         style={{
           color:
@@ -85,6 +86,7 @@ const Square: React.FC<SquareProps> = ({
         {position.row === 0 ? colToNotation(position.col) : ""}
       </p>
       <p
+      id="box2"
         className="box"
         style={{
           color:

@@ -3,13 +3,13 @@
 import React from "react";
 import "./Piece.css";
 import { useDrag } from "react-dnd";
-import { BoardLocation, Rank, Team } from "../game/ChessGameTypes";
+import { Loc, Rank, Team } from "../game/ChessGameTypes";
 
 export interface PieceProps {
   id: string;
   team: Team;
   rank: Rank;
-  position: BoardLocation;
+  position: Loc;
 }
 
 export const Piece: React.FC<PieceProps> = ({ id, team, rank, position }) => {
@@ -28,13 +28,13 @@ export const Piece: React.FC<PieceProps> = ({ id, team, rank, position }) => {
   if (team === Team.White) {
     return (
       <div ref={drag} style={{ opacity: isDragging ? 0.5 : 1 }}>
-        <img src={imagePath} alt={`${team} ${rank}`} className="piece" />
+        <img src={imagePath} alt={`${team} ${rank}`} className="pieceImage" />
       </div>
     );
   } else {
     return (
       <div>
-        <img src={imagePath} alt={`${team} ${rank}`} className="piece" />
+        <img src={imagePath} alt={`${team} ${rank}`} className="pieceImage" />
       </div>
     );
   }
