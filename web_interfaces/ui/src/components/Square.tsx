@@ -86,7 +86,7 @@ const Square: React.FC<SquareProps> = ({
         {position.row === 0 ? colToNotation(position.col) : ""}
       </p>
       <p
-      id="box2"
+        id="box2"
         className="box"
         style={{
           color:
