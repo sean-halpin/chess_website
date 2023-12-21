@@ -2,4 +2,4 @@
 
 A simple chess website built using React
 
-![Chess Preview](./media/chess_preview.png)
+![Chess Preview](./media/chess_preview_annotated.png)
