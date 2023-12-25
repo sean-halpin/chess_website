@@ -234,7 +234,7 @@ export class ChessGame {
     for (const move of legalMoves) {
       const clonedState = gameState.clone();
       const updatedState = this.applyMoveCommand(move, clonedState);
-      const promise = this.minimax(updatedState, depth, alpha, beta, 4, false);
+      const promise = this.minimax(updatedState, depth, alpha, beta, 5, false);
       promises.push(promise);
     }
 
@@ -287,7 +287,10 @@ export class ChessGame {
       Array.from({ length: 8 }, () => Array(8).fill(None))
     );
     pieces.forEach((piece) => {
-        initialBoard = initialBoard.updatePieceFromLoc(piece.position, Some(piece));
+      initialBoard = initialBoard.updatePieceFromLoc(
+        piece.position,
+        Some(piece)
+      );
     });
 
     const initialState: GameState = new GameState(
@@ -482,7 +485,7 @@ export class ChessGame {
     const possibleMoves = this.findLegalMoves(clonedGameState, team);
 
     if (possibleMoves.length > 0) {
-      const bestMove = this.getBestMove(clonedGameState, 4);
+      const bestMove = this.getBestMove(clonedGameState, 6);
       return this.executeCommand(await bestMove);
     } else {
       return { success: false, error: "No possible moves" };
