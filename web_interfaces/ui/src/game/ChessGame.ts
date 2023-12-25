@@ -86,9 +86,9 @@ export class ChessGame {
     gameState: GameState
   ): GameState => {
     const clonedGameState = gameState.clone();
-    const updatedBoard = clonedGameState.board;
+    let updatedBoard = clonedGameState.board;
 
-    const movingPiece: ChessPiece = updatedBoard.pieces
+    const movingPiece: ChessPiece = updatedBoard.squares
       .flat()
       .filter(isSome)
       .map(unwrap)
@@ -110,7 +110,7 @@ export class ChessGame {
       const move = moveResult[0];
       // Remove taken piece
       if (isSome(move.takenPiece)) {
-        updatedBoard.updatePieceFromLoc(
+        updatedBoard = updatedBoard = updatedBoard.updatePieceFromLoc(
           move.takenPiece.unwrap().position,
           None
         );
@@ -130,16 +130,19 @@ export class ChessGame {
           const castlingRook = updatedBoard.pieceFromLoc(
             castlingRookSrcDest.src
           );
-          updatedBoard.updatePieceFromLoc(castlingRookSrcDest.src, None);
-          updatedBoard.updatePieceFromLoc(
+          updatedBoard = updatedBoard.updatePieceFromLoc(
+            castlingRookSrcDest.src,
+            None
+          );
+          updatedBoard = updatedBoard.updatePieceFromLoc(
             castlingRookSrcDest.dest,
             castlingRook
           );
         }
         movingPiece.position = move.destination;
         movingPiece.firstMove = false;
-        updatedBoard.updatePieceFromLoc(newCommand.source, None);
-        updatedBoard.updatePieceFromLoc(
+        updatedBoard = updatedBoard.updatePieceFromLoc(newCommand.source, None);
+        updatedBoard = updatedBoard.updatePieceFromLoc(
           newCommand.destination,
           Some(movingPiece)
         );
@@ -174,7 +177,7 @@ export class ChessGame {
   };
   private evaluateBoard = (gameState: GameState): number => {
     let score = 0;
-    const pieces = gameState.board.pieces.flat().filter(isSome).map(unwrap);
+    const pieces = gameState.board.squares.flat().filter(isSome).map(unwrap);
     for (const piece of pieces) {
       if (piece.team === Team.White) {
         score += rankValue(piece.rank);
@@ -199,7 +202,7 @@ export class ChessGame {
     const clonedState = gameState.clone();
     // Apply the move command to the copied game state
 
-    const pieces = clonedState.board.pieces
+    const pieces = clonedState.board.squares
       .flat()
       .filter(isSome)
       .map(unwrap)
@@ -280,11 +283,11 @@ export class ChessGame {
         }
       });
     });
-    const initialBoard: ChessBoard = new ChessBoard(
+    let initialBoard: ChessBoard = new ChessBoard(
       Array.from({ length: 8 }, () => Array(8).fill(None))
     );
     pieces.forEach((piece) => {
-      initialBoard.updatePieceFromLoc(piece.position, Some(piece));
+        initialBoard = initialBoard.updatePieceFromLoc(piece.position, Some(piece));
     });
 
     const initialState: GameState = new GameState(
@@ -304,7 +307,7 @@ export class ChessGame {
     const clonedGameState = gameState.clone();
 
     // Find the player's king on the updated board
-    const king = clonedGameState.board.pieces
+    const king = clonedGameState.board.squares
       .flat()
       .filter(isSome)
       .map(unwrap)
@@ -314,7 +317,7 @@ export class ChessGame {
 
     // Check if the king is under threat after the move
     const opponentColor = team === Team.White ? Team.Black : Team.White;
-    const opponentPieces = clonedGameState.board.pieces
+    const opponentPieces = clonedGameState.board.squares
       .flat()
       .filter(isSome)
       .map(unwrap)
@@ -422,9 +425,9 @@ export class ChessGame {
 
         if (checkMate) {
           console.log("Checkmate");
-          updatedState = updatedState.withWinner(`Checkmate, ${
-            clonedState.currentPlayer as Team
-          } wins`);
+          updatedState = updatedState.withWinner(
+            `Checkmate, ${clonedState.currentPlayer as Team} wins`
+          );
         } else if (draw) {
           console.log("Draw");
           updatedState = updatedState.withWinner("Draw");
@@ -463,7 +466,7 @@ export class ChessGame {
   }
 
   public get pieces(): ChessPiece[] {
-    return this.gameState.board.pieces.flat().filter(isSome).map(unwrap);
+    return this.gameState.board.squares.flat().filter(isSome).map(unwrap);
   }
 
   public get winner(): Team | "Check" | "Checkmate" | "Draw" | null {
