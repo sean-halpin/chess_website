@@ -1,13 +1,13 @@
-import { Team } from "./ChessGameTypes";
+import { Team } from "./Team";
 import { MoveResult } from "./MoveResult";
-import { ChessBoard } from "./ChessBoard";
+import { Board } from "./Board";
 import _ from "lodash";
 
 export class GameState {
   // #region Constructors (1)
 
   constructor(
-    readonly board: ChessBoard,
+    readonly board: Board,
     readonly currentPlayer: Team.White | Team.Black,
     readonly commands: MoveResult[],
     readonly counter: number,

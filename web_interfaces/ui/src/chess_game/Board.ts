@@ -2,7 +2,7 @@ import { Option } from "../types/Option";
 import { Loc } from "./Loc";
 import { ChessPiece } from "./ChessPiece";
 
-export class ChessBoard {
+export class Board {
   // #region Properties (1)
 
   private readonly _squares: ReadonlyArray<ReadonlyArray<Option<ChessPiece>>> =
@@ -39,7 +39,7 @@ export class ChessBoard {
   public updatePieceFromLoc(
     location: Loc,
     newPiece: Option<ChessPiece>
-  ): ChessBoard {
+  ): Board {
     const updatedSquares = this.squares.map((row, rowIndex) => {
       return row.map((piece, colIndex) => {
         if (rowIndex === location.row && colIndex === location.col) {
@@ -50,7 +50,20 @@ export class ChessBoard {
       });
     });
 
-    return new ChessBoard(updatedSquares);
+    return new Board(updatedSquares);
+  }
+
+  public static isLocOOB(location: Loc): boolean {
+    return (
+      location.row < 0 ||
+      location.row > 7 ||
+      location.col < 0 ||
+      location.col > 7
+    );
+  }
+
+  public static isRowColOOB(row: number, col: number): boolean {
+    return row < 0 || row > 7 || col < 0 || col > 7;
   }
 
   // #endregion Public Methods (3)

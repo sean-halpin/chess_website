@@ -40,5 +40,9 @@ export class Loc {
     return `${column}${row}`;
   }
 
+  public isCentral(): boolean {
+    return this.row >= 3 && this.row <= 4 && this.col >= 3 && this.col <= 4;
+  }
+
   // #endregion Public Methods (2)
 }

@@ -1,6 +1,6 @@
 import { isNone, unwrap } from "../types/Option";
-import { Team } from "./ChessGameTypes";
-import { Rank } from "./ChessGameTypes";
+import { Team } from "./Team";
+import { Rank } from "./Rank";
 import { GameState } from "./GameState";
 
 export function fenToRank(fenChar: string): Rank {

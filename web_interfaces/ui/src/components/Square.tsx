@@ -3,9 +3,9 @@
 import React from "react";
 import { Piece } from "./Piece";
 import { useDrop } from "react-dnd";
-import { MoveCommand } from "../game/GameCommands";
-import { Loc } from "../game/Loc";
-import { ChessPiece } from "../game/ChessPiece";
+import { MoveCommand } from "../chess_game/GameCommands";
+import { Loc } from "../chess_game/Loc";
+import { ChessPiece } from "../chess_game/ChessPiece";
 import { Option, isSome, unwrap } from "../types/Option";
 import "./Square.css";
 
@@ -18,7 +18,7 @@ interface SquareProps {
 
 function maybePiece(piece: Option<ChessPiece>) {
   if (isSome(piece)) {
-    let p = unwrap(piece);
+    const p = unwrap(piece);
     return (
       <div id="box3" className="box">
         <Piece id={p.id} team={p.team} rank={p.rank} position={p.position} />
@@ -45,7 +45,7 @@ const Square: React.FC<SquareProps> = ({
     accept: "PIECE", // Make sure it matches the type used in useDrag
     drop: (piece: ChessPiece) => {
       if (piece) {
-        let info = `[Square] Dropped ${piece.team} ${piece.rank} from ${piece.position.toNotation()} to ${position.toNotation()}`;
+        const info = `[Square] Dropped ${piece.team} ${piece.rank} from ${piece.position.toNotation()} to ${position.toNotation()}`;
         console.log(info);
         const moveCommand: MoveCommand = {
           command: "move",

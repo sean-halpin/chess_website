@@ -1,7 +1,8 @@
 // ChessGameLogic.test.ts
 
 import { ChessGame } from "../ChessGame";
-import { Rank, Team } from "../ChessGameTypes";
+import { Team } from "../Team";
+import { Rank } from "../Rank";
 import { Loc } from "../Loc";
 import { MoveCommand } from "../GameCommands";
 

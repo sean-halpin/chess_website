@@ -3,15 +3,15 @@
 import { DndProvider } from "react-dnd";
 import React, { useEffect, useState, useRef } from "react";
 import Board from "./Board";
-import { Team } from "../game/ChessGameTypes";
-import { MoveCommand } from "../game/GameCommands";
+import { Team } from "../chess_game/Team";
+import { MoveCommand } from "../chess_game/GameCommands";
 import "./Game.css";
 import isTouchDevice from "is-touch-device";
 import { TouchBackend } from "react-dnd-touch-backend";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import AudioPlayer from "./AudioPlayer";
 import { TextComponent } from "./TextComponent";
-import { ChessGame } from "../game/ChessGame";
+import { ChessGame } from "../chess_game/ChessGame";
 
 export interface GameProps {
   game: ChessGame;
@@ -89,13 +89,15 @@ export const Game: React.FC = () => {
   const sendMoveCommand = (newCommand: MoveCommand) => {
     switch (newCommand.command) {
       case "move":
-        const result = state.game.executeCommand(newCommand);
-        if (result.success) {
-          playAudio();
-          setState({
-            ...state,
-            game: result.data,
-          });
+        {
+          const result = state.game.executeCommand(newCommand);
+          if (result.success) {
+            playAudio();
+            setState({
+              ...state,
+              game: result.data,
+            });
+          }
         }
         break;
       default:
