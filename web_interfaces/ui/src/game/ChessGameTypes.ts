@@ -59,13 +59,19 @@ export class Loc {
 
   // #endregion Public Static Methods (1)
 
-  // #region Public Methods (1)
+  // #region Public Methods (2)
 
   public isEqual(otherLocation: Loc): boolean {
     return this.row === otherLocation.row && this.col === otherLocation.col;
   }
 
-  // #endregion Public Methods (1)
+  public toNotation(): string {
+    const row = this.row + 1;
+    const column = String.fromCharCode(this.col + 97);
+    return `${column}${row}`;
+  }
+
+  // #endregion Public Methods (2)
 }
 
 export class ChessPiece {
@@ -85,28 +91,53 @@ export class ChessPiece {
 // export type ChessBoard = Option<ChessPiece>[][];
 
 export class ChessBoard {
+  // #region Properties (1)
+
   private _pieces: Option<ChessPiece>[][] = [];
+
+  // #endregion Properties (1)
+
+  // #region Constructors (1)
+
   constructor(pieces: Option<ChessPiece>[][]) {
     this._pieces = pieces;
   }
+
+  // #endregion Constructors (1)
+
+  // #region Public Accessors (2)
+
   public get pieces(): Option<ChessPiece>[][] {
     return this._pieces;
   }
+
   public set pieces(value: Option<ChessPiece>[][]) {
     this._pieces = value;
   }
+
+  // #endregion Public Accessors (2)
+
+  // #region Public Methods (5)
+
+  public clone(): ChessBoard {
+    return new ChessBoard(this._pieces.map((row) => [...row]));
+  }
+
   public pieceFromLoc(location: Loc): Option<ChessPiece> {
     return this.pieces[location.row][location.col];
   }
+
+  public pieceFromRowCol(row: number, col: number): Option<ChessPiece> {
+    return this.pieces[row][col];
+  }
+
   public updatePieceFromLoc(location: Loc, newPiece: Option<ChessPiece>) {
     if (newPiece.isSome()) {
       newPiece.unwrap().position = location;
     }
     this.pieces[location.row][location.col] = newPiece;
   }
-  public pieceFromRowCol(row: number, col: number): Option<ChessPiece> {
-    return this.pieces[row][col];
-  }
+
   public updatePieceFromRowCol(
     row: number,
     col: number,
@@ -117,9 +148,8 @@ export class ChessBoard {
     }
     this.pieces[row][col] = newPiece;
   }
-  public clone(): ChessBoard {
-    return new ChessBoard(this._pieces.map((row) => [...row]));
-  }
+
+  // #endregion Public Methods (5)
 }
 
 interface IMoveResult {

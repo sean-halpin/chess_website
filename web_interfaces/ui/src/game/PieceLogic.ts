@@ -1,7 +1,5 @@
 import { None, Some, isSome, unwrap } from "../types/Option";
 import {
-  ChessGame,
-  CopyGameState,
   IChessState,
   isOOB,
   isSquareEmpty,

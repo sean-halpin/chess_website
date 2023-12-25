@@ -69,10 +69,7 @@ export class ChessGame {
           const castlingRook = updatedBoard.pieceFromLoc(
             castlingRookSrcDest.src
           );
-          updatedBoard.updatePieceFromLoc(
-            castlingRookSrcDest.src,
-            None
-          );
+          updatedBoard.updatePieceFromLoc(castlingRookSrcDest.src, None);
           updatedBoard.updatePieceFromLoc(
             castlingRookSrcDest.dest,
             castlingRook
@@ -129,15 +126,6 @@ export class ChessGame {
     );
   };
   private gameState: IChessState;
-  private moveFunctions = {
-    pawn: findLegalPawnMoves,
-    rook: findLegalCastleMoves,
-    knight: findLegalKnightMoves,
-    bishop: findLegalBishopMoves,
-    queen: findLegalQueenMoves,
-    king: findLegalKingMoves,
-  };
-
   private isKingInCheck = (gameState: IChessState, team: Team): boolean => {
     // Make a copy of the current game state
     const clonedGameState = CopyGameState(gameState);
@@ -177,6 +165,14 @@ export class ChessGame {
     // The king is not in check after the move
     return false;
   };
+  private moveFunctions = {
+    pawn: findLegalPawnMoves,
+    rook: findLegalCastleMoves,
+    knight: findLegalKnightMoves,
+    bishop: findLegalBishopMoves,
+    queen: findLegalQueenMoves,
+    king: findLegalKingMoves,
+  };
 
   // #endregion Properties (5)
 
@@ -206,45 +202,19 @@ export class ChessGame {
 
   // #region Public Methods (3)
 
-  public cpuMove(team: Team): Result<ChessGame, string> {
+  public async cpuMoveMinimax(team: Team): Promise<Result<ChessGame, string>> {
     const clonedGameState = CopyGameState(this.gameState);
-    let possibleMoves: MoveCommand[] = [];
-    const pieces = this.pieces.filter((p) => p !== null && p.team === team);
-    const randomPiece = pieces[Math.floor(Math.random() * pieces.length)];
+    const possibleMoves = this.findLegalMoves(clonedGameState, team);
 
-    if (randomPiece) {
-      possibleMoves = this.findLegalMoves(clonedGameState, team);
-
-      if (possibleMoves.length > 0) {
-        const rankValueFromOption = (piece: Option<ChessPiece>) => {
-          if (isSome(piece)) {
-            return rankValue(unwrap(piece).rank);
-          } else {
-            return 0;
-          }
-        };
-        const randomMove =
-          possibleMoves.flat()[
-            Math.floor(Math.random() * possibleMoves.flat().length)
-          ];
-        const maxMove: MoveCommand = possibleMoves.reduce((max, move) => {
-          return rankValueFromOption(
-            clonedGameState.board.pieceFromLoc(move.destination)
-          ) >
-            rankValueFromOption(
-              clonedGameState.board.pieceFromLoc(max.destination)
-            )
-            ? move
-            : max;
-        }, randomMove);
-        return this.executeCommand(maxMove);
-      } else {
-        return { success: false, error: "No possible moves" };
-      }
+    if (possibleMoves.length > 0) {
+      const bestMove = this.getBestMove(clonedGameState, 4);
+      return this.executeCommand(await bestMove);
+    } else {
+      return { success: false, error: "No possible moves" };
     }
-    return { success: false, error: "No pieces to move" };
   }
 
+  // Rest of the code...
   public executeCommand(cmd: MoveCommand): Result<ChessGame, string> {
     switch (cmd.command) {
       case "move":
@@ -299,7 +269,46 @@ export class ChessGame {
 
   // #endregion Public Methods (3)
 
-  // #region Private Methods (2)
+  // #region Private Methods (8)
+
+  private cpuMove(team: Team): Result<ChessGame, string> {
+    const clonedGameState = CopyGameState(this.gameState);
+    let possibleMoves: MoveCommand[] = [];
+    const pieces = this.pieces.filter((p) => p !== null && p.team === team);
+    const randomPiece = pieces[Math.floor(Math.random() * pieces.length)];
+
+    if (randomPiece) {
+      possibleMoves = this.findLegalMoves(clonedGameState, team);
+
+      if (possibleMoves.length > 0) {
+        const rankValueFromOption = (piece: Option<ChessPiece>) => {
+          if (isSome(piece)) {
+            return rankValue(unwrap(piece).rank);
+          } else {
+            return 0;
+          }
+        };
+        const randomMove =
+          possibleMoves.flat()[
+            Math.floor(Math.random() * possibleMoves.flat().length)
+          ];
+        const maxMove: MoveCommand = possibleMoves.reduce((max, move) => {
+          return rankValueFromOption(
+            clonedGameState.board.pieceFromLoc(move.destination)
+          ) >
+            rankValueFromOption(
+              clonedGameState.board.pieceFromLoc(max.destination)
+            )
+            ? move
+            : max;
+        }, randomMove);
+        return this.executeCommand(maxMove);
+      } else {
+        return { success: false, error: "No possible moves" };
+      }
+    }
+    return { success: false, error: "No pieces to move" };
+  }
 
   private createPiece(
     team: Team,
@@ -314,6 +323,65 @@ export class ChessGame {
       position,
       firstMove: true,
     };
+  }
+
+  private evaluateBoard(gameState: IChessState): number {
+    let score = 0;
+    const pieces = gameState.board.pieces.flat().filter(isSome).map(unwrap);
+    for (const piece of pieces) {
+      if (piece.team === Team.White) {
+        score += rankValue(piece.rank);
+        if (this.isPieceInCenter(piece.position)) {
+          score += 1; // Increase score for controlling the center
+        }
+      } else {
+        score -= rankValue(piece.rank);
+        if (this.isPieceInCenter(piece.position)) {
+          score -= 1; // Decrease score for opponent controlling the center
+        }
+      }
+    }
+    return score;
+  }
+
+  private async getBestMove(
+    gameState: IChessState,
+    depth: number
+  ): Promise<MoveCommand> {
+    let bestMove: MoveCommand | null = null;
+    let bestScore = Number.POSITIVE_INFINITY;
+    const alpha = Number.NEGATIVE_INFINITY;
+    const beta = Number.POSITIVE_INFINITY;
+
+    const legalMoves = this.findLegalMoves(gameState, gameState.currentPlayer);
+
+    const promises: Promise<number>[] = [];
+
+    for (const move of legalMoves) {
+      const clonedState = CopyGameState(gameState);
+      const updatedState = this.applyMoveCommand(move, clonedState);
+      const promise = this.minimax(updatedState, depth, alpha, beta, 4, false);
+      promises.push(promise);
+    }
+
+    const scores = await Promise.all(promises);
+
+    for (let i = 0; i < legalMoves.length; i++) {
+      const move = legalMoves[i];
+      const score = scores[i];
+      if (score < bestScore) {
+        console.log(
+          `[Evaluation]Score: ${score}`,
+          `Move: ${
+            move.command
+          } ${move.source.toNotation()} ${move.destination.toNotation()}`
+        );
+        bestScore = score;
+        bestMove = move;
+      }
+    }
+
+    return bestMove!;
   }
 
   private initializeGameState(
@@ -359,7 +427,125 @@ export class ChessGame {
     return initialState;
   }
 
-  // #endregion Private Methods (2)
+  private isGameOver(gameState: IChessState): boolean {
+    return gameState.winner === "Checkmate" || gameState.winner === "Draw";
+  }
+
+  private isPieceInCenter(position: Loc): boolean {
+    return [3, 4].includes(position.col) && [3, 4].includes(position.row);
+  }
+
+  async minimax(
+    gameState: IChessState,
+    depth: number,
+    alpha: number,
+    beta: number,
+    timeLimit: number,
+    maximizingPlayer: boolean
+  ): Promise<number> {
+    const startTime = Date.now();
+    let bestScore = maximizingPlayer ? -Infinity : Infinity;
+    let bestMove: MoveCommand | null = null;
+
+    for (let currentDepth = 1; currentDepth <= depth; currentDepth++) {
+      const result = await this.alphaBeta(
+        gameState,
+        currentDepth,
+        alpha,
+        beta,
+        startTime,
+        timeLimit,
+        maximizingPlayer
+      );
+
+      if (maximizingPlayer) {
+        if (result.score > bestScore) {
+          bestScore = result.score;
+          bestMove = result.move;
+        }
+        alpha = Math.max(alpha, bestScore);
+      } else {
+        if (result.score < bestScore) {
+          bestScore = result.score;
+          bestMove = result.move;
+          // log the score and move and depth
+          console.log(
+            `[Evaluation]Score: ${bestScore}`,
+            `Move: ${bestMove?.source.toNotation()} ${bestMove?.destination.toNotation()}`,
+            `Depth: ${currentDepth}`
+          );
+        }
+        beta = Math.min(beta, bestScore);
+      }
+
+      if (Date.now() - startTime >= timeLimit) {
+        break;
+      }
+    }
+
+    return bestScore;
+  }
+
+  async alphaBeta(
+    gameState: IChessState,
+    depth: number,
+    alpha: number,
+    beta: number,
+    startTime: number,
+    timeLimit: number,
+    maximizingPlayer: boolean
+  ): Promise<{ score: number; move: MoveCommand | null }> {
+    if (depth === 0 || this.isGameOver(gameState)) {
+      return { score: this.evaluateBoard(gameState), move: null };
+    }
+
+    let bestScore = maximizingPlayer ? -Infinity : Infinity;
+    let bestMove: MoveCommand | null = null;
+
+    const moves = this.findLegalMoves(gameState, gameState.currentPlayer);
+
+    for (const move of moves) {
+      const newGameState = this.applyMoveCommand(move, gameState);
+
+      const result = await this.alphaBeta(
+        newGameState,
+        depth - 1,
+        alpha,
+        beta,
+        startTime,
+        timeLimit,
+        !maximizingPlayer
+      );
+
+      const score = result.score;
+
+      if (maximizingPlayer) {
+        if (score > bestScore) {
+          bestScore = score;
+          bestMove = move;
+        }
+        alpha = Math.max(alpha, bestScore);
+      } else {
+        if (score < bestScore) {
+          bestScore = score;
+          bestMove = move;
+        }
+        beta = Math.min(beta, bestScore);
+      }
+
+      if (alpha >= beta) {
+        break;
+      }
+
+      if (Date.now() - startTime >= timeLimit) {
+        break;
+      }
+    }
+
+    return { score: bestScore, move: bestMove };
+  }
+
+  // #endregion Private Methods (8)
 }
 
 export interface IChessState {
@@ -382,6 +568,11 @@ export const isOOB = (r: number, c: number) => r < 0 || r > 7 || c < 0 || c > 7;
 export const isSquareEmpty = (r: number, c: number, b: ChessBoard) => {
   return !isOOB(r, c) && isNone(b.pieceFromRowCol(r, c));
 };
+
+export const isSquareEmptyLoc = (loc: Loc, b: ChessBoard) => {
+  return isSquareEmpty(loc.row, loc.col, b);
+};
+
 export const isSquareEmptyNotation = (notation: string, b: ChessBoard) => {
   const c = notation.toLowerCase().charCodeAt(0) - 97; // Convert letter to column index (A=0, B=1, ...)
   const r = parseInt(notation.charAt(1)) - 1; // Convert number to row index (1=0, 2=1, ...)
