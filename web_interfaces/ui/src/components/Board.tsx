@@ -2,9 +2,9 @@
 
 import React from "react";
 import Square from "./Square";
-import { MoveCommand } from "../game/GameCommands";
-import { Loc } from "../game/Loc";
-import { ChessPiece } from "../game/ChessPiece";
+import { MoveCommand } from "../chess_game/GameCommands";
+import { Loc } from "../chess_game/Loc";
+import { ChessPiece } from "../chess_game/ChessPiece";
 import { None, Some } from "../types/Option";
 
 interface BoardProps {

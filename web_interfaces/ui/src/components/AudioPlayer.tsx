@@ -1,8 +1,8 @@
 import React, { RefObject } from "react";
 
-type AudioPlayerProps = {};
+type AudioPlayerProps = object;
 
-type AudioPlayerState = {};
+type AudioPlayerState = object;
 
 class AudioPlayer extends React.Component<AudioPlayerProps, AudioPlayerState> {
   audioRef: RefObject<HTMLAudioElement>;
@@ -24,7 +24,7 @@ class AudioPlayer extends React.Component<AudioPlayerProps, AudioPlayerState> {
       <div>
         <audio ref={this.audioRef} controls hidden>
           <source
-            src={process.env.PUBLIC_URL + "/sounds/table_knock.wav"}
+            src={`${process.env.PUBLIC_URL  }/sounds/table_knock.wav`}
             type="audio/wav"
           />
           Your browser does not support the audio element.

@@ -1,7 +1,5 @@
-import React from "react";
 import { render, screen, act, waitFor } from "@testing-library/react";
 import { TextComponent, TextProps } from "../TextComponent";
-import userEvent from "@testing-library/user-event";
 
 describe("TextComponent", () => {
   const defaultProps: TextProps = {
@@ -32,7 +30,7 @@ describe("TextComponent", () => {
     const clearIntervalMock = jest.spyOn(window, "clearInterval");
     const { unmount } = render(<TextComponent text={"Hello"} textLow="" />);
 
-    // eslint-disable-next-line testing-library/no-wait-for-empty-callback
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     await waitFor(() => {}, { timeout: 1 });
 
     // Unmount the component

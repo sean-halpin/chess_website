@@ -1,4 +1,5 @@
-import { Team, Rank } from "./ChessGameTypes";
+import { Team } from "./Team";
+import { Rank } from "./Rank";
 import { Loc } from "./Loc";
 
 export class ChessPiece {
