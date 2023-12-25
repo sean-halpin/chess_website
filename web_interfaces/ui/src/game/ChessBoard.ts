@@ -50,9 +50,6 @@ export class ChessBoard {
       });
     });
 
-    if (newPiece.isSome()) {
-      newPiece.unwrap().position = location;
-    }
     return new ChessBoard(updatedSquares);
   }
 

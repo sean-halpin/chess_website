@@ -117,34 +117,45 @@ export class ChessGame {
       }
       // Update moving piece
       if (movingPiece) {
-        // Handle Pawn Promotion to Queen by default
-        if (
-          movingPiece.rank === Rank.Pawn &&
-          (move.destination.row === 0 || move.destination.row === 7)
-        ) {
-          movingPiece.rank = Rank.Queen;
-        }
         // Handle Castle
         if (move.rookSrcDestCastling.isSome()) {
           const castlingRookSrcDest = move.rookSrcDestCastling.unwrap();
           const castlingRook = updatedBoard.pieceFromLoc(
             castlingRookSrcDest.src
           );
-          updatedBoard = updatedBoard.updatePieceFromLoc(
-            castlingRookSrcDest.src,
-            None
-          );
-          updatedBoard = updatedBoard.updatePieceFromLoc(
-            castlingRookSrcDest.dest,
-            castlingRook
-          );
+          if (castlingRook.isSome()) {
+            const unwrappedCastlingRook = castlingRook.unwrap();
+            const updatedRook = new ChessPiece(
+              unwrappedCastlingRook.id,
+              unwrappedCastlingRook.team,
+              unwrappedCastlingRook.rank,
+              castlingRookSrcDest.dest,
+              false
+            );
+            updatedBoard = updatedBoard.updatePieceFromLoc(
+              castlingRookSrcDest.src,
+              None
+            );
+            updatedBoard = updatedBoard.updatePieceFromLoc(
+              castlingRookSrcDest.dest,
+              Some(updatedRook)
+            );
+          }
         }
-        movingPiece.position = move.destination;
-        movingPiece.firstMove = false;
+        const updatedPiece = new ChessPiece(
+          movingPiece.id,
+          movingPiece.team,
+          movingPiece.rank === Rank.Pawn &&
+          (move.destination.row === 0 || move.destination.row === 7)
+            ? Rank.Queen
+            : movingPiece.rank,
+          move.destination,
+          false
+        );
         updatedBoard = updatedBoard.updatePieceFromLoc(newCommand.source, None);
         updatedBoard = updatedBoard.updatePieceFromLoc(
           newCommand.destination,
-          Some(movingPiece)
+          Some(updatedPiece)
         );
       }
 
@@ -170,7 +181,7 @@ export class ChessGame {
     return {
       id: `${team}-${rank}-${i}`,
       rank,
-      team: team,
+      team,
       position,
       firstMove: true,
     };
@@ -182,12 +193,12 @@ export class ChessGame {
       if (piece.team === Team.White) {
         score += rankValue(piece.rank);
         if (this.isPieceInCenter(piece.position)) {
-          score += 1; // Increase score for controlling the center
+          score += 0.1; // Increase score for controlling the center
         }
       } else {
         score -= rankValue(piece.rank);
         if (this.isPieceInCenter(piece.position)) {
-          score -= 1; // Decrease score for opponent controlling the center
+          score -= 0.1; // Decrease score for opponent controlling the center
         }
       }
     }
