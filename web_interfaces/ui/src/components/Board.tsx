@@ -3,7 +3,8 @@
 import React from "react";
 import Square from "./Square";
 import { MoveCommand } from "../game/GameCommands";
-import { ChessPiece } from "../game/ChessGameTypes";
+import { Loc } from "../game/Loc";
+import { ChessPiece } from "../game/ChessPiece";
 import { None, Some } from "../types/Option";
 
 interface BoardProps {
@@ -14,17 +15,17 @@ interface BoardProps {
 const Board: React.FC<BoardProps> = ({ pieces, sendMoveCommand }) => {
   const renderSquare = (row: number, col: number): JSX.Element => {
     const isEven = (row + col) % 2 === 1;
-    const color = isEven ? "silver" : "saddlebrown";
-
+    const color = isEven ? "rgb(255, 205, 148)" : "rgb(200, 110, 25)";
     const piece = pieces.find((p) => {
       return p ? p.position.row === row && p.position.col === col : false;
     });
+
     return (
       <Square
         key={`${row}-${col}`}
         color={color}
         piece={piece !== undefined ? Some(piece) : None}
-        position={{ row: row, col: col }}
+        position={new Loc(row, col)}
         sendMoveCommand={sendMoveCommand}
       />
     );

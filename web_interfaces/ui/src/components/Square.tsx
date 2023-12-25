@@ -4,14 +4,15 @@ import React from "react";
 import { Piece } from "./Piece";
 import { useDrop } from "react-dnd";
 import { MoveCommand } from "../game/GameCommands";
-import { Loc, ChessPiece } from "../game/ChessGameTypes";
+import { Loc } from "../game/Loc";
+import { ChessPiece } from "../game/ChessPiece";
 import { Option, isSome, unwrap } from "../types/Option";
 import "./Square.css";
 
 interface SquareProps {
   color: string;
   piece: Option<ChessPiece>;
-  position: { row: number; col: number };
+  position: Loc;
   sendMoveCommand: (command: MoveCommand) => void;
 }
 
@@ -44,7 +45,7 @@ const Square: React.FC<SquareProps> = ({
     accept: "PIECE", // Make sure it matches the type used in useDrag
     drop: (piece: ChessPiece) => {
       if (piece) {
-        let info = `[Square] Dropped ${piece.team} ${piece.rank} from ${piece.position.row}-${piece.position.col} to ${position.row}-${position.col}`;
+        let info = `[Square] Dropped ${piece.team} ${piece.rank} from ${piece.position.toNotation()} to ${position.toNotation()}`;
         console.log(info);
         const moveCommand: MoveCommand = {
           command: "move",

@@ -35,25 +35,20 @@ export const Game: React.FC = () => {
   });
 
   async function executeCpuMoves(team: Team) {
-    let success = false;
-
-    while (!success) {
-      try {
-        const result = await state.game.cpuMove(team);
-
-        if (result.success) {
-          success = true;
+    state.game
+      .cpuMoveMinimax(team)
+      .then((res) => {
+        if (res.success) {
           playAudio();
           setState({
             ...state,
-            game: result.data,
+            game: res.data,
           });
         }
-      } catch (error) {
-        console.error("Error during CPU move:", error);
-        break;
-      }
-    }
+      })
+      .catch((err) => {
+        console.error("Error during CPU move:", err);
+      });
   }
 
   if (

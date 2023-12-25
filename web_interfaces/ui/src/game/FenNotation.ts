@@ -1,7 +1,7 @@
 import { isNone, unwrap } from "../types/Option";
-import { IChessState } from "./ChessGame";
 import { Team } from "./ChessGameTypes";
 import { Rank } from "./ChessGameTypes";
+import { GameState } from "./GameState";
 
 export function fenToRank(fenChar: string): Rank {
   switch (fenChar.toLowerCase()) {
@@ -58,7 +58,7 @@ export function fenPieceToTeam(str: string): Team {
     : Team.White;
 }
 
-export function gameToFEN(game: IChessState): string {
+export function gameToFEN(game: GameState): string {
   let fen = "";
 
   for (let row = 7; row >= 0; row--) {
