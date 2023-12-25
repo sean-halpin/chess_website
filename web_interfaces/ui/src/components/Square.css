@@ -21,3 +21,15 @@
     top: 0px;
     z-index: 1;
 }
+
+.circle-container {
+    width: 0px;
+    height: 0px;
+    background-color: rgb(0,0,0,0);
+    border-radius: 50%;
+    border: 1px solid rgb(0,0,0,0);
+    margin: auto;
+    margin-top: 18px;
+    z-index: 4;
+    position: inherit;
+}

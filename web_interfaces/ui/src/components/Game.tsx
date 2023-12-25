@@ -116,6 +116,7 @@ export const Game: React.FC = () => {
               <Board
                 pieces={state.game.pieces}
                 sendMoveCommand={sendMoveCommand}
+                legalMoves={ChessGame.findLegalMovesCurry(state.game.gameState)}
               />
             </DndProvider>
           </div>
@@ -134,6 +135,7 @@ export const Game: React.FC = () => {
               <Board
                 pieces={state.game.pieces}
                 sendMoveCommand={sendMoveCommand}
+                legalMoves={ChessGame.findLegalMovesCurry(state.game.gameState)}
               />
             </DndProvider>
           </div>

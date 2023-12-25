@@ -6,7 +6,7 @@ import { useDrop } from "react-dnd";
 import { MoveCommand } from "../chess_game/GameCommands";
 import { Loc } from "../chess_game/Loc";
 import { ChessPiece } from "../chess_game/ChessPiece";
-import { Option, isSome, unwrap } from "../types/Option";
+import { Option, isSome } from "../types/Option";
 import "./Square.css";
 
 interface SquareProps {
@@ -14,14 +14,21 @@ interface SquareProps {
   piece: Option<ChessPiece>;
   position: Loc;
   sendMoveCommand: (command: MoveCommand) => void;
+  moves: MoveCommand[];
 }
 
-function maybePiece(piece: Option<ChessPiece>) {
+function maybePiece(piece: Option<ChessPiece>, moves: MoveCommand[]) {
   if (isSome(piece)) {
-    const p = unwrap(piece);
+    const p = piece.unwrap();
     return (
       <div id="box3" className="box">
-        <Piece id={p.id} team={p.team} rank={p.rank} position={p.position} />
+        <Piece
+          id={p.id}
+          team={p.team}
+          rank={p.rank}
+          position={p.position}
+          moves={moves}
+        />
       </div>
     );
   } else {
@@ -40,12 +47,15 @@ const Square: React.FC<SquareProps> = ({
   piece,
   position,
   sendMoveCommand,
+  moves,
 }) => {
   const [{ isOver }, drop] = useDrop({
     accept: "PIECE", // Make sure it matches the type used in useDrag
     drop: (piece: ChessPiece) => {
       if (piece) {
-        const info = `[Square] Dropped ${piece.team} ${piece.rank} from ${piece.position.toNotation()} to ${position.toNotation()}`;
+        const info = `[Square] Dropped ${piece.team} ${
+          piece.rank
+        } from ${piece.position.toNotation()} to ${position.toNotation()}`;
         console.log(info);
         const moveCommand: MoveCommand = {
           command: "move",
@@ -73,7 +83,8 @@ const Square: React.FC<SquareProps> = ({
       ref={drop}
       style={{ ...squareStyle, opacity: isOver ? 0.7 : 1 }}
     >
-      {maybePiece(piece)}
+      {maybePiece(piece, moves)}
+      <div id={`${position.toNotation()}`} className="circle-container"></div>
       <p
         id="box1"
         className="box"

@@ -32,7 +32,14 @@ export class ChessGame {
       firstMove: true,
     };
   };
-  private gameState: GameState;
+  private _gameState: GameState;
+  public get gameState(): GameState {
+    return this._gameState;
+  }
+  public set gameState(value: GameState) {
+    this._gameState = value;
+  }
+
   private initializeGameState = (
     fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
   ): GameState => {
@@ -188,6 +195,11 @@ export class ChessGame {
     }
     return score;
   };
+
+  public static findLegalMovesCurry = (gs: GameState) => (t: Team) => {
+    return ChessGame.findLegalMoves(gs, t);
+  };
+
   public static findLegalMoves = (
     gameState: GameState,
     team: Team
@@ -313,7 +325,7 @@ export class ChessGame {
   // #region Constructors (1)
 
   constructor(fen?: string) {
-    this.gameState = this.initializeGameState(fen);
+    this._gameState = this.initializeGameState(fen);
   }
 
   // #endregion Constructors (1)
