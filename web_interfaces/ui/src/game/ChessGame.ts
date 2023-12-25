@@ -200,7 +200,66 @@ export class ChessGame {
 
   // #endregion Public Accessors (3)
 
-  // #region Public Methods (3)
+  // #region Public Methods (5)
+
+  public async alphaBeta(
+    gameState: IChessState,
+    depth: number,
+    alpha: number,
+    beta: number,
+    startTime: number,
+    timeLimit: number,
+    maximizingPlayer: boolean
+  ): Promise<{ score: number; move: MoveCommand | null }> {
+    if (depth === 0 || this.isGameOver(gameState)) {
+      return { score: this.evaluateBoard(gameState), move: null };
+    }
+
+    let bestScore = maximizingPlayer ? -Infinity : Infinity;
+    let bestMove: MoveCommand | null = null;
+
+    const moves = this.findLegalMoves(gameState, gameState.currentPlayer);
+
+    for (const move of moves) {
+      const newGameState = this.applyMoveCommand(move, gameState);
+
+      const result = await this.alphaBeta(
+        newGameState,
+        depth - 1,
+        alpha,
+        beta,
+        startTime,
+        timeLimit,
+        !maximizingPlayer
+      );
+
+      const score = result.score;
+
+      if (maximizingPlayer) {
+        if (score > bestScore) {
+          bestScore = score;
+          bestMove = move;
+        }
+        alpha = Math.max(alpha, bestScore);
+      } else {
+        if (score < bestScore) {
+          bestScore = score;
+          bestMove = move;
+        }
+        beta = Math.min(beta, bestScore);
+      }
+
+      if (alpha >= beta) {
+        break;
+      }
+
+      if (Date.now() - startTime >= timeLimit) {
+        break;
+      }
+    }
+
+    return { score: bestScore, move: bestMove };
+  }
 
   public async cpuMoveMinimax(team: Team): Promise<Result<ChessGame, string>> {
     const clonedGameState = CopyGameState(this.gameState);
@@ -267,9 +326,60 @@ export class ChessGame {
     return gameToFEN(this.gameState);
   }
 
-  // #endregion Public Methods (3)
+  public async minimax(
+    gameState: IChessState,
+    depth: number,
+    alpha: number,
+    beta: number,
+    timeLimit: number,
+    maximizingPlayer: boolean
+  ): Promise<number> {
+    const startTime = Date.now();
+    let bestScore = maximizingPlayer ? -Infinity : Infinity;
+    let bestMove: MoveCommand | null = null;
 
-  // #region Private Methods (8)
+    for (let currentDepth = 1; currentDepth <= depth; currentDepth++) {
+      const result = await this.alphaBeta(
+        gameState,
+        currentDepth,
+        alpha,
+        beta,
+        startTime,
+        timeLimit,
+        maximizingPlayer
+      );
+
+      if (maximizingPlayer) {
+        if (result.score > bestScore) {
+          bestScore = result.score;
+          bestMove = result.move;
+        }
+        alpha = Math.max(alpha, bestScore);
+      } else {
+        if (result.score < bestScore) {
+          bestScore = result.score;
+          bestMove = result.move;
+          // log the score and move and depth
+          console.log(
+            `[Evaluation]Score: ${bestScore}`,
+            `Move: ${bestMove?.source.toNotation()} ${bestMove?.destination.toNotation()}`,
+            `Depth: ${currentDepth}`
+          );
+        }
+        beta = Math.min(beta, bestScore);
+      }
+
+      if (Date.now() - startTime >= timeLimit) {
+        break;
+      }
+    }
+
+    return bestScore;
+  }
+
+  // #endregion Public Methods (5)
+
+  // #region Private Methods (7)
 
   private cpuMove(team: Team): Result<ChessGame, string> {
     const clonedGameState = CopyGameState(this.gameState);
@@ -435,117 +545,7 @@ export class ChessGame {
     return [3, 4].includes(position.col) && [3, 4].includes(position.row);
   }
 
-  async minimax(
-    gameState: IChessState,
-    depth: number,
-    alpha: number,
-    beta: number,
-    timeLimit: number,
-    maximizingPlayer: boolean
-  ): Promise<number> {
-    const startTime = Date.now();
-    let bestScore = maximizingPlayer ? -Infinity : Infinity;
-    let bestMove: MoveCommand | null = null;
-
-    for (let currentDepth = 1; currentDepth <= depth; currentDepth++) {
-      const result = await this.alphaBeta(
-        gameState,
-        currentDepth,
-        alpha,
-        beta,
-        startTime,
-        timeLimit,
-        maximizingPlayer
-      );
-
-      if (maximizingPlayer) {
-        if (result.score > bestScore) {
-          bestScore = result.score;
-          bestMove = result.move;
-        }
-        alpha = Math.max(alpha, bestScore);
-      } else {
-        if (result.score < bestScore) {
-          bestScore = result.score;
-          bestMove = result.move;
-          // log the score and move and depth
-          console.log(
-            `[Evaluation]Score: ${bestScore}`,
-            `Move: ${bestMove?.source.toNotation()} ${bestMove?.destination.toNotation()}`,
-            `Depth: ${currentDepth}`
-          );
-        }
-        beta = Math.min(beta, bestScore);
-      }
-
-      if (Date.now() - startTime >= timeLimit) {
-        break;
-      }
-    }
-
-    return bestScore;
-  }
-
-  async alphaBeta(
-    gameState: IChessState,
-    depth: number,
-    alpha: number,
-    beta: number,
-    startTime: number,
-    timeLimit: number,
-    maximizingPlayer: boolean
-  ): Promise<{ score: number; move: MoveCommand | null }> {
-    if (depth === 0 || this.isGameOver(gameState)) {
-      return { score: this.evaluateBoard(gameState), move: null };
-    }
-
-    let bestScore = maximizingPlayer ? -Infinity : Infinity;
-    let bestMove: MoveCommand | null = null;
-
-    const moves = this.findLegalMoves(gameState, gameState.currentPlayer);
-
-    for (const move of moves) {
-      const newGameState = this.applyMoveCommand(move, gameState);
-
-      const result = await this.alphaBeta(
-        newGameState,
-        depth - 1,
-        alpha,
-        beta,
-        startTime,
-        timeLimit,
-        !maximizingPlayer
-      );
-
-      const score = result.score;
-
-      if (maximizingPlayer) {
-        if (score > bestScore) {
-          bestScore = score;
-          bestMove = move;
-        }
-        alpha = Math.max(alpha, bestScore);
-      } else {
-        if (score < bestScore) {
-          bestScore = score;
-          bestMove = move;
-        }
-        beta = Math.min(beta, bestScore);
-      }
-
-      if (alpha >= beta) {
-        break;
-      }
-
-      if (Date.now() - startTime >= timeLimit) {
-        break;
-      }
-    }
-
-    return { score: bestScore, move: bestMove };
-  }
-
-  // #endregion Private Methods (8)
+  // #endregion Private Methods (7)
 }
 
 export interface IChessState {
