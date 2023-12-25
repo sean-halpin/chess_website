@@ -14,7 +14,7 @@ import { Result } from "../types/Result";
 import { Rank, rankValue } from "./ChessGameTypes";
 import { Team } from "./ChessGameTypes";
 import { None, Some, isSome, unwrap, Option, isNone } from "../types/Option";
-import { MoveResult } from "./ChessGameTypes";
+import { MoveResult } from "./MoveResult";
 import { Loc } from "./Loc";
 import { ChessPiece } from "./ChessPiece";
 import { ChessBoard } from "./ChessBoard";

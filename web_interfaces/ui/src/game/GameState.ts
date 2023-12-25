@@ -1,5 +1,5 @@
 import { Team } from "./ChessGameTypes";
-import { MoveResult } from "./ChessGameTypes";
+import { MoveResult } from "./MoveResult";
 import { ChessBoard } from "./ChessBoard";
 import _ from "lodash";
 

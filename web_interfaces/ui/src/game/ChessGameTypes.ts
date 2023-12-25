@@ -1,8 +1,3 @@
-import { MoveCommand } from "./GameCommands";
-import { None, Option } from "../types/Option";
-import { ChessPiece } from "./ChessPiece";
-import { Loc } from "./Loc";
-
 export enum Rank {
   Rook = "rook",
   Knight = "knight",
@@ -32,40 +27,4 @@ export function rankValue(rank: Rank): number {
 export enum Team {
   White = "white",
   Black = "black",
-}
-interface IMoveResult {
-  // #region Properties (4)
-
-  destination: Loc;
-  enPassantPossible?: Boolean;
-  movingPiece: ChessPiece;
-  takenPiece: Option<ChessPiece>;
-
-  // #endregion Properties (4)
-}
-export class MoveResult implements IMoveResult {
-  // #region Constructors (1)
-
-  constructor(
-    public destination: Loc,
-    public movingPiece: ChessPiece,
-    public takenPiece: Option<ChessPiece>,
-    public enPassantPossible: boolean = false,
-    public kingLocationsMustNotBeInCheck: Option<Loc[]> = None,
-    public rookSrcDestCastling: Option<{ src: Loc; dest: Loc }> = None
-  ) {}
-
-  // #endregion Constructors (1)
-
-  // #region Public Methods (1)
-
-  public toMoveCommand(): MoveCommand {
-    return {
-      command: "move",
-      source: this.movingPiece.position,
-      destination: this.destination,
-    };
-  }
-
-  // #endregion Public Methods (1)
 }
