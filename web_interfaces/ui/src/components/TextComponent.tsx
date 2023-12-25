@@ -25,7 +25,7 @@ export const TextComponent: React.FC<TextProps> = ({ text, textLow }) => {
         <p>Timer: {timer} seconds</p>
       </div>
       <div className="text-component-container">
-        <input type="text" id="textInput" name="textInput" value={textLow}></input>
+        <input type="text" id="textInput" name="textInput" value={textLow} onChange={()=>undefined}></input>
       </div>
     </div>
   );
