@@ -145,9 +145,9 @@ export class ChessGame {
         const updatedPiece = new ChessPiece(
           movingPiece.id,
           movingPiece.team,
-          movingPiece.rank === Rank.Pawn &&
-          (move.destination.row === 0 || move.destination.row === 7)
-            ? Rank.Queen
+          (movingPiece.rank === Rank.Pawn && move.destination.row === 0) ||
+          move.destination.row === 7
+            ? Rank.Queen // Promote pawn to queen
             : movingPiece.rank,
           move.destination,
           false
