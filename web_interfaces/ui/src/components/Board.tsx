@@ -3,7 +3,8 @@
 import React from "react";
 import Square from "./Square";
 import { MoveCommand } from "../game/GameCommands";
-import { ChessPiece, Loc } from "../game/ChessGameTypes";
+import { Loc } from "../game/Loc";
+import { ChessPiece } from "../game/ChessPiece";
 import { None, Some } from "../types/Option";
 
 interface BoardProps {

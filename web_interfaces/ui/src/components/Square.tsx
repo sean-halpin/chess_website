@@ -4,7 +4,8 @@ import React from "react";
 import { Piece } from "./Piece";
 import { useDrop } from "react-dnd";
 import { MoveCommand } from "../game/GameCommands";
-import { Loc, ChessPiece } from "../game/ChessGameTypes";
+import { Loc } from "../game/Loc";
+import { ChessPiece } from "../game/ChessPiece";
 import { Option, isSome, unwrap } from "../types/Option";
 import "./Square.css";
 

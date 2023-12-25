@@ -3,7 +3,8 @@
 import React from "react";
 import "./Piece.css";
 import { useDrag } from "react-dnd";
-import { Loc, Rank, Team } from "../game/ChessGameTypes";
+import { Rank, Team } from "../game/ChessGameTypes";
+import { Loc } from "../game/Loc";
 
 export interface PieceProps {
   id: string;

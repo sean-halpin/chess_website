@@ -1,6 +1,6 @@
 // MoveCommand.tsx
 
-import { Loc } from "./ChessGameTypes";
+import { Loc } from "./Loc";
 
 export interface MoveCommand {
   command: "move";

@@ -1,91 +1,30 @@
-import { isSome, unwrap } from "../types/Option";
-import { ChessPiece, Team } from "./ChessGameTypes";
-import { ChessBoard, MoveResult } from "./ChessGameTypes";
+import { Team } from "./ChessGameTypes";
+import { MoveResult } from "./ChessGameTypes";
+import { ChessBoard } from "./ChessBoard";
 import _ from "lodash";
 
 export class GameState {
-  // #region Properties (5)
-
-  private _board: ChessBoard;
-  private _commands: MoveResult[] = [];
-  private _counter: number = 0;
-  private _currentPlayer: Team.White | Team.Black = Team.White;
-  private _winner: any;
-
-  // #endregion Properties (5)
-
   // #region Constructors (1)
 
   constructor(
-    board: ChessBoard,
-    currentPlayer: Team.White | Team.Black,
-    commands: MoveResult[],
-    counter: number,
-    winner: any
-  ) {
-    this._board = board;
-    this._currentPlayer = currentPlayer;
-    this._commands = commands;
-    this._counter = counter;
-    this._winner = winner;
-  }
+    readonly board: ChessBoard,
+    readonly currentPlayer: Team.White | Team.Black,
+    readonly commands: MoveResult[],
+    readonly counter: number,
+    readonly winner: any
+  ) {}
 
   // #endregion Constructors (1)
 
-  // #region Public Accessors (11)
+  // #region Public Methods (2)
 
-  public get board(): ChessBoard {
-    return this._board;
-  }
-
-  public set board(value: ChessBoard) {
-    this._board = value;
-  }
-
-  public get commands(): MoveResult[] {
-    return this._commands;
-  }
-
-  public set commands(value: MoveResult[]) {
-    this._commands = value;
-  }
-
-  public get counter(): number {
-    return this._counter;
-  }
-
-  public set counter(value: number) {
-    this._counter = value;
-  }
-
-  public get currentPlayer(): Team.White | Team.Black {
-    return this._currentPlayer;
-  }
-
-  public set currentPlayer(value: Team.White | Team.Black) {
-    this._currentPlayer = value;
-  }
-
-  public get pieces(): ChessPiece[] {
-    return this.board.pieces.flat().filter(isSome).map(unwrap);
-  }
-
-  public get winner(): any {
-    return this._winner;
-  }
-
-  public set winner(value: any) {
-    this._winner = value;
-  }
-
-  // #endregion Public Accessors (11)
-
-  // #region Public Methods (1)
-
-  // a function which creates a deep copy the current state
-  public clone(): GameState {
+  public clone(){
     return _.cloneDeep(this);
   }
 
-  // #endregion Public Methods (1)
+  public withWinner(winner: string): GameState {
+    return new GameState(this.board, this.currentPlayer, this.commands, this.counter, winner);
+  }
+
+  // #endregion Public Methods (2)
 }

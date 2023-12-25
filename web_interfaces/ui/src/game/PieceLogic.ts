@@ -5,7 +5,9 @@ import {
   isSquareEmptyNotation,
   squareEntry,
 } from "./ChessGame";
-import { Loc, ChessPiece, MoveResult } from "./ChessGameTypes";
+import { MoveResult } from "./ChessGameTypes";
+import { Loc } from "./Loc";
+import { ChessPiece } from "./ChessPiece";
 import { Team } from "./ChessGameTypes";
 import { Rank } from "./ChessGameTypes";
 import { GameState } from "./GameState";

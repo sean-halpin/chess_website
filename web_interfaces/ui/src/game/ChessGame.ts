@@ -14,7 +14,10 @@ import { Result } from "../types/Result";
 import { Rank, rankValue } from "./ChessGameTypes";
 import { Team } from "./ChessGameTypes";
 import { None, Some, isSome, unwrap, Option, isNone } from "../types/Option";
-import { Loc, ChessPiece, ChessBoard, MoveResult } from "./ChessGameTypes";
+import { MoveResult } from "./ChessGameTypes";
+import { Loc } from "./Loc";
+import { ChessPiece } from "./ChessPiece";
+import { ChessBoard } from "./ChessBoard";
 import { GameState } from "./GameState";
 
 export class ChessGame {
@@ -404,7 +407,7 @@ export class ChessGame {
         const currentPlayer = clonedState.currentPlayer;
         const enemyPlayer =
           currentPlayer === Team.White ? Team.Black : Team.White;
-        const updatedState = this.applyMoveCommand(cmd, clonedState);
+        let updatedState = this.applyMoveCommand(cmd, clonedState);
         const ownKingChecked = this.isKingInCheck(updatedState, currentPlayer);
         if (ownKingChecked) {
           const err = "Invalid move: puts own king in check";
@@ -419,17 +422,16 @@ export class ChessGame {
 
         if (checkMate) {
           console.log("Checkmate");
-          updatedState.winner = `Checkmate, ${
+          updatedState = updatedState.withWinner(`Checkmate, ${
             clonedState.currentPlayer as Team
-          } wins`;
+          } wins`);
         } else if (draw) {
           console.log("Draw");
-          updatedState.winner = "Draw";
+          updatedState = updatedState.withWinner("Draw");
         } else if (enemyKingChecked) {
           console.log("Check");
-          updatedState.winner = "Check";
+          updatedState = updatedState.withWinner("Check");
         }
-        updatedState.counter = clonedState.counter + 1;
         // Lastly update the game state from updatedState
         this.gameState = updatedState;
 
