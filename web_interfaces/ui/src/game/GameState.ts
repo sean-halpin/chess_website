@@ -1,6 +1,7 @@
 import { isSome, unwrap } from "../types/Option";
 import { ChessPiece, Team } from "./ChessGameTypes";
 import { ChessBoard, MoveResult } from "./ChessGameTypes";
+import _ from "lodash";
 
 export class GameState {
   // #region Properties (5)
@@ -66,10 +67,7 @@ export class GameState {
   }
 
   public get pieces(): ChessPiece[] {
-    return this.board.pieces
-      .flat()
-      .filter(isSome)
-      .map(unwrap);
+    return this.board.pieces.flat().filter(isSome).map(unwrap);
   }
 
   public get winner(): any {
@@ -86,19 +84,7 @@ export class GameState {
 
   // a function which creates a deep copy the current state
   public clone(): GameState {
-    const clonedBoard: ChessBoard = this._board.clone();
-    const clonedCommands: MoveResult[] = [...this._commands];
-    const clonedCounter: number = this._counter;
-    const clonedCurrentPlayer: Team = this._currentPlayer;
-    const clonedWinner: any = this._winner;
-
-    return new GameState(
-      clonedBoard,
-      clonedCurrentPlayer,
-      clonedCommands,
-      clonedCounter,
-      clonedWinner
-    );
+    return _.cloneDeep(this);
   }
 
   // #endregion Public Methods (1)

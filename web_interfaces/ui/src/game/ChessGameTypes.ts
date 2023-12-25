@@ -117,11 +117,7 @@ export class ChessBoard {
 
   // #endregion Public Accessors (2)
 
-  // #region Public Methods (5)
-
-  public clone(): ChessBoard {
-    return new ChessBoard(this._pieces.map((row) => [...row]));
-  }
+  // #region Public Methods (4)
 
   public pieceFromLoc(location: Loc): Option<ChessPiece> {
     return this.pieces[location.row][location.col];
@@ -149,7 +145,7 @@ export class ChessBoard {
     this.pieces[row][col] = newPiece;
   }
 
-  // #endregion Public Methods (5)
+  // #endregion Public Methods (4)
 }
 
 interface IMoveResult {
