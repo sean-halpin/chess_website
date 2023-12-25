@@ -273,7 +273,6 @@ export class ChessGame {
     }
   }
 
-  // Rest of the code...
   public executeCommand(cmd: MoveCommand): Result<ChessGame, string> {
     switch (cmd.command) {
       case "move":
