@@ -10,13 +10,12 @@ const alphaBeta = async (
   startTime: number,
   timeLimit: number,
   maximizingPlayer: boolean
-): Promise<{ score: number; move: MoveCommand | null }> => {
+): Promise<{ score: number}> => {
   if (depth === 0 || ChessGame.isGameOver(gameState)) {
-    return { score: ChessGame.evaluateBoard(gameState), move: null };
+    return { score: ChessGame.evaluateBoard(gameState) };
   }
 
   let bestScore = maximizingPlayer ? -Infinity : Infinity;
-  let bestMove: MoveCommand | null = null;
 
   const moves = ChessGame.findLegalMoves(gameState, gameState.currentPlayer);
 
@@ -38,13 +37,11 @@ const alphaBeta = async (
     if (maximizingPlayer) {
       if (score > bestScore) {
         bestScore = score;
-        bestMove = move;
       }
       alpha = Math.max(alpha, bestScore);
     } else {
       if (score < bestScore) {
         bestScore = score;
-        bestMove = move;
       }
       beta = Math.min(beta, bestScore);
     }
@@ -58,7 +55,7 @@ const alphaBeta = async (
     }
   }
 
-  return { score: bestScore, move: bestMove };
+  return { score: bestScore };
 };
 
 const minimax = async (
@@ -71,7 +68,6 @@ const minimax = async (
 ): Promise<number> => {
   const startTime = Date.now();
   let bestScore = maximizingPlayer ? -Infinity : Infinity;
-  let bestMove: MoveCommand | null = null;
 
   for (let currentDepth = 1; currentDepth <= depth; currentDepth++) {
     const result = await alphaBeta(
@@ -87,17 +83,14 @@ const minimax = async (
     if (maximizingPlayer) {
       if (result.score > bestScore) {
         bestScore = result.score;
-        bestMove = result.move;
       }
       alpha = Math.max(alpha, bestScore);
     } else {
       if (result.score < bestScore) {
         bestScore = result.score;
-        bestMove = result.move;
         // log the score and move and depth
         console.log(
           `[Evaluation]Score: ${bestScore}`,
-          `Move: ${bestMove?.source.toNotation()} ${bestMove?.destination.toNotation()}`,
           `Depth: ${currentDepth}`
         );
       }
