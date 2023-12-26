@@ -16,8 +16,9 @@ import { GameState } from "./GameState";
 import { findBestMoveMinimax } from "./Minimax";
 
 export class ChessGame {
-  // #region Properties (10)
+  // #region Properties (11)
 
+  private _gameState: GameState;
   private createPiece = (
     team: Team,
     position: Loc,
@@ -32,14 +33,6 @@ export class ChessGame {
       firstMove: true,
     };
   };
-  private _gameState: GameState;
-  public get gameState(): GameState {
-    return this._gameState;
-  }
-  public set gameState(value: GameState) {
-    this._gameState = value;
-  }
-
   private initializeGameState = (
     fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
   ): GameState => {
@@ -195,11 +188,6 @@ export class ChessGame {
     }
     return score;
   };
-
-  public static findLegalMovesCurry = (gs: GameState) => (t: Team) => {
-    return ChessGame.findLegalMoves(gs, t);
-  };
-
   public static findLegalMoves = (
     gameState: GameState,
     team: Team
@@ -223,6 +211,9 @@ export class ChessGame {
       (move) =>
         !this.isKingInCheck(this.applyMoveCommand(move, clonedState), team)
     );
+  };
+  public static findLegalMovesCurry = (gs: GameState) => (t: Team) => {
+    return ChessGame.findLegalMoves(gs, t);
   };
   public static isGameOver = (gameState: GameState): boolean => {
     return gameState.winner === "Checkmate" || gameState.winner === "Draw";
@@ -320,7 +311,7 @@ export class ChessGame {
     return gameToFEN(this.gameState);
   };
 
-  // #endregion Properties (10)
+  // #endregion Properties (11)
 
   // #region Constructors (1)
 
@@ -330,10 +321,18 @@ export class ChessGame {
 
   // #endregion Constructors (1)
 
-  // #region Public Accessors (3)
+  // #region Public Accessors (5)
 
   public get currentPlayer(): string {
     return this.gameState.currentPlayer;
+  }
+
+  public get gameState(): GameState {
+    return this._gameState;
+  }
+
+  public set gameState(value: GameState) {
+    this._gameState = value;
   }
 
   public get pieces(): ChessPiece[] {
@@ -344,7 +343,7 @@ export class ChessGame {
     return this.gameState.winner;
   }
 
-  // #endregion Public Accessors (3)
+  // #endregion Public Accessors (5)
 
   // #region Public Methods (1)
 
@@ -353,7 +352,7 @@ export class ChessGame {
     const possibleMoves = ChessGame.findLegalMoves(clonedGameState, team);
 
     if (possibleMoves.length > 0) {
-      const bestMove = findBestMoveMinimax(clonedGameState, 6);
+      const bestMove = findBestMoveMinimax(clonedGameState, 3, 3 * 1000);
       return this.executeCommand(await bestMove);
     } else {
       return { success: false, error: "No possible moves" };
