@@ -36,8 +36,6 @@ function maybePiece(piece: Option<ChessPiece>, moves: MoveCommand[]) {
   }
 }
 
-// function that takes a row number and returns the chess alphabet notation
-// for that row. 0 -> a, 1 -> b, etc.
 function colToNotation(row: number): string {
   return String.fromCharCode(97 + row);
 }

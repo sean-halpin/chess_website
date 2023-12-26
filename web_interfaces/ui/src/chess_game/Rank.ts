@@ -5,7 +5,7 @@ export enum Rank {
     Queen = "queen",
     King = "king",
     Pawn = "pawn"
-}// function that takes a rank and returns the value of the rank
+}
 
 export function rankValue(rank: Rank): number {
     switch (rank) {
