@@ -110,38 +110,76 @@ export const Game: React.FC = () => {
     if (isTouchDevice()) {
       return (
         <div>
-          <div className="chessBox">
+          <div className="header">
             <h1>Chess</h1>
-            <DndProvider backend={TouchBackend}>
-              <Board
-                pieces={state.game.pieces}
-                sendMoveCommand={sendMoveCommand}
-                legalMoves={ChessGame.findLegalMovesCurry(state.game.gameState)}
-              />
-            </DndProvider>
           </div>
-          <div>
-            <TextComponent text={state.displayText} textLow={state.fen} />
-            <AudioPlayer ref={audioPlayerRef} />
+          <div className="topnav">
+            <button>Connect</button>
+          </div>
+          <div className="row">
+            <div className="column">
+              <h2></h2>
+              <p></p>
+            </div>
+            <div className="column">
+              <div className="chessBox">
+                <DndProvider backend={TouchBackend}>
+                  <Board
+                    pieces={state.game.pieces}
+                    sendMoveCommand={sendMoveCommand}
+                    legalMoves={ChessGame.findLegalMovesCurry(
+                      state.game.gameState
+                    )}
+                  />
+                </DndProvider>
+              </div>
+              <div>
+                <TextComponent text={state.displayText} textLow={state.fen} />
+                <AudioPlayer ref={audioPlayerRef} />
+              </div>
+            </div>
+            <div className="column">
+              <h2></h2>
+              <p></p>
+            </div>
           </div>
         </div>
       );
     } else {
       return (
         <div>
-          <div className="chessBox">
+          <div className="header">
             <h1>Chess</h1>
-            <DndProvider backend={HTML5Backend}>
-              <Board
-                pieces={state.game.pieces}
-                sendMoveCommand={sendMoveCommand}
-                legalMoves={ChessGame.findLegalMovesCurry(state.game.gameState)}
-              />
-            </DndProvider>
           </div>
-          <div>
-            <TextComponent text={state.displayText} textLow={state.fen} />
-            <AudioPlayer ref={audioPlayerRef} />
+          <div className="topnav">
+            <button>Connect</button>
+          </div>
+          <div className="row">
+            <div className="column">
+              <h2></h2>
+              <p></p>
+            </div>
+            <div className="column">
+              <div className="chessBox">
+                <DndProvider backend={HTML5Backend}>
+                  <Board
+                    pieces={state.game.pieces}
+                    sendMoveCommand={sendMoveCommand}
+                    legalMoves={ChessGame.findLegalMovesCurry(
+                      state.game.gameState
+                    )}
+                  />
+                </DndProvider>
+              </div>
+              <div>
+                <TextComponent text={state.displayText} textLow={state.fen} />
+                <AudioPlayer ref={audioPlayerRef} />
+              </div>
+            </div>
+            <div className="column">
+              <h2></h2>
+              <p></p>
+            </div>
           </div>
         </div>
       );
