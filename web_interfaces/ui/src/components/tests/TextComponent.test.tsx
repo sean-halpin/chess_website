@@ -3,13 +3,14 @@ import { TextComponent, TextProps } from "../TextComponent";
 
 describe("TextComponent", () => {
   const defaultProps: TextProps = {
-    text: "Hello, World!",
-    textLow: ""
+    statusMessage: "",
+    nextToMove: "Hello, World!",
+    fenString: ""
   };
 
   it("renders component with initial state", () => {
     render(<TextComponent {...defaultProps} />);
-    expect(screen.getByText(defaultProps.text)).toBeInTheDocument();
+    expect(screen.getByText(defaultProps.nextToMove)).toBeInTheDocument();
     expect(screen.getByText("Timer: 0 seconds")).toBeInTheDocument();
   });
 
@@ -28,7 +29,7 @@ describe("TextComponent", () => {
   it("cleanup function calls clearInterval", async () => {
     jest.useFakeTimers(); // Mock the timers API
     const clearIntervalMock = jest.spyOn(window, "clearInterval");
-    const { unmount } = render(<TextComponent text={"Hello"} textLow="" />);
+    const { unmount } = render(<TextComponent statusMessage="" nextToMove={"Hello"} fenString="" />);
 
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     await waitFor(() => {}, { timeout: 1 });

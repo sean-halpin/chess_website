@@ -30,7 +30,7 @@ describe("ChessGameLogic", () => {
     );
     expect(q?.position).toEqual(expected_dest);
     expect(updatedState.currentPlayer).toEqual(Team.Black);
-    expect(updatedState.winner).toEqual("Checkmate, white wins");
+    expect(updatedState.status).toEqual("Checkmate");
   });
 
   it("should initialize from a non default FEN string and update via move command", () => {
@@ -77,7 +77,7 @@ describe("ChessGameLogic", () => {
     const initialGame: ChessGame = new ChessGame(defaultFEN);
 
     expect(initialGame.currentPlayer).toEqual(Team.White);
-    expect(initialGame.winner).toBeNull();
+    expect(initialGame.status).toBeNull();
   });
 
   it("should initialize from a non default FEN string", () => {
@@ -86,12 +86,12 @@ describe("ChessGameLogic", () => {
     const initialGame: ChessGame = new ChessGame(defaultFEN);
 
     expect(initialGame.currentPlayer).toEqual(Team.White);
-    expect(initialGame.winner).toBeNull();
+    expect(initialGame.status).toBeNull();
   });
 
   it("should initialize with default values", () => {
     expect(chessGameLogic.currentPlayer).toEqual(Team.White);
-    expect(chessGameLogic.winner).toBeNull();
+    expect(chessGameLogic.status).toBeNull();
   });
 
   it("should execute a valid move command", () => {
@@ -129,7 +129,7 @@ describe("ChessGameLogic", () => {
     expect(king?.position).toEqual(expected_king_loc);
     expect(rook?.position).toEqual(expected_rook_loc);
     expect(updatedState.currentPlayer).toEqual(Team.Black);
-    expect(updatedState.winner).toEqual(null);
+    expect(updatedState.status).toEqual(null);
   });
 
 
@@ -158,7 +158,7 @@ describe("ChessGameLogic", () => {
     expect(king?.position).toEqual(expected_king_loc);
     expect(rook?.position).toEqual(expected_rook_loc);
     expect(updatedState.currentPlayer).toEqual(Team.Black);
-    expect(updatedState.winner).toEqual(null);
+    expect(updatedState.status).toEqual(null);
   });
 
   xit("should handle invalid move commands", () => {

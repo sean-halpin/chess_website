@@ -11,7 +11,7 @@ export class GameState {
     readonly currentPlayer: Team.White | Team.Black,
     readonly commands: MoveResult[],
     readonly counter: number,
-    readonly winner: any
+    readonly status: any
   ) {}
 
   // #endregion Constructors (1)

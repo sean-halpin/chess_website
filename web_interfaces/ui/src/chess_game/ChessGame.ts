@@ -216,7 +216,7 @@ export class ChessGame {
     return ChessGame.findLegalMoves(gs, t);
   };
   public static isGameOver = (gameState: GameState): boolean => {
-    return gameState.winner === "Checkmate" || gameState.winner === "Draw";
+    return gameState.status === "Checkmate" || gameState.status === "Draw";
   };
   public static isKingInCheck = (gameState: GameState, team: Team): boolean => {
     // Make a copy of the current game state
@@ -287,9 +287,7 @@ export class ChessGame {
 
           if (checkMate) {
             console.log("Checkmate");
-            updatedState = updatedState.withWinner(
-              `Checkmate, ${clonedState.currentPlayer as Team} wins`
-            );
+            updatedState = updatedState.withWinner(`Checkmate`);
           } else if (draw) {
             console.log("Draw");
             updatedState = updatedState.withWinner("Draw");
@@ -339,8 +337,8 @@ export class ChessGame {
     return this.gameState.board.squares.flat().filter(isSome).map(unwrap);
   }
 
-  public get winner(): Team | "Check" | "Checkmate" | "Draw" | null {
-    return this.gameState.winner;
+  public get status(): Team | "Check" | "Checkmate" | "Draw" | null {
+    return this.gameState.status;
   }
 
   // #endregion Public Accessors (5)

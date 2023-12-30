@@ -52,8 +52,8 @@ export const Game: React.FC = () => {
   }
 
   if (
-    !state.game.winner?.includes("Checkmate") &&
-    !state.game.winner?.includes("Draw")
+    !state.game.status?.includes("Checkmate") &&
+    !state.game.status?.includes("Draw")
   ) {
     const curr_player = state.game.currentPlayer;
     const capitalized_player =
@@ -61,7 +61,7 @@ export const Game: React.FC = () => {
 
     state.displayText = `${capitalized_player} to move`;
   } else {
-    state.displayText = `${state.game.winner}`;
+    state.displayText = `${state.game.status}`;
   }
   state.fen = state.game.getCurrentFen();
 
@@ -73,8 +73,8 @@ export const Game: React.FC = () => {
       }
     };
     if (
-      !state.game.winner?.includes("Checkmate") &&
-      !state.game.winner?.includes("Draw")
+      !state.game.status?.includes("Checkmate") &&
+      !state.game.status?.includes("Draw")
     ) {
       const curr_player = state.game.currentPlayer;
       const capitalized_player =
@@ -82,7 +82,7 @@ export const Game: React.FC = () => {
       state.displayText = `${capitalized_player} to move`;
       waitOneSecond();
     } else {
-      state.displayText = `${state.game.winner}`;
+      state.displayText = `${state.game.status}`;
     }
   });
 
@@ -134,7 +134,11 @@ export const Game: React.FC = () => {
                 </DndProvider>
               </div>
               <div>
-                <TextComponent text={state.displayText} textLow={state.fen} />
+                <TextComponent
+                  statusMessage={state.game.status || ""}
+                  nextToMove={`${state.game.currentPlayer} to move next`}
+                  fenString={state.fen}
+                />
                 <AudioPlayer ref={audioPlayerRef} />
               </div>
             </div>
@@ -172,7 +176,11 @@ export const Game: React.FC = () => {
                 </DndProvider>
               </div>
               <div>
-                <TextComponent text={state.displayText} textLow={state.fen} />
+                <TextComponent
+                  statusMessage={state.game.status || ""}
+                  nextToMove={`${state.game.currentPlayer} to move next`}
+                  fenString={state.fen}
+                />
                 <AudioPlayer ref={audioPlayerRef} />
               </div>
             </div>

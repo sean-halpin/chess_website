@@ -2,11 +2,16 @@ import React, { useState, useEffect } from "react";
 import "./TextComponent.css";
 
 export interface TextProps {
-  text: string;
-  textLow: string;
+  statusMessage: string;
+  nextToMove: string;
+  fenString: string;
 }
 
-export const TextComponent: React.FC<TextProps> = ({ text, textLow }) => {
+export const TextComponent: React.FC<TextProps> = ({
+  statusMessage,
+  nextToMove,
+  fenString,
+}) => {
   const [timer, setTimer] = useState(0);
 
   useEffect(() => {
@@ -21,11 +26,18 @@ export const TextComponent: React.FC<TextProps> = ({ text, textLow }) => {
   return (
     <div>
       <div className="infoBox">
-        <p>{text}</p>
+        <p>{statusMessage}</p>
+        <p>{nextToMove}</p>
         <p>Timer: {timer} seconds</p>
       </div>
       <div className="text-component-container">
-        <input type="text" id="textInput" name="textInput" value={textLow} onChange={()=>undefined}></input>
+        <input
+          type="text"
+          id="textInput"
+          name="textInput"
+          value={fenString}
+          onChange={() => undefined}
+        ></input>
       </div>
     </div>
   );
