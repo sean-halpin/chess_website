@@ -14,8 +14,16 @@ interface BoardProps {
   legalMoves: (team: Team) => MoveCommand[];
 }
 
-const Board: React.FC<BoardProps> = ({ pieces, sendMoveCommand, legalMoves }) => {
-  const renderSquare = (row: number, col: number, moves: MoveCommand[]): JSX.Element => {
+const Board: React.FC<BoardProps> = ({
+  pieces,
+  sendMoveCommand,
+  legalMoves,
+}) => {
+  const renderSquare = (
+    row: number,
+    col: number,
+    moves: MoveCommand[]
+  ): JSX.Element => {
     const isEven = (row + col) % 2 === 1;
     const color = isEven ? "rgb(255, 205, 148)" : "rgb(200, 110, 25)";
     const piece = pieces.find((p) => {
