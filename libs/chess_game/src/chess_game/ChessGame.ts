@@ -197,15 +197,19 @@ export class ChessGame {
     const clonedState = gameState.clone();
     // Apply the move command to the copied game state
 
-    const pieces = clonedState.board.squares
+    const pieces: ChessPiece[] = clonedState.board.squares
       .flat()
       .filter(isSome)
       .map(unwrap)
-      .filter((p) => p.team === team);
+      .filter((p: { team: Team }) => p.team === team);
 
     for (const piece of pieces) {
       const moves = moveFunctions[piece.rank](piece, clonedState);
-      legalMoves.push(...moves.flat().map((m) => m.toMoveCommand()));
+      legalMoves.push(
+        ...moves
+          .flat()
+          .map((m: { toMoveCommand: () => any }) => m.toMoveCommand())
+      );
     }
     return legalMoves.filter(
       (move) =>
@@ -228,17 +232,18 @@ export class ChessGame {
       .filter(isSome)
       .map(unwrap)
       .find(
-        (piece) => piece.team === team && piece.rank === Rank.King
+        (piece: { team: Team; rank: Rank }) =>
+          piece.team === team && piece.rank === Rank.King
       ) as ChessPiece;
 
     // Check if the king is under threat after the move
     const opponentColor = team === Team.White ? Team.Black : Team.White;
-    const opponentPieces = clonedGameState.board.squares
+    const opponentPieces: ChessPiece[] = clonedGameState.board.squares
       .flat()
       .filter(isSome)
       .map(unwrap)
-      .filter((piece) => piece.team === opponentColor)
-      .map((piece) => piece as ChessPiece);
+      .filter((piece: { team: Team }) => piece.team === opponentColor)
+      .map((piece: ChessPiece) => piece as ChessPiece);
 
     for (const opponentPiece of opponentPieces) {
       const opponentMoves = moveFunctions[opponentPiece.rank](

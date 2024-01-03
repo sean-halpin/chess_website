@@ -129,7 +129,7 @@ const findLegalPawnMoves = (
   );
   if (
     isSome(possiblePieceRight) &&
-    unwrap(possiblePieceRight).team !== movingPiece.team
+    possiblePieceRight.unwrap().team !== movingPiece.team
   ) {
     moveResults.push(
       new MoveResult(
@@ -146,7 +146,7 @@ const findLegalPawnMoves = (
   );
   if (
     isSome(possiblePieceLeft) &&
-    unwrap(possiblePieceLeft).team !== movingPiece.team
+    possiblePieceLeft.unwrap().team !== movingPiece.team
   ) {
     moveResults.push(
       new MoveResult(
@@ -185,8 +185,8 @@ const findLegalPawnMoves = (
       );
       return (
         isSome(possiblePiece) &&
-        unwrap(possiblePiece).rank === Rank.Pawn &&
-        unwrap(possiblePiece).team !== movingPiece.team
+        possiblePiece.unwrap().rank === Rank.Pawn &&
+        possiblePiece.unwrap().team !== movingPiece.team
       );
     };
     if (enPassantAttackable(-1)) {

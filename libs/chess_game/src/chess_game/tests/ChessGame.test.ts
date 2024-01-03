@@ -26,7 +26,8 @@ describe("ChessGameLogic", () => {
     const result = initialGame.executeCommand(cmd);
     const updatedState = result.success ? result.data : initialGame;
     const q = updatedState.pieces.find(
-      (p) => p.rank === Rank.Queen && p.team === Team.White
+      (p: { rank: Rank; team: Team }) =>
+        p.rank === Rank.Queen && p.team === Team.White
     );
     expect(q?.position).toEqual(expected_dest);
     expect(updatedState.currentPlayer).toEqual(Team.Black);
@@ -46,7 +47,8 @@ describe("ChessGameLogic", () => {
     const result = initialGame.executeCommand(cmd);
     const updatedState = result.success ? result.data : initialGame;
     const q = updatedState.pieces.find(
-      (p) => p.rank === Rank.Queen && p.team === Team.White
+      (p: { rank: Rank; team: Team }) =>
+        p.rank === Rank.Queen && p.team === Team.White
     );
     expect(q?.position).toEqual(expected_dest);
     expect(updatedState.currentPlayer).toEqual(Team.Black);
@@ -64,7 +66,7 @@ describe("ChessGameLogic", () => {
     const result = initialGame.executeCommand(cmd);
     const updatedState = result.success ? result.data : initialGame;
     const q = updatedState.pieces.find(
-      (p) =>
+      (p: { rank: Rank; id: string | string[]; team: Team }) =>
         p.rank === Rank.Queen && p.id.includes("pawn") && p.team === Team.White
     );
     expect(q?.position).toEqual(expected_dest);
@@ -118,10 +120,15 @@ describe("ChessGameLogic", () => {
     const result = initialGame.executeCommand(cmd);
     const updatedState = result.success ? result.data : initialGame;
     const king = updatedState.pieces.find(
-      (p) => p.rank === Rank.King && p.team === Team.White
+      (p: { rank: Rank; team: Team }) =>
+        p.rank === Rank.King && p.team === Team.White
     );
     const rook = updatedState.pieces.find(
-      (p) =>
+      (p: {
+        rank: Rank;
+        team: Team;
+        position: { isEqual: (arg0: any) => any };
+      }) =>
         p.rank === Rank.Rook &&
         p.team === Team.White &&
         p.position.isEqual(Loc.fromNotation("d1").unwrap())
@@ -131,7 +138,6 @@ describe("ChessGameLogic", () => {
     expect(updatedState.currentPlayer).toEqual(Team.Black);
     expect(updatedState.status).toEqual(null);
   });
-
 
   it("should initialize from a FEN string move the king and assert king side rook position", () => {
     const bothSideCastleInOneFen =
@@ -147,10 +153,15 @@ describe("ChessGameLogic", () => {
     const result = initialGame.executeCommand(cmd);
     const updatedState = result.success ? result.data : initialGame;
     const king = updatedState.pieces.find(
-      (p) => p.rank === Rank.King && p.team === Team.White
+      (p: { rank: Rank; team: Team }) =>
+        p.rank === Rank.King && p.team === Team.White
     );
     const rook = updatedState.pieces.find(
-      (p) =>
+      (p: {
+        rank: Rank;
+        team: Team;
+        position: { isEqual: (arg0: any) => any };
+      }) =>
         p.rank === Rank.Rook &&
         p.team === Team.White &&
         p.position.isEqual(Loc.fromNotation("f1").unwrap())

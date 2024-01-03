@@ -1,12 +1,12 @@
 // Piece.tsx
 
 import React, { useEffect } from "react";
-import "./Piece.css";
+import "./css/Piece.css";
 import { useDrag } from "react-dnd";
-import { Team } from "../chess_game/Team";
-import { Rank } from "../chess_game/Rank";
-import { Loc } from "../chess_game/Loc";
-import { MoveCommand } from "../chess_game/GameCommands";
+import { Team } from "chess_game";
+import { Rank } from "chess_game";
+import { Loc } from "chess_game";
+import { MoveCommand } from "chess_game";
 
 export interface PieceProps {
   id: string;

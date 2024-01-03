@@ -3,11 +3,11 @@
 import React from "react";
 import { Piece } from "./Piece";
 import { useDrop } from "react-dnd";
-import { MoveCommand } from "../chess_game/GameCommands";
-import { Loc } from "../chess_game/Loc";
-import { ChessPiece } from "../chess_game/ChessPiece";
-import { Option, isSome } from "../types/Option";
-import "./Square.css";
+import { MoveCommand } from "chess_game";
+import { Loc } from "chess_game";
+import { ChessPiece } from "chess_game";
+import { Option, isSome } from "chess_game";
+import "./css/Square.css";
 
 interface SquareProps {
   color: string;

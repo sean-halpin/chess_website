@@ -1,0 +1,13 @@
+# Files and directories to be ignored in npm package
+*.ts
+*.tsx
+*.d.ts
+tsconfig.json
+src/
+node_modules/
+__tests__/
+__mocks__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx

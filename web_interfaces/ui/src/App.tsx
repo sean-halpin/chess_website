@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Game } from "./components/Game";
-import "./App.css";
+import "./css/App.css";
 
 const App: React.FC = () => {
   return (
