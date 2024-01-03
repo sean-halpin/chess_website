@@ -2,11 +2,11 @@
 
 import React from "react";
 import Square from "./Square";
-import { MoveCommand } from "../chess_game/GameCommands";
-import { Loc } from "../chess_game/Loc";
-import { ChessPiece } from "../chess_game/ChessPiece";
-import { None, Some } from "../types/Option";
-import { Team } from "../chess_game/Team";
+import { MoveCommand } from "chess_game";
+import { Loc } from "chess_game";
+import { ChessPiece } from "chess_game";
+import { None, Some } from "chess_game";
+import { Team } from "chess_game";
 
 interface BoardProps {
   pieces: ChessPiece[];
@@ -14,8 +14,16 @@ interface BoardProps {
   legalMoves: (team: Team) => MoveCommand[];
 }
 
-const Board: React.FC<BoardProps> = ({ pieces, sendMoveCommand, legalMoves }) => {
-  const renderSquare = (row: number, col: number, moves: MoveCommand[]): JSX.Element => {
+const Board: React.FC<BoardProps> = ({
+  pieces,
+  sendMoveCommand,
+  legalMoves,
+}) => {
+  const renderSquare = (
+    row: number,
+    col: number,
+    moves: MoveCommand[]
+  ): JSX.Element => {
     const isEven = (row + col) % 2 === 1;
     const color = isEven ? "rgb(255, 205, 148)" : "rgb(200, 110, 25)";
     const piece = pieces.find((p) => {

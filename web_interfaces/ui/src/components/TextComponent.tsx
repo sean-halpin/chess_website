@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import "./TextComponent.css";
+import "./css/TextComponent.css";
 
 export interface TextProps {
   statusMessage: string;
