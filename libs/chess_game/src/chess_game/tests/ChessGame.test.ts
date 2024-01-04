@@ -5,6 +5,7 @@ import { Team } from "../Team";
 import { Rank } from "../Rank";
 import { Loc } from "../Loc";
 import { MoveCommand } from "../GameCommands";
+import { GameStatus } from "../GameState";
 
 describe("ChessGameLogic", () => {
   let chessGameLogic: ChessGame;
@@ -79,7 +80,7 @@ describe("ChessGameLogic", () => {
     const initialGame: ChessGame = new ChessGame(defaultFEN);
 
     expect(initialGame.currentPlayer).toEqual(Team.White);
-    expect(initialGame.status).toBeNull();
+    expect(initialGame.status).toBe(GameStatus.InProgress);
   });
 
   it("should initialize from a non default FEN string", () => {
@@ -88,12 +89,12 @@ describe("ChessGameLogic", () => {
     const initialGame: ChessGame = new ChessGame(defaultFEN);
 
     expect(initialGame.currentPlayer).toEqual(Team.White);
-    expect(initialGame.status).toBeNull();
+    expect(initialGame.status).toBe(GameStatus.InProgress);
   });
 
   it("should initialize with default values", () => {
     expect(chessGameLogic.currentPlayer).toEqual(Team.White);
-    expect(chessGameLogic.status).toBeNull();
+    expect(chessGameLogic.status).toBe(GameStatus.InProgress);
   });
 
   it("should execute a valid move command", () => {
@@ -136,7 +137,7 @@ describe("ChessGameLogic", () => {
     expect(king?.position).toEqual(expected_king_loc);
     expect(rook?.position).toEqual(expected_rook_loc);
     expect(updatedState.currentPlayer).toEqual(Team.Black);
-    expect(updatedState.status).toEqual(null);
+    expect(updatedState.status).toBe(GameStatus.InProgress);
   });
 
   it("should initialize from a FEN string move the king and assert king side rook position", () => {
@@ -169,7 +170,7 @@ describe("ChessGameLogic", () => {
     expect(king?.position).toEqual(expected_king_loc);
     expect(rook?.position).toEqual(expected_rook_loc);
     expect(updatedState.currentPlayer).toEqual(Team.Black);
-    expect(updatedState.status).toEqual(null);
+    expect(updatedState.status).toBe(GameStatus.InProgress);
   });
 
   xit("should handle invalid move commands", () => {

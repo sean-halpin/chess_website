@@ -175,8 +175,8 @@ const findLegalPawnMoves = (
   }
 
   // En Passant
-  const lastCommand = gameState.commands[gameState.commands.length - 1];
-  if (gameState.commands.length > 0 && lastCommand?.enPassantPossible) {
+  const lastCommandResult = gameState.commands[gameState.commands.length - 1];
+  if (gameState.commands.length > 0 && lastCommandResult[1]?.enPassantPossible) {
     const enPassantAttackable = (column_offset: number) => {
       const possiblePiece = squareEntry(
         movingPieceCurrentRow,
