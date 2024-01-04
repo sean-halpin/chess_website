@@ -10,5 +10,5 @@ export * from './chess_game/MoveResult';
 export * from './chess_game/PieceLogic';
 export * from './chess_game/Rank';
 export * from './chess_game/Team';
-export * from './types/Option';
-export * from './types/Result';
+export * from './rust_types/Option';
+export * from './rust_types/Result';

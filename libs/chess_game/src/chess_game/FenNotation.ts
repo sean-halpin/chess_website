@@ -1,7 +1,15 @@
-import { isNone, unwrap } from "../types/Option";
+import { isNone, unwrap } from "../rust_types/Option";
 import { Team } from "./Team";
 import { Rank } from "./Rank";
 import { GameState } from "./GameState";
+
+// #region Functions (5)
+
+export function fenPieceToTeam(str: string): Team {
+  return str === str.toLowerCase() && str !== str.toUpperCase()
+    ? Team.Black
+    : Team.White;
+}
 
 export function fenToRank(fenChar: string): Rank {
   switch (fenChar.toLowerCase()) {
@@ -22,25 +30,6 @@ export function fenToRank(fenChar: string): Rank {
   }
 }
 
-export function rankToFEN(rank: Rank): string {
-  switch (rank) {
-    case Rank.Rook:
-      return "r";
-    case Rank.Knight:
-      return "n";
-    case Rank.Bishop:
-      return "b";
-    case Rank.Queen:
-      return "q";
-    case Rank.King:
-      return "k";
-    case Rank.Pawn:
-      return "p";
-    default:
-      return "p";
-  }
-}
-
 export function fenToTeam(fenChar: string): Team {
   switch (fenChar.toLowerCase()) {
     case "w":
@@ -50,12 +39,6 @@ export function fenToTeam(fenChar: string): Team {
     default:
       return Team.White;
   }
-}
-
-export function fenPieceToTeam(str: string): Team {
-  return str === str.toLowerCase() && str !== str.toUpperCase()
-    ? Team.Black
-    : Team.White;
 }
 
 export function gameToFEN(game: GameState): string {
@@ -95,3 +78,24 @@ export function gameToFEN(game: GameState): string {
 
   return fen;
 }
+
+export function rankToFEN(rank: Rank): string {
+  switch (rank) {
+    case Rank.Rook:
+      return "r";
+    case Rank.Knight:
+      return "n";
+    case Rank.Bishop:
+      return "b";
+    case Rank.Queen:
+      return "q";
+    case Rank.King:
+      return "k";
+    case Rank.Pawn:
+      return "p";
+    default:
+      return "p";
+  }
+}
+
+// #endregion Functions (5)

@@ -2,11 +2,11 @@
 
 import React from "react";
 import Square from "./Square";
-import { MoveCommand } from "chess_game";
-import { Loc } from "chess_game";
-import { ChessPiece } from "chess_game";
-import { None, Some } from "chess_game";
-import { Team } from "chess_game";
+import { MoveCommand } from "@sean_halpin/chess_game";
+import { Loc } from "@sean_halpin/chess_game";
+import { ChessPiece } from "@sean_halpin/chess_game";
+import { None, Some } from "@sean_halpin/chess_game";
+import { Team } from "@sean_halpin/chess_game";
 
 interface BoardProps {
   pieces: ChessPiece[];

@@ -38,11 +38,11 @@ export const minimax = (
   }
 };
 
-export const findBestMoveMinimax = (
+export const findBestMoveMinimax = async (
   gameState: GameState,
   depth: number,
   timeLimit: number
-): MoveCommand => {
+): Promise<MoveCommand> => {
   const start = Date.now();
   let bestMove = null;
   let bestValue = -Infinity;

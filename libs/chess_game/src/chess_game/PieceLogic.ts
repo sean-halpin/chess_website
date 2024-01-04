@@ -1,4 +1,4 @@
-import { None, Some, isSome, unwrap } from "../types/Option";
+import { None, Some, isSome, unwrap } from "../rust_types/Option";
 import {
   isSquareEmpty,
   isSquareEmptyNotation,

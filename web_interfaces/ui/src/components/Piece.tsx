@@ -3,10 +3,10 @@
 import React, { useEffect } from "react";
 import "./css/Piece.css";
 import { useDrag } from "react-dnd";
-import { Team } from "chess_game";
-import { Rank } from "chess_game";
-import { Loc } from "chess_game";
-import { MoveCommand } from "chess_game";
+import { Team } from "@sean_halpin/chess_game";
+import { Rank } from "@sean_halpin/chess_game";
+import { Loc } from "@sean_halpin/chess_game";
+import { MoveCommand } from "@sean_halpin/chess_game";
 
 export interface PieceProps {
   id: string;

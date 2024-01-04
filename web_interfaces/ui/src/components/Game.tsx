@@ -3,15 +3,13 @@
 import { DndProvider } from "react-dnd";
 import React, { useEffect, useState, useRef } from "react";
 import Board from "./Board";
-import { Team } from "chess_game";
-import { MoveCommand } from "chess_game";
 import "./css/Game.css";
 import isTouchDevice from "is-touch-device";
 import { TouchBackend } from "react-dnd-touch-backend";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import AudioPlayer from "./AudioPlayer";
 import { TextComponent } from "./TextComponent";
-import { ChessGame } from "chess_game";
+import { ChessGame, MoveCommand, Team } from "@sean_halpin/chess_game";
 
 export interface GameProps {
   game: ChessGame;

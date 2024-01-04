@@ -2,7 +2,7 @@ import { Team } from "./Team";
 import { MoveResult } from "./MoveResult";
 import { Board } from "./Board";
 import _ from "lodash";
-import { isSome, unwrap } from "../types/Option";
+import { isSome, unwrap } from "../rust_types/Option";
 import { rankValue } from "./Rank";
 import { ChessGame } from "./ChessGame";
 import { MoveCommand } from "./GameCommands";

@@ -3,10 +3,10 @@
 import React from "react";
 import { Piece } from "./Piece";
 import { useDrop } from "react-dnd";
-import { MoveCommand } from "chess_game";
-import { Loc } from "chess_game";
-import { ChessPiece } from "chess_game";
-import { Option, isSome } from "chess_game";
+import { MoveCommand } from "@sean_halpin/chess_game";
+import { Loc } from "@sean_halpin/chess_game";
+import { ChessPiece } from "@sean_halpin/chess_game";
+import { Option, isSome } from "@sean_halpin/chess_game";
 import "./css/Square.css";
 
 interface SquareProps {

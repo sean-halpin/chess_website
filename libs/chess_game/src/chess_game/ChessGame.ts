@@ -3,11 +3,10 @@
 import { gameToFEN, fenPieceToTeam, fenToRank, fenToTeam } from "./FenNotation";
 import { MoveCommand } from "./GameCommands";
 import { moveFunctions } from "./PieceLogic";
-import { Result } from "../types/Result";
-import { rankValue } from "./Rank";
+import { Result } from "../rust_types/Result";
 import { Rank } from "./Rank";
 import { Team } from "./Team";
-import { None, Some, isSome, unwrap, Option, isNone } from "../types/Option";
+import { None, Some, isSome, unwrap, Option, isNone } from "../rust_types/Option";
 import { MoveResult } from "./MoveResult";
 import { Loc } from "./Loc";
 import { ChessPiece } from "./ChessPiece";
@@ -16,7 +15,7 @@ import { GameState, GameStatus } from "./GameState";
 import { findBestMoveMinimax } from "./Minimax";
 
 export class ChessGame {
-  // #region Properties (11)
+  // #region Properties (10)
 
   private _gameState: GameState;
   private createPiece = (
@@ -170,7 +169,6 @@ export class ChessGame {
     }
     return clonedGameState;
   };
-
   public static findLegalMoves = (
     gameState: GameState,
     team: Team
@@ -297,7 +295,7 @@ export class ChessGame {
     return gameToFEN(this.gameState);
   };
 
-  // #endregion Properties (11)
+  // #endregion Properties (10)
 
   // #region Constructors (1)
 
@@ -307,7 +305,7 @@ export class ChessGame {
 
   // #endregion Constructors (1)
 
-  // #region Public Accessors (5)
+  // #region Public Getters And Setters (5)
 
   public get currentPlayer(): string {
     return this.gameState.currentPlayer;
@@ -329,17 +327,17 @@ export class ChessGame {
     return this.gameState.status;
   }
 
-  // #endregion Public Accessors (5)
+  // #endregion Public Getters And Setters (5)
 
   // #region Public Methods (1)
 
-  public cpuMoveMinimax(team: Team): Result<ChessGame, string> {
+  public async cpuMoveMinimax(team: Team): Promise<Result<ChessGame, string>> {
     const clonedGameState = this.gameState.clone();
     const possibleMoves = ChessGame.findLegalMoves(clonedGameState, team);
 
     if (possibleMoves.length > 0) {
       const bestMove = findBestMoveMinimax(clonedGameState, 3, 3 * 1000);
-      return this.executeCommand(bestMove);
+      return this.executeCommand(await bestMove);
     } else {
       return { success: false, error: "No possible moves" };
     }
