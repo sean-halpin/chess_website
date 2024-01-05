@@ -7,6 +7,7 @@
     "declaration": true, 
     "strict": true,
     "esModuleInterop": true,
-    "types": ["./src/index.d.ts","jest", "node"]
+    "declarationDir": "types",
+    "types": ["jest", "node"]
   }
 }

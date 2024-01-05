@@ -1,4 +1,4 @@
-import { None, Option, Some } from "../types/Option";
+import { None, Option, Some } from "../rust_types/Option";
 
 export class Loc {
   // #region Constructors (1)
@@ -28,7 +28,11 @@ export class Loc {
 
   // #endregion Public Static Methods (1)
 
-  // #region Public Methods (2)
+  // #region Public Methods (3)
+
+  public isCentral(): boolean {
+    return this.row >= 3 && this.row <= 4 && this.col >= 3 && this.col <= 4;
+  }
 
   public isEqual(otherLocation: Loc): boolean {
     return this.row === otherLocation.row && this.col === otherLocation.col;
@@ -40,9 +44,5 @@ export class Loc {
     return `${column}${row}`;
   }
 
-  public isCentral(): boolean {
-    return this.row >= 3 && this.row <= 4 && this.col >= 3 && this.col <= 4;
-  }
-
-  // #endregion Public Methods (2)
+  // #endregion Public Methods (3)
 }

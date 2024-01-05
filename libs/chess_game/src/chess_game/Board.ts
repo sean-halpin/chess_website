@@ -1,4 +1,4 @@
-import { Option } from "../types/Option";
+import { Option } from "../rust_types/Option";
 import { Loc } from "./Loc";
 import { ChessPiece } from "./ChessPiece";
 
@@ -18,13 +18,30 @@ export class Board {
 
   // #endregion Constructors (1)
 
-  // #region Public Accessors (1)
+  // #region Public Getters And Setters (1)
 
   public get squares(): ReadonlyArray<ReadonlyArray<Option<ChessPiece>>> {
     return this._squares;
   }
 
-  // #endregion Public Accessors (1)
+  // #endregion Public Getters And Setters (1)
+
+  // #region Public Static Methods (2)
+
+  public static isLocOOB(location: Loc): boolean {
+    return (
+      location.row < 0 ||
+      location.row > 7 ||
+      location.col < 0 ||
+      location.col > 7
+    );
+  }
+
+  public static isRowColOOB(row: number, col: number): boolean {
+    return row < 0 || row > 7 || col < 0 || col > 7;
+  }
+
+  // #endregion Public Static Methods (2)
 
   // #region Public Methods (3)
 
@@ -51,19 +68,6 @@ export class Board {
     });
 
     return new Board(updatedSquares);
-  }
-
-  public static isLocOOB(location: Loc): boolean {
-    return (
-      location.row < 0 ||
-      location.row > 7 ||
-      location.col < 0 ||
-      location.col > 7
-    );
-  }
-
-  public static isRowColOOB(row: number, col: number): boolean {
-    return row < 0 || row > 7 || col < 0 || col > 7;
   }
 
   // #endregion Public Methods (3)

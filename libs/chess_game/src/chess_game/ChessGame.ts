@@ -3,20 +3,19 @@
 import { gameToFEN, fenPieceToTeam, fenToRank, fenToTeam } from "./FenNotation";
 import { MoveCommand } from "./GameCommands";
 import { moveFunctions } from "./PieceLogic";
-import { Result } from "../types/Result";
-import { rankValue } from "./Rank";
+import { Result } from "../rust_types/Result";
 import { Rank } from "./Rank";
 import { Team } from "./Team";
-import { None, Some, isSome, unwrap, Option, isNone } from "../types/Option";
+import { None, Some, isSome, unwrap, Option, isNone } from "../rust_types/Option";
 import { MoveResult } from "./MoveResult";
 import { Loc } from "./Loc";
 import { ChessPiece } from "./ChessPiece";
 import { Board } from "./Board";
-import { GameState } from "./GameState";
+import { GameState, GameStatus } from "./GameState";
 import { findBestMoveMinimax } from "./Minimax";
 
 export class ChessGame {
-  // #region Properties (11)
+  // #region Properties (10)
 
   private _gameState: GameState;
   private createPiece = (
@@ -74,7 +73,7 @@ export class ChessGame {
       fenToTeam(activeColor),
       [],
       0,
-      null
+      GameStatus.InProgress
     );
     return initialState;
   };
@@ -105,19 +104,19 @@ export class ChessGame {
         move.movingPiece.position.col === newCommand.source.col
     );
     if (moveResult.length > 0) {
-      const move = moveResult[0];
+      const moveRes = moveResult[0];
       // Remove taken piece
-      if (isSome(move.takenPiece)) {
+      if (isSome(moveRes.takenPiece)) {
         updatedBoard = updatedBoard = updatedBoard.updatePieceFromLoc(
-          move.takenPiece.unwrap().position,
+          moveRes.takenPiece.unwrap().position,
           None
         );
       }
       // Update moving piece
       if (movingPiece) {
         // Handle Castle
-        if (move.rookSrcDestCastling.isSome()) {
-          const castlingRookSrcDest = move.rookSrcDestCastling.unwrap();
+        if (moveRes.rookSrcDestCastling.isSome()) {
+          const castlingRookSrcDest = moveRes.rookSrcDestCastling.unwrap();
           const castlingRook = updatedBoard.pieceFromLoc(
             castlingRookSrcDest.src
           );
@@ -144,10 +143,10 @@ export class ChessGame {
           movingPiece.id,
           movingPiece.team,
           movingPiece.rank === Rank.Pawn &&
-          (move.destination.row === 0 || move.destination.row === 7)
+          (moveRes.destination.row === 0 || moveRes.destination.row === 7)
             ? Rank.Queen // Promote pawn to queen
             : movingPiece.rank,
-          move.destination,
+          moveRes.destination,
           false
         );
         updatedBoard = updatedBoard.updatePieceFromLoc(newCommand.source, None);
@@ -158,35 +157,17 @@ export class ChessGame {
       }
 
       // Push Latest Command Result
-      clonedGameState.commands.push(move);
+      clonedGameState.commands.push([newCommand, moveRes]);
 
       return new GameState(
         updatedBoard,
         clonedGameState.currentPlayer === Team.White ? Team.Black : Team.White,
         clonedGameState.commands,
         clonedGameState.counter,
-        null
+        GameStatus.InProgress
       );
     }
     return clonedGameState;
-  };
-  public static evaluateBoard = (gameState: GameState): number => {
-    let score = 0;
-    const pieces = gameState.board.squares.flat().filter(isSome).map(unwrap);
-    for (const piece of pieces) {
-      if (piece.team === Team.White) {
-        score += rankValue(piece.rank);
-        if (piece.position.isCentral()) {
-          score += 0.1; // Increase score for controlling the center
-        }
-      } else {
-        score -= rankValue(piece.rank);
-        if (piece.position.isCentral()) {
-          score -= 0.1; // Decrease score for opponent controlling the center
-        }
-      }
-    }
-    return score;
   };
   public static findLegalMoves = (
     gameState: GameState,
@@ -292,13 +273,13 @@ export class ChessGame {
 
           if (checkMate) {
             console.log("Checkmate");
-            updatedState = updatedState.withWinner(`Checkmate`);
+            updatedState = updatedState.updateStatus(GameStatus.Checkmate);
           } else if (draw) {
             console.log("Draw");
-            updatedState = updatedState.withWinner("Draw");
+            updatedState = updatedState.updateStatus(GameStatus.Draw);
           } else if (enemyKingChecked) {
             console.log("Check");
-            updatedState = updatedState.withWinner("Check");
+            updatedState = updatedState.updateStatus(GameStatus.Check);
           }
           // Lastly update the game state from updatedState
           this.gameState = updatedState;
@@ -314,7 +295,7 @@ export class ChessGame {
     return gameToFEN(this.gameState);
   };
 
-  // #endregion Properties (11)
+  // #endregion Properties (10)
 
   // #region Constructors (1)
 
@@ -324,7 +305,7 @@ export class ChessGame {
 
   // #endregion Constructors (1)
 
-  // #region Public Accessors (5)
+  // #region Public Getters And Setters (5)
 
   public get currentPlayer(): string {
     return this.gameState.currentPlayer;
@@ -342,11 +323,11 @@ export class ChessGame {
     return this.gameState.board.squares.flat().filter(isSome).map(unwrap);
   }
 
-  public get status(): Team | "Check" | "Checkmate" | "Draw" | null {
+  public get status(): GameStatus {
     return this.gameState.status;
   }
 
-  // #endregion Public Accessors (5)
+  // #endregion Public Getters And Setters (5)
 
   // #region Public Methods (1)
 

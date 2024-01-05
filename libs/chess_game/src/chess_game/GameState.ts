@@ -2,6 +2,12 @@ import { Team } from "./Team";
 import { MoveResult } from "./MoveResult";
 import { Board } from "./Board";
 import _ from "lodash";
+import { isSome, unwrap } from "../rust_types/Option";
+import { rankValue } from "./Rank";
+import { ChessGame } from "./ChessGame";
+import { MoveCommand } from "./GameCommands";
+
+// #region Classes (1)
 
 export class GameState {
   // #region Constructors (1)
@@ -9,22 +15,70 @@ export class GameState {
   constructor(
     readonly board: Board,
     readonly currentPlayer: Team.White | Team.Black,
-    readonly commands: MoveResult[],
+    readonly commands: [MoveCommand, MoveResult][],
     readonly counter: number,
-    readonly status: any
+    readonly status: GameStatus
   ) {}
 
   // #endregion Constructors (1)
 
-  // #region Public Methods (2)
+  // #region Public Methods (4)
 
-  public clone(){
+  public clone() {
     return _.cloneDeep(this);
   }
 
-  public withWinner(winner: string): GameState {
-    return new GameState(this.board, this.currentPlayer, this.commands, this.counter, winner);
+  public evaluate() {
+    let score = 0;
+    const pieces = this.board.squares.flat().filter(isSome).map(unwrap);
+    for (const piece of pieces) {
+      if (piece.team === Team.White) {
+        score += rankValue(piece.rank);
+        if (piece.position.isCentral()) {
+          score += 0.1; // Increase score for controlling the center
+        }
+      } else {
+        score -= rankValue(piece.rank);
+        if (piece.position.isCentral()) {
+          score -= 0.1; // Decrease score for opponent controlling the center
+        }
+      }
+    }
+    return score;
   }
 
-  // #endregion Public Methods (2)
+  public getChildren() {
+    const moves = ChessGame.findLegalMoves(this, this.currentPlayer);
+
+    const children = moves.map((move) =>
+      ChessGame.applyMoveCommand(move, this)
+    );
+    return children;
+  }
+
+  public updateStatus(status: GameStatus): GameState {
+    return new GameState(
+      this.board,
+      this.currentPlayer,
+      this.commands,
+      this.counter,
+      status
+    );
+  }
+
+  // #endregion Public Methods (4)
 }
+
+// #endregion Classes (1)
+
+// #region Enums (1)
+
+export enum GameStatus {
+  InProgress = "In Progress",
+  Checkmate = "Checkmate",
+  Stalemate = "Stalemate",
+  Draw = "Draw",
+  Check = "Check",
+}
+
+// #endregion Enums (1)

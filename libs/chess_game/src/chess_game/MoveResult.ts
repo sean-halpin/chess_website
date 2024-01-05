@@ -1,5 +1,5 @@
 import { MoveCommand } from "./GameCommands";
-import { None, Option } from "../types/Option";
+import { None, Option } from "../rust_types/Option";
 import { ChessPiece } from "./ChessPiece";
 import { Loc } from "./Loc";
 
