@@ -1,4 +1,4 @@
-# UI
+# A Chess UI written in react for desktop & mobile web browser 
 
 ## Once off npm global change default dir to avoid permissions issues
 ```
