@@ -7,7 +7,11 @@ export interface TextProps {
   fenString: string;
 }
 
-export const TextComponent: React.FC<TextProps> = ({ statusMessage, nextToMove, fenString }) => {
+export const TextComponent: React.FC<TextProps> = ({
+  statusMessage,
+  nextToMove,
+  fenString,
+}) => {
   const [timer, setTimer] = useState(0);
 
   useEffect(() => {
@@ -22,9 +26,9 @@ export const TextComponent: React.FC<TextProps> = ({ statusMessage, nextToMove, 
   return (
     <View>
       <View style={styles.infoBox}>
-        <Text>{statusMessage}</Text>
-        <Text>{nextToMove}</Text>
-        <Text>Timer: {timer} seconds</Text>
+        <Text style={styles.text}>{statusMessage}</Text>
+        <Text style={styles.text}>{nextToMove}</Text>
+        <Text style={styles.text}>Timer: {timer} seconds</Text>
       </View>
       <View style={styles.textComponentContainer}>
         <TextInput
@@ -40,22 +44,23 @@ export const TextComponent: React.FC<TextProps> = ({ statusMessage, nextToMove, 
 
 const styles = StyleSheet.create({
   infoBox: {
-    display: "flex",
-    flexDirection: "column",
     alignItems: "center",
     textAlign: "center",
+    padding: 10,
   },
   textComponentContainer: {
-    display: "flex",
-    flexDirection: "column",
     alignItems: "center",
+    color: "white",
+  },
+  text: {
+    color: "white",
   },
   input: {
-    width: "90%",
+    color: "white",
+    width: "95%",
     maxWidth: 500,
     padding: 8,
     borderWidth: 1,
-    borderColor: "black", // Add your desired border color
     borderRadius: 5,
     marginBottom: 10,
   },

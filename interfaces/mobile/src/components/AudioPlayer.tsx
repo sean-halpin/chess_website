@@ -23,7 +23,7 @@ class AudioPlayer extends React.Component<AudioPlayerProps, AudioPlayerState> {
   render() {
     return (
       <View>
-        <Text>Your device does not support audio playback.</Text>
+        {/* <Text>Your device does not support audio playback.</Text> */}
       </View>
     );
   }

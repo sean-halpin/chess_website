@@ -1,7 +1,7 @@
 // Game.tsx
 
 import React, { useEffect, useState, useRef } from "react";
-import { View, Text, Button, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { Board } from "./Board";
 import AudioPlayer from "./AudioPlayer";
 import { TextComponent } from "./TextComponent";
@@ -99,22 +99,12 @@ export const Game: React.FC = () => {
         break;
     }
   };
-
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text>Chess</Text>
-      </View>
-      <View style={styles.topnav}>
-        <Button title="Connect" onPress={() => {}} />
-      </View>
+      <Text style={styles.text}>Chess</Text>
       <View style={styles.row}>
         <View style={styles.column}>
-          <Text></Text>
-          <Text></Text>
-        </View>
-        <View style={styles.column}>
-          <View style={styles.chessBox}>
+          <View style={styles.chessBoard}>
             <Board
               pieces={state.game.pieces}
               sendMoveCommand={sendMoveCommand}
@@ -130,10 +120,6 @@ export const Game: React.FC = () => {
             <AudioPlayer ref={audioPlayerRef} />
           </View>
         </View>
-        <View style={styles.column}>
-          <Text></Text>
-          <Text></Text>
-        </View>
       </View>
     </View>
   );
@@ -141,53 +127,20 @@ export const Game: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor: "#000",
     alignItems: "center",
     justifyContent: "center",
-    flex: 1,
-    backgroundColor: "black",
-    color: "white",
   },
-  chessBox: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
+  chessBoard: {
+    flex: 0,
     padding: 50,
   },
-  infoBox: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-  },
   header: {
-    padding: 0,
-    textAlign: "center",
-    // background-color: '#f1f1f1', // uncomment if needed
-  },
-  topnav: {
-    overflow: "hidden",
-  },
-  topnavButton: {
-    display: "flex",
-    textAlign: "center",
-    padding: 10,
-    margin: 12,
-    textDecorationLine: "none",
-  },
-  topnavButtonHover: {
-    backgroundColor: "#ddd",
     color: "black",
   },
-  column: {
-    width: "33.33%",
-    padding: 15,
+  text: {
+    color: "white",
   },
-  row: {
-    content: "",
-    display: "flex",
-    clear: "both",
-  },
-  // Responsive layout
-  columnResponsive: {
-    width: "100%",
-  },
+  column: {},
+  row: {},
 });

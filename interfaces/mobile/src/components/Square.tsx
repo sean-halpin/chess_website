@@ -80,22 +80,21 @@ const styles = StyleSheet.create({
     position: "relative",
     width: 50,
     height: 50,
-    borderWidth: 1,
+    borderWidth: 0.5,
   },
   box: {
     position: "absolute",
   },
   box1: {
-    top: 17,
+    top: 32,
     zIndex: 3,
   },
   box2: {
-    top: -17,
+    top: 32,
     left: 42,
     zIndex: 2,
   },
   pieceContainer: {
-    position: "absolute",
     zIndex: 1,
   },
   circleContainer: {
