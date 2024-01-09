@@ -101,22 +101,22 @@ export const Game: React.FC = () => {
   };
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Chess</Text>
+      <Text style={styles.header}>Chess</Text>
       <View style={styles.row}>
         <View style={styles.column}>
-          <View style={styles.chessBoard}>
-            <Board
-              pieces={state.game.pieces}
-              sendMoveCommand={sendMoveCommand}
-              legalMoves={ChessGame.findLegalMovesCurry(state.game.gameState)}
-            />
-          </View>
+            <View style={styles.chessBoard}>
+              <Board
+                pieces={state.game.pieces}
+                sendMoveCommand={sendMoveCommand}
+                legalMoves={ChessGame.findLegalMovesCurry(state.game.gameState)}
+              />
+            </View>
           <View>
             <TextComponent
               statusMessage={state.game.status || ""}
               nextToMove={`${state.game.currentPlayer} to move next`}
               fenString={state.fen}
-            />
+              />
             <AudioPlayer ref={audioPlayerRef} />
           </View>
         </View>
@@ -132,11 +132,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   chessBoard: {
-    flex: 0,
-    padding: 50,
+    flex: 1,
+    justifyContent: "center",
   },
   header: {
-    color: "black",
+    marginTop: 50,
+    color: "white",
   },
   text: {
     color: "white",

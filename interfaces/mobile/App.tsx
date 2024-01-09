@@ -2,13 +2,19 @@ import { StatusBar } from "expo-status-bar";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Game } from "./src/components/Game";
+import { DraxProvider } from "react-native-drax";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Game />
-      <StatusBar style="auto" />
-    </View>
+    <GestureHandlerRootView style={{ flex:1}} >
+      <View style={styles.container}>
+        <DraxProvider>
+          <Game />
+        </DraxProvider>
+        <StatusBar style="auto" />
+      </View>
+    </GestureHandlerRootView>
   );
 }
 

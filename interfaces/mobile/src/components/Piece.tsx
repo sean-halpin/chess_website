@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Image, ImageSourcePropType, Text } from "react-native";
 import { Loc, MoveCommand, Rank, Team } from "@sean_halpin/chess_game";
+import { DraxView } from 'react-native-drax';
 
 export interface PieceProps {
   id: string;
@@ -34,39 +35,25 @@ export const Piece: React.FC<PieceProps> = ({
   moves,
 }) => {
   const imagePath = `${team}-${rank}`.toLowerCase();
-  const [imageLoaded, setImageLoaded] = useState(false);
-
-  useEffect(() => {
-    const handleDraggingState = (_moves: MoveCommand[]) => {
-      const legalMoves = moves.filter((m) => m.source.isEqual(position));
-    };
-
-    handleDraggingState(moves);
-
-    // Cleanup function to reset elements when component unmounts or isDragging changes
-    return () => {
-      // Cleanup logic if needed
-    };
-  }, [moves, position]); // Re-run the effect when moves or position changes
-
   const imageSource: ImageSourcePropType = imageMapping[imagePath];
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const onLoad = () => {
     setImageLoaded(true);
   };
 
   return (
-    (
-      <View>
-        <Image
-          source={imageSource}
-          style={styles.pieceImage}
-          resizeMode="contain"
-          onLoad={onLoad}
-        />
-        {!imageLoaded && <Text>Loading...</Text>}
-      </View>
-    )
+    <View>
+      <DraxView payload={position.toNotation()}>
+      <Image
+        source={imageSource}
+        style={styles.pieceImage}
+        resizeMode="contain"
+        onLoad={onLoad}
+      />
+      {!imageLoaded && <Text>Loading...</Text>}
+      </DraxView>
+    </View>
   );
 };
 
