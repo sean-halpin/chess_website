@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Image, ImageSourcePropType, Text } from "react-native";
 import { Loc, MoveCommand, Rank, Team } from "@sean_halpin/chess_game";
-import { DraxView } from 'react-native-drax';
+import { DraxView } from "react-native-drax";
 
 export interface PieceProps {
   id: string;
@@ -36,22 +36,28 @@ export const Piece: React.FC<PieceProps> = ({
 }) => {
   const imagePath = `${team}-${rank}`.toLowerCase();
   const imageSource: ImageSourcePropType = imageMapping[imagePath];
-  const [imageLoaded, setImageLoaded] = useState(false);
 
-  const onLoad = () => {
-    setImageLoaded(true);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragStart = () => {
+    setIsDragging(true);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
   };
 
   return (
     <View>
-      <DraxView payload={position.toNotation()}>
-      <Image
-        source={imageSource}
-        style={styles.pieceImage}
-        resizeMode="contain"
-        onLoad={onLoad}
-      />
-      {!imageLoaded && <Text>Loading...</Text>}
+      <DraxView
+        draggable={true}
+        snapbackDuration={0}
+        draggingStyle={styles.dragging}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        payload={position.toNotation()}
+      >
+        <Image source={imageSource} style={styles.pieceImage} />
       </DraxView>
     </View>
   );
@@ -61,5 +67,8 @@ const styles = {
   pieceImage: {
     width: 50,
     height: 50,
+  },
+  dragging: {
+    opacity: 0.1,
   },
 };
