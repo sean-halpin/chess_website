@@ -5,6 +5,7 @@ import { MoveCommand } from "@sean_halpin/chess_game";
 import { Loc } from "@sean_halpin/chess_game";
 import { ChessPiece } from "@sean_halpin/chess_game";
 import { Option, isSome } from "@sean_halpin/chess_game";
+import { DraxView } from "react-native-drax";
 
 interface SquareProps {
   color: string;
@@ -45,33 +46,48 @@ const Square: React.FC<SquareProps> = ({
   moves,
 }) => {
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: color, borderColor: "#000" },
-      ]}
+    <DraxView
+      receptive={true}
+      onReceiveDragDrop={({ dragged: { payload } }) => {
+        console.log(`Square.tsx: Received payload: ${payload}`);
+        const source = Loc.fromNotation(payload);
+        const destination = position;
+        const moveCommand: MoveCommand = {
+          command: "move",
+          source: source.unwrap(),
+          destination: destination,
+        };
+        sendMoveCommand(moveCommand);
+      }}
     >
-      {maybePiece(piece, moves)}
-      <View style={styles.circleContainer} />
-      <Text
+      <View
         style={[
-          styles.box,
-          { color: (position.col + position.row) % 2 ? "#000" : "#FFF" },
-          styles.box1,
+          styles.container,
+          { backgroundColor: color, borderColor: "#000" },
         ]}
       >
-        {position.row === 0 ? colToNotation(position.col) : ""}
-      </Text>
-      <Text
-        style={[
-          styles.box,
-          { color: (position.col + position.row) % 2 ? "#000" : "#FFF" },
-          styles.box2,
-        ]}
-      >
-        {position.col === 7 ? position.row + 1 : ""}
-      </Text>
-    </View>
+        {maybePiece(piece, moves)}
+        <View style={styles.circleContainer} />
+        <Text
+          style={[
+            styles.box,
+            { color: (position.col + position.row) % 2 ? "#000" : "#FFF" },
+            styles.box1,
+          ]}
+        >
+          {position.row === 0 ? colToNotation(position.col) : ""}
+        </Text>
+        <Text
+          style={[
+            styles.box,
+            { color: (position.col + position.row) % 2 ? "#000" : "#FFF" },
+            styles.box2,
+          ]}
+        >
+          {position.col === 7 ? position.row + 1 : ""}
+        </Text>
+      </View>
+    </DraxView>
   );
 };
 

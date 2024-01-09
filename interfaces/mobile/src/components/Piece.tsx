@@ -52,6 +52,7 @@ export const Piece: React.FC<PieceProps> = ({
       <DraxView
         draggable={true}
         snapbackDuration={0}
+        snapbackDelay={0}
         draggingStyle={styles.dragging}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}

@@ -45,25 +45,11 @@ export const Game: React.FC = () => {
       });
   }
 
-  if (
-    !state.game.status?.includes("Checkmate") &&
-    !state.game.status?.includes("Draw")
-  ) {
-    const curr_player = state.game.currentPlayer;
-    const capitalized_player =
-      curr_player.charAt(0).toUpperCase() + curr_player.slice(1);
-
-    state.displayText = `${capitalized_player} to move`;
-  } else {
-    state.displayText = `${state.game.status}`;
-  }
-  state.fen = state.game.getCurrentFen();
-
   useEffect(() => {
     const waitOneSecond = async () => {
       await new Promise((resolve) => setTimeout(resolve, 2000));
       if (state.game.currentPlayer === Team.Black) {
-        executeCpuMoves(Team.Black);
+        // executeCpuMoves(Team.Black);
       }
     };
     if (
@@ -104,19 +90,19 @@ export const Game: React.FC = () => {
       <Text style={styles.header}>Chess</Text>
       <View style={styles.row}>
         <View style={styles.column}>
-            <View style={styles.chessBoard}>
-              <Board
-                pieces={state.game.pieces}
-                sendMoveCommand={sendMoveCommand}
-                legalMoves={ChessGame.findLegalMovesCurry(state.game.gameState)}
-              />
-            </View>
+          <View style={styles.chessBoard}>
+            <Board
+              pieces={state.game.pieces}
+              sendMoveCommand={sendMoveCommand}
+              legalMoves={ChessGame.findLegalMovesCurry(state.game.gameState)}
+            />
+          </View>
           <View>
             <TextComponent
               statusMessage={state.game.status || ""}
               nextToMove={`${state.game.currentPlayer} to move next`}
               fenString={state.fen}
-              />
+            />
             <AudioPlayer ref={audioPlayerRef} />
           </View>
         </View>
