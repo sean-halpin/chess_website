@@ -173,7 +173,7 @@ describe("ChessGameLogic", () => {
     expect(updatedState.status).toBe(GameStatus.InProgress);
   });
 
-  xit("should handle invalid move commands", () => {
+  it("should handle invalid move commands", () => {
     const invalidMoveCommand: MoveCommand = {
       command: "move",
       source: new Loc(5, 0),
@@ -181,5 +181,21 @@ describe("ChessGameLogic", () => {
     };
     const result = chessGameLogic.executeCommand(invalidMoveCommand);
     expect(result.success).toBeFalsy();
+    expect(result.isOk()).toBeFalsy();
+    expect(result.isError()).toBeTruthy();
+    expect(result.error).toEqual("Invalid move: no piece at source");
+  });
+
+  it("should handle only allow current team to move", () => {
+    const invalidMoveCommand: MoveCommand = {
+      command: "move",
+      source: Loc.fromNotation("e7").unwrap(),
+      destination: Loc.fromNotation("e6").unwrap(),
+    };
+    const result = chessGameLogic.executeCommand(invalidMoveCommand);
+    expect(result.success).toBeFalsy();
+    expect(result.isOk()).toBeFalsy();
+    expect(result.isError()).toBeTruthy();
+    expect(result.error).toEqual("Invalid move: not current player's piece");
   });
 });

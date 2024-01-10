@@ -3,10 +3,17 @@
 import { gameToFEN, fenPieceToTeam, fenToRank, fenToTeam } from "./FenNotation";
 import { MoveCommand } from "./GameCommands";
 import { moveFunctions } from "./PieceLogic";
-import { Result } from "../rust_types/Result";
+import { Err, Ok, Result } from "../rust_types/Result";
 import { Rank } from "./Rank";
 import { Team } from "./Team";
-import { None, Some, isSome, unwrap, Option, isNone } from "../rust_types/Option";
+import {
+  None,
+  Some,
+  isSome,
+  unwrap,
+  Option,
+  isNone,
+} from "../rust_types/Option";
 import { MoveResult } from "./MoveResult";
 import { Loc } from "./Loc";
 import { ChessPiece } from "./ChessPiece";
@@ -250,6 +257,18 @@ export class ChessGame {
         {
           const clonedState = this.gameState.clone();
           const currentPlayer = clonedState.currentPlayer;
+          // check the cmd source is the current player's piece
+          const piece = clonedState.board.pieceFromLoc(cmd.source);
+          if (isNone(piece)) {
+            const err = "Invalid move: no piece at source";
+            console.warn(err);
+            return Err(err);
+          }
+          if (piece.unwrap().team !== currentPlayer) {
+            const err = "Invalid move: not current player's piece";
+            console.warn(err);
+            return Err(err);
+          }
           const enemyPlayer =
             currentPlayer === Team.White ? Team.Black : Team.White;
           let updatedState = ChessGame.applyMoveCommand(cmd, clonedState);
@@ -260,7 +279,7 @@ export class ChessGame {
           if (ownKingChecked) {
             const err = "Invalid move: puts own king in check";
             console.warn(err);
-            return { success: false, error: err };
+            return Err(err);
           }
           const enemyKingChecked = ChessGame.isKingInCheck(
             updatedState,
@@ -284,12 +303,12 @@ export class ChessGame {
           // Lastly update the game state from updatedState
           this.gameState = updatedState;
         }
-        return { success: true, data: this };
+        return Ok(this);
       default:
         console.warn(`[${ChessGame.name}] Unknown command`);
         break;
     }
-    return { success: false, error: "" };
+    return Err("Unknown command");
   };
   public getCurrentFen = () => {
     return gameToFEN(this.gameState);
@@ -339,7 +358,7 @@ export class ChessGame {
       const bestMove = findBestMoveMinimax(clonedGameState, 3, 3 * 1000);
       return this.executeCommand(await bestMove);
     } else {
-      return { success: false, error: "No possible moves" };
+      return Err("No legal moves");
     }
   }
 
