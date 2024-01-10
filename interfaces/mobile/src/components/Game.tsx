@@ -3,9 +3,10 @@
 import React, { useEffect, useState, useRef } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Board } from "./Board";
-import AudioPlayer from "./AudioPlayer";
 import { TextComponent } from "./TextComponent";
 import { ChessGame, MoveCommand, Team } from "@sean_halpin/chess_game";
+import { Audio } from "expo-av";
+import { SoundObject } from "expo-av/build/Audio";
 
 export interface GameProps {
   game: ChessGame;
@@ -14,13 +15,27 @@ export interface GameProps {
 }
 
 export const Game: React.FC = () => {
-  const audioPlayerRef = useRef<AudioPlayer>(null);
+  const [player, setPlayer] = useState<SoundObject>();
 
-  const playAudio = () => {
-    if (audioPlayerRef.current) {
-      audioPlayerRef.current.play();
-    }
-  };
+  async function playSound() {
+    console.log("[Game] Loading Sound");
+    const player = await Audio.Sound.createAsync(
+      require("../../assets/audio/table_knock.wav")
+    );
+    setPlayer(player);
+
+    console.log("[Game] Playing Sound");
+    await player.sound.playAsync();
+  }
+
+  useEffect(() => {
+    return player
+      ? () => {
+          console.log("[Game] Unloading Sound");
+          player.sound.unloadAsync();
+        }
+      : undefined;
+  }, [player]);
 
   const [state, setState] = useState<GameProps>({
     game: new ChessGame(),
@@ -33,7 +48,7 @@ export const Game: React.FC = () => {
       .cpuMoveMinimax(team)
       .then((res) => {
         if (res.success) {
-          playAudio();
+          playSound();
           setState({
             ...state,
             game: res.data,
@@ -49,7 +64,7 @@ export const Game: React.FC = () => {
     const waitOneSecond = async () => {
       await new Promise((resolve) => setTimeout(resolve, 2000));
       if (state.game.currentPlayer === Team.Black) {
-        // executeCpuMoves(Team.Black);
+        executeCpuMoves(Team.Black);
       }
     };
     if (
@@ -72,7 +87,7 @@ export const Game: React.FC = () => {
         {
           const result = state.game.executeCommand(newCommand);
           if (result.success) {
-            playAudio();
+            playSound();
             setState({
               ...state,
               game: result.data,
@@ -103,7 +118,6 @@ export const Game: React.FC = () => {
               nextToMove={`${state.game.currentPlayer} to move next`}
               fenString={state.fen}
             />
-            <AudioPlayer ref={audioPlayerRef} />
           </View>
         </View>
       </View>
