@@ -12,25 +12,43 @@ interface SquareProps {
   piece: Option<ChessPiece>;
   position: Loc;
   sendMoveCommand: (command: MoveCommand) => void;
-  moves: MoveCommand[];
+  draggedPieceMoves: MoveCommand[];
 }
 
-function maybePiece(piece: Option<ChessPiece>, moves: MoveCommand[]) {
+function maybePiece(
+  position: Loc,
+  piece: Option<ChessPiece>,
+  draggedPieceMoves: MoveCommand[],
+  sendMoveCommand: (command: MoveCommand) => void
+) {
+  const isDraggedPieceLegalDestination = draggedPieceMoves.some((move) => {
+    return move.destination.isEqual(position);
+  });
   if (isSome(piece)) {
     const p = piece.unwrap();
     return (
       <View style={styles.pieceContainer}>
+        <View
+          style={isDraggedPieceLegalDestination ? styles.circleContainer : null}
+        />
         <Piece
           id={p.id}
           team={p.team}
           rank={p.rank}
           position={p.position}
-          moves={moves}
+          draggedPieceMoves={draggedPieceMoves}
+          sendMoveCommand={sendMoveCommand}
         />
       </View>
     );
   } else {
-    return <></>;
+    return (
+      <View style={styles.pieceContainer}>
+        <View
+          style={isDraggedPieceLegalDestination ? styles.circleContainer : null}
+        />
+      </View>
+    );
   }
 }
 
@@ -43,15 +61,21 @@ const Square: React.FC<SquareProps> = ({
   piece,
   position,
   sendMoveCommand,
-  moves,
+  draggedPieceMoves,
 }) => {
   return (
     <DraxView
+      style={[
+        styles.container,
+        { backgroundColor: color, borderColor: "#000" },
+      ]}
       receptive={true}
       onReceiveDragDrop={({ dragged: { payload } }) => {
-        console.log(`Square.tsx: Received payload: ${payload}`);
         const source = Loc.fromNotation(payload);
         const destination = position;
+        console.log(
+          `[Square] Dropped ${payload} to ${destination.toNotation()}`
+        );
         const moveCommand: MoveCommand = {
           command: "move",
           source: source.unwrap(),
@@ -60,33 +84,25 @@ const Square: React.FC<SquareProps> = ({
         sendMoveCommand(moveCommand);
       }}
     >
-      <View
+      {maybePiece(position, piece, draggedPieceMoves, sendMoveCommand)}
+      <Text
         style={[
-          styles.container,
-          { backgroundColor: color, borderColor: "#000" },
+          styles.box,
+          { color: (position.col + position.row) % 2 ? "#000" : "#FFF" },
+          styles.box1,
         ]}
       >
-        {maybePiece(piece, moves)}
-        <View style={styles.circleContainer} />
-        <Text
-          style={[
-            styles.box,
-            { color: (position.col + position.row) % 2 ? "#000" : "#FFF" },
-            styles.box1,
-          ]}
-        >
-          {position.row === 0 ? colToNotation(position.col) : ""}
-        </Text>
-        <Text
-          style={[
-            styles.box,
-            { color: (position.col + position.row) % 2 ? "#000" : "#FFF" },
-            styles.box2,
-          ]}
-        >
-          {position.col === 7 ? position.row + 1 : ""}
-        </Text>
-      </View>
+        {position.row === 0 ? colToNotation(position.col) : ""}
+      </Text>
+      <Text
+        style={[
+          styles.box,
+          { color: (position.col + position.row) % 2 ? "#000" : "#FFF" },
+          styles.box2,
+        ]}
+      >
+        {position.col === 7 ? position.row + 1 : ""}
+      </Text>
     </DraxView>
   );
 };
@@ -114,16 +130,16 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   circleContainer: {
-    width: 0,
-    height: 0,
-    backgroundColor: "rgba(0,0,0,0)",
-    borderRadius: 50,
+    position: "absolute",
+    width: 15,
+    height: 15,
+    backgroundColor: "rgba(0,255,0,255)",
+    borderRadius: 15,
     borderWidth: 1,
-    borderColor: "rgba(0,0,0,0)",
-    margin: "auto",
+    borderColor: "rgba(0,0,0,255)",
     marginTop: 18,
+    marginLeft: 18,
     zIndex: 4,
-    position: "relative",
   },
 });
 

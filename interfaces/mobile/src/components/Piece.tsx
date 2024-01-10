@@ -8,7 +8,8 @@ export interface PieceProps {
   team: Team;
   rank: Rank;
   position: Loc;
-  moves: MoveCommand[];
+  draggedPieceMoves: MoveCommand[];
+  sendMoveCommand: (command: MoveCommand) => void;
 }
 
 const imageMapping: Record<string, ImageSourcePropType> = {
@@ -32,7 +33,7 @@ export const Piece: React.FC<PieceProps> = ({
   team,
   rank,
   position,
-  moves,
+  sendMoveCommand,
 }) => {
   const imagePath = `${team}-${rank}`.toLowerCase();
   const imageSource: ImageSourcePropType = imageMapping[imagePath];
@@ -45,22 +46,36 @@ export const Piece: React.FC<PieceProps> = ({
 
   const handleDragEnd = () => {
     setIsDragging(false);
+    console.log(`[Piece] Drag Ended ${id} ${position.toNotation()}`);
   };
 
   return (
-    <View>
-      <DraxView
-        draggable={true}
-        snapbackDuration={0}
-        snapbackDelay={0}
-        draggingStyle={styles.dragging}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        payload={position.toNotation()}
-      >
-        <Image source={imageSource} style={styles.pieceImage} />
-      </DraxView>
-    </View>
+    <DraxView
+      draggable={true}
+      receptive={true}
+      snapbackDuration={0}
+      snapbackDelay={0}
+      draggingStyle={styles.dragging}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      payload={position.toNotation()}
+      renderContent={({ viewState }) => {
+        return <Image source={imageSource} style={[styles.pieceImage]} />;
+      }}
+      onReceiveDragDrop={({ dragged: { payload } }) => {
+        const source = Loc.fromNotation(payload);
+        const destination = position;
+        console.log(
+          `[Piece] Dropped ${payload} to ${destination.toNotation()}`
+        );
+        const moveCommand: MoveCommand = {
+          command: "move",
+          source: source.unwrap(),
+          destination: destination,
+        };
+        sendMoveCommand(moveCommand);
+      }}
+    ></DraxView>
   );
 };
 
