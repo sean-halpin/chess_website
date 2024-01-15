@@ -8,7 +8,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 export default function App() {
   return (
     <GestureHandlerRootView style={{ flex:1}} >
-      <View style={styles.container}>
+      <View style={styles.container} testID="game_view">
         <DraxProvider>
           <Game />
         </DraxProvider>

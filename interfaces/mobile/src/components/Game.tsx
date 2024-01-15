@@ -1,6 +1,6 @@
 // Game.tsx
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Board } from "./Board";
 import { TextComponent } from "./TextComponent";
@@ -44,27 +44,25 @@ export const Game: React.FC = () => {
   });
 
   async function executeCpuMoves(team: Team) {
-    state.game
-      .cpuMoveMinimax(team)
-      .then((res) => {
-        if (res.success) {
-          playSound();
-          setState({
-            ...state,
-            game: res.data,
-          });
-        }
-      })
-      .catch((err) => {
-        console.error("Error during CPU move:", err);
-      });
+    try {
+      const res = await state.game.cpuMoveMinimax(team);
+      if (res.success) {
+        playSound();
+        setState((prevState) => ({
+          ...prevState,
+          game: res.data,
+        }));
+      }
+    } catch (err) {
+      console.error("Error during CPU move:", err);
+    }
   }
 
   useEffect(() => {
     const waitOneSecond = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       if (state.game.currentPlayer === Team.Black) {
-        executeCpuMoves(Team.Black);
+        // executeCpuMoves(Team.Black);
       }
     };
     if (
@@ -74,12 +72,18 @@ export const Game: React.FC = () => {
       const curr_player = state.game.currentPlayer;
       const capitalized_player =
         curr_player.charAt(0).toUpperCase() + curr_player.slice(1);
-      state.displayText = `${capitalized_player} to move`;
+      setState((prevState) => ({
+        ...prevState,
+        displayText: `${capitalized_player} to move`,
+      }));
       waitOneSecond();
     } else {
-      state.displayText = `${state.game.status}`;
+      setState((prevState) => ({
+        ...prevState,
+        displayText: `${state.game.status}`,
+      }));
     }
-  });
+  }, [state.game]);
 
   const sendMoveCommand = (newCommand: MoveCommand) => {
     switch (newCommand.command) {
@@ -88,10 +92,10 @@ export const Game: React.FC = () => {
           const result = state.game.executeCommand(newCommand);
           if (result.success) {
             playSound();
-            setState({
-              ...state,
+            setState((prevState) => ({
+              ...prevState,
               game: result.data,
-            });
+            }));
           }
         }
         break;
@@ -100,6 +104,7 @@ export const Game: React.FC = () => {
         break;
     }
   };
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Chess</Text>
