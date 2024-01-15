@@ -5,7 +5,7 @@ import { Game } from "./src/components/Game";
 import { DraxProvider } from "react-native-drax";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-export default function App() {
+export default function App(): React.JSX.Element {
   return (
     <GestureHandlerRootView style={{ flex:1}} >
       <View style={styles.container} testID="game_view">
