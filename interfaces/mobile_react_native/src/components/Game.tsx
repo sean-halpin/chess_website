@@ -15,40 +15,29 @@ export interface GameProps {
 
 export const Game: React.FC = () => {
   const [player, setPlayer] = useState<Sound | null>(null);
-
-  const prepareSound = () => {
-    console.log('[Game] Loading Sound');
-
-    const sound = new Sound(
-      require('../../assets/audio/table_knock.wav'),
-      Sound.MAIN_BUNDLE,
-      error => {
-        if (error) {
-          console.error('[Game] Error loading sound:', error);
-        } else {
-          setPlayer(sound);
-
-          console.log('[Game] Playing Sound');
-          sound.play(success => {
-            if (success) {
-              console.log('[Game] Sound played successfully');
-            } else {
-              console.error('[Game] Error playing sound');
-            }
-          });
-        }
-      },
-    );
+  const soundInfo = {
+    url: require('./table_knock.wav'),
   };
-
-  useEffect(() => {
-    return player
-      ? () => {
-          console.log('[Game] Unloading Sound');
-          player.release();
+  // load audio file
+  const prepareSound = () => {
+    const s = new Sound(soundInfo.url, error => {
+      if (error) {
+        console.warn('failed to load the sound', error);
+        return;
+      }
+      setPlayer(s);
+    });
+  };
+  // play audio file
+  const playSound = () => {
+    if (player) {
+      player.play(success => {
+        if (!success) {
+          console.warn('playback failed due to audio decoding errors');
         }
-      : undefined;
-  }, [player]);
+      });
+    }
+  };
 
   const [state, setState] = useState<GameProps>({
     game: new ChessGame(),
@@ -62,7 +51,7 @@ export const Game: React.FC = () => {
       const res = await state.game.cpuMoveMinimax(team);
       if (res.success) {
         prepareSound();
-        player?.play();
+        playSound();
         setState(prevState => ({
           ...prevState,
           game: res.data,
@@ -98,6 +87,7 @@ export const Game: React.FC = () => {
         displayText: `${state.game.status}`,
       }));
     }
+    prepareSound();
   }, [state.game]);
 
   const sendMoveCommand = (newCommand: MoveCommand) => {
@@ -107,7 +97,7 @@ export const Game: React.FC = () => {
           const result = state.game.executeCommand(newCommand);
           if (result.success) {
             prepareSound();
-            player?.play();
+            playSound();
             setState(prevState => ({
               ...prevState,
               game: result.data,
