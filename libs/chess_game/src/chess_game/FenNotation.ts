@@ -41,17 +41,36 @@ export function fenToTeam(fenChar: string): Team {
   }
 }
 
+export function rankToFEN(rank: Rank): string {
+  switch (rank) {
+    case Rank.Rook:
+      return "r";
+    case Rank.Knight:
+      return "n";
+    case Rank.Bishop:
+      return "b";
+    case Rank.Queen:
+      return "q";
+    case Rank.King:
+      return "k";
+    case Rank.Pawn:
+      return "p";
+    default:
+      return "p";
+  }
+}
+
 export function gameToFEN(game: GameState): string {
   let fen = "";
 
   for (let row = 7; row >= 0; row--) {
     let emptySquares = 0;
     for (let col = 0; col < 8; col++) {
-      const piece = game.board.pieceFromRowCol(row,col);
+      const piece = game.board.pieceFromRowCol(row, col);
       if (isNone(piece)) {
         emptySquares++;
       } else {
-        const piece = unwrap(game.board.pieceFromRowCol(row,col));
+        const piece = unwrap(game.board.pieceFromRowCol(row, col));
         if (emptySquares > 0) {
           fen += emptySquares.toString();
           emptySquares = 0;
@@ -77,25 +96,6 @@ export function gameToFEN(game: GameState): string {
   fen += "0 1";
 
   return fen;
-}
-
-export function rankToFEN(rank: Rank): string {
-  switch (rank) {
-    case Rank.Rook:
-      return "r";
-    case Rank.Knight:
-      return "n";
-    case Rank.Bishop:
-      return "b";
-    case Rank.Queen:
-      return "q";
-    case Rank.King:
-      return "k";
-    case Rank.Pawn:
-      return "p";
-    default:
-      return "p";
-  }
 }
 
 // #endregion Functions (5)
