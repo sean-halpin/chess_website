@@ -7,7 +7,8 @@
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest  --testPathIgnorePatterns 'e2e'",
+    "e2e": "npm run android & appium & node ./e2e/battery.android.test.js && lsof -ti tcp:4723 | xargs kill && echo 'XXXXXXXXXXX'"
   },
   "dependencies": {
     "@sean_halpin/chess_game": "^1.0.25",
@@ -28,11 +29,14 @@
     "@types/react": "^18.2.6",
     "@types/react-test-renderer": "^18.0.0",
     "babel-jest": "^29.6.3",
+    "concurrently": "^8.2.2",
     "eslint": "^8.19.0",
     "jest": "^29.6.3",
+    "npm-run-all": "^4.1.5",
     "prettier": "2.8.8",
     "react-test-renderer": "18.2.0",
-    "typescript": "5.0.4"
+    "typescript": "5.0.4",
+    "webdriverio": "^8.28.0"
   },
   "engines": {
     "node": ">=18"
