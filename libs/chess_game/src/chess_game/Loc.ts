@@ -1,13 +1,23 @@
 import { None, Option, Some } from "../rust_types/Option";
 
 export class Loc {
+  // #region Properties (2)
+
+  public col: number;
+  public row: number;
+
+  // #endregion Properties (2)
+
   // #region Constructors (1)
 
-  constructor(readonly row: number, readonly col: number) {}
+  constructor(row: number, col: number) {
+    this.row = row;
+    this.col = col;
+  }
 
   // #endregion Constructors (1)
 
-  // #region Public Static Methods (1)
+  // #region Public Static Methods (2)
 
   public static fromNotation(notation: string): Option<Loc> {
     const column = notation.charCodeAt(0) - 97; // Convert letter to column index (A=0, B=1, ...)
@@ -26,7 +36,15 @@ export class Loc {
     return Some(new Loc(row, column));
   }
 
-  // #endregion Public Static Methods (1)
+  public static fromRowCol(row: number, col: number): Option<Loc> {
+    if (row < 0 || row > 7 || col < 0 || col > 7) {
+      return None; // Invalid row or column
+    }
+
+    return Some(new Loc(row, col));
+  }
+
+  // #endregion Public Static Methods (2)
 
   // #region Public Methods (3)
 

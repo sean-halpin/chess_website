@@ -1,4 +1,4 @@
-import { MoveCommand } from "./GameCommands";
+import { MoveCommand } from "./MoveCommand";
 import { None, Option } from "../rust_types/Option";
 import { ChessPiece } from "./ChessPiece";
 import { Loc } from "./Loc";
@@ -21,7 +21,6 @@ export class MoveResult {
 
   public toMoveCommand(): MoveCommand {
     return {
-      command: "move",
       source: this.movingPiece.position,
       destination: this.destination,
     };

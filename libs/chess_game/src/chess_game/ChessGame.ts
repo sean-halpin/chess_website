@@ -1,7 +1,7 @@
 // ChessGameLogic.ts
 
 import { gameToFEN, fenPieceToTeam, fenToRank, fenToTeam } from "./FenNotation";
-import { MoveCommand } from "./GameCommands";
+import { MoveCommand } from "./MoveCommand";
 import { moveFunctions } from "./PieceLogic";
 import { Err, Ok, Result } from "../rust_types/Result";
 import { Rank } from "./Rank";
@@ -251,64 +251,63 @@ export class ChessGame {
     return false;
   };
 
-  public executeCommand = (cmd: MoveCommand): Result<ChessGame, string> => {
-    switch (cmd.command) {
-      case "move":
-        {
-          const clonedState = this.gameState.clone();
-          const currentPlayer = clonedState.currentPlayer;
-          // check the cmd source is the current player's piece
-          const piece = clonedState.board.pieceFromLoc(cmd.source);
-          if (isNone(piece)) {
-            const err = "Invalid move: no piece at source";
-            console.warn(err);
-            return Err(err);
-          }
-          if (piece.unwrap().team !== currentPlayer) {
-            const err = "Invalid move: not current player's piece";
-            console.warn(err);
-            return Err(err);
-          }
-          const enemyPlayer =
-            currentPlayer === Team.White ? Team.Black : Team.White;
-          let updatedState = ChessGame.applyMoveCommand(cmd, clonedState);
-          const ownKingChecked = ChessGame.isKingInCheck(
-            updatedState,
-            currentPlayer
-          );
-          if (ownKingChecked) {
-            const err = "Invalid move: puts own king in check";
-            console.warn(err);
-            return Err(err);
-          }
-          const enemyKingChecked = ChessGame.isKingInCheck(
-            updatedState,
-            enemyPlayer
-          );
-          const noLegalFollowingMoves =
-            ChessGame.findLegalMoves(updatedState, enemyPlayer).length === 0;
-          const checkMate = enemyKingChecked && noLegalFollowingMoves;
-          const draw = !enemyKingChecked && noLegalFollowingMoves;
-
-          if (checkMate) {
-            console.log("Checkmate");
-            updatedState = updatedState.updateStatus(GameStatus.Checkmate);
-          } else if (draw) {
-            console.log("Draw");
-            updatedState = updatedState.updateStatus(GameStatus.Draw);
-          } else if (enemyKingChecked) {
-            console.log("Check");
-            updatedState = updatedState.updateStatus(GameStatus.Check);
-          }
-          // Lastly update the game state from updatedState
-          this.gameState = updatedState;
-        }
-        return Ok(this);
-      default:
-        console.warn(`[${ChessGame.name}] Unknown command`);
-        break;
+  public executeCommandAlgebraic = (cmd: string): Result<ChessGame, string> => {
+    const cmdArr = cmd.split(" ");
+    const source = cmdArr[0];
+    const destination = cmdArr[1];
+    try {
+      const cmdObj = new MoveCommand(
+        Loc.fromNotation(source).unwrap(),
+        Loc.fromNotation(destination).unwrap()
+      );
+      return this.executeCommand(cmdObj);
+    } catch (e) {
+      return Err("Invalid move");
     }
-    return Err("Unknown command");
+  };
+
+  public executeCommand = (cmd: MoveCommand): Result<ChessGame, string> => {
+    const clonedState = this.gameState.clone();
+    const currentPlayer = clonedState.currentPlayer;
+    // check the cmd source is the current player's piece
+    const piece = clonedState.board.pieceFromLoc(cmd.source);
+    if (isNone(piece)) {
+      const err = "Invalid move: no piece at source";
+      console.info(err);
+      return Err(err);
+    }
+    if (piece.unwrap().team !== currentPlayer) {
+      const err = "Invalid move: not current player's piece";
+      console.info(err);
+      return Err(err);
+    }
+    const enemyPlayer = currentPlayer === Team.White ? Team.Black : Team.White;
+    let updatedState = ChessGame.applyMoveCommand(cmd, clonedState);
+    const ownKingChecked = ChessGame.isKingInCheck(updatedState, currentPlayer);
+    if (ownKingChecked) {
+      const err = "Invalid move: puts own king in check";
+      console.warn(err);
+      return Err(err);
+    }
+    const enemyKingChecked = ChessGame.isKingInCheck(updatedState, enemyPlayer);
+    const noLegalFollowingMoves =
+      ChessGame.findLegalMoves(updatedState, enemyPlayer).length === 0;
+    const checkMate = enemyKingChecked && noLegalFollowingMoves;
+    const draw = !enemyKingChecked && noLegalFollowingMoves;
+
+    if (checkMate) {
+      console.log("Checkmate");
+      updatedState = updatedState.updateStatus(GameStatus.Checkmate);
+    } else if (draw) {
+      console.log("Draw");
+      updatedState = updatedState.updateStatus(GameStatus.Draw);
+    } else if (enemyKingChecked) {
+      console.log("Check");
+      updatedState = updatedState.updateStatus(GameStatus.Check);
+    }
+    // Lastly update the game state from updatedState
+    this.gameState = updatedState;
+    return Ok(this);
   };
   public getCurrentFen = () => {
     return gameToFEN(this.gameState);
