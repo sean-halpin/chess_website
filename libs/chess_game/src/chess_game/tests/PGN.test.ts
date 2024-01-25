@@ -43,11 +43,11 @@ describe("PGNParser", () => {
 
     // prettier-ignore
     const expectedMoves = [
-		"e4", "d5", "exd5", "Qxd5", "Nc3", "Qe5+", "Qe2", "Qxe2+", "Bxe2", "e6",
-		"Nf3", "Bc5", "d4", "Bb4", "Bb5+", "c6", "Ba4", "b5", "Bxb5", "cxb5",
+		"e4", "d5", "exd5", "Qxd5", "Nc3", "Qe5", "Qe2", "Qxe2", "Bxe2", "e6",
+		"Nf3", "Bc5", "d4", "Bb4", "Bb5", "c6", "Ba4", "b5", "Bxb5", "cxb5",
 		"O-O", "Bxc3", "bxc3", "Nf6", "Bg5", "O-O", "Rfe1", "Ng4", "h3", "Nh6",
 		"Be7", "Re8", "Bd6", "Nd7", "Ne5", "Nxe5", "dxe5", "Nf5", "Rad1", "Bb7",
-		"Be7", "Rxe7", "Rd8+"
+		"Be7", "Rxe7", "Rd8"
 	];
 
     expect(parsedMoves.length).toEqual(expectedMoves.length);
@@ -56,8 +56,8 @@ describe("PGNParser", () => {
     }
   });
 
-  xit("should parse PGN moves correctly ending in checkmate", () => {
-    const filePath = "./data/pgn.txt";
+  it("should parse PGN moves correctly ending in checkmate", () => {
+    const filePath = "./data/pgn.checkmate.txt";
     const pgn = fs.readFileSync(path.resolve(__dirname, filePath), "utf-8");
 
     const parser = new PGNParser(pgn);
@@ -67,12 +67,13 @@ describe("PGNParser", () => {
 
     // prettier-ignore
     const expectedMoves = [
-		"e4", "d5", "exd5", "Qxd5", "Nc3", "Qe5+", "Qe2", "Qxe2+", "Bxe2", "e6",
-		"Nf3", "Bc5", "d4", "Bb4", "Bb5+", "c6", "Ba4", "b5", "Bxb5", "cxb5",
-		"O-O", "Bxc3", "bxc3", "Nf6", "Bg5", "O-O", "Rfe1", "Ng4", "h3", "Nh6",
-		"Be7", "Re8", "Bd6", "Nd7", "Ne5", "Nxe5", "dxe5", "Nf5", "Rad1", "Bb7",
-		"Be7", "Rxe7", "Rd8+"
-	];
+        "e4","e5","Nf3","Nc6","Bb5","Nf6","c3","d5","O-O","Be7","h3",
+        "Bd6","d3","O-O","Qd2","dxe4","dxe4","Nxe4","Qc2","Bf5","g4","Bg6","Nh4","Ng5",
+        "Nxg6","fxg6","c4","Nd4","Qa4","Rf3","Nd2","Rxh3","c5","Ngf3","Nxf3","Nxf3",
+        "Kg2","Qh4","cxd6","Rf8","dxc7","h5","Qxa7","e4","Qxb7","Kh7","c8=Q","Ne1",
+        "Rxe1","Qxg4","Qxg4","Rh2","Kxh2","Rf3","Rxe4","Re3","Rxe3","Kg8","Qxg6",
+        "Kf8","Qxh5","Kg8","Qhf7","Kh7","Qxg7"
+    ];
 
     expect(parsedMoves.length).toEqual(expectedMoves.length);
     for (let i = 0; i < expectedMoves.length; i++) {
@@ -81,7 +82,7 @@ describe("PGNParser", () => {
   });
 
 
-  xit("should build a chess game from PGN", () => {
+  it("should build a chess game from PGN", () => {
     const filePath = "./data/pgn.checkmate.txt";
     const pgn = fs.readFileSync(path.resolve(__dirname, filePath), "utf-8");
     const parser = new PGNParser(pgn);

@@ -76,7 +76,6 @@ export class PGNParser {
     const moves: string[] = [];
 
     while ((match = movesRegex.exec(moveText)) !== null) {
-      console.log(match);
       if (match[2] === ".") {
         const white = match[3];
         const black = match[4];
@@ -87,7 +86,12 @@ export class PGNParser {
         moves.push(black);
       }
     }
-    return moves;
+    // remove special characters from moves, like !, ?, +, #.
+    return moves.map((m) =>
+      m
+        .replace(/[?!#+]/g, "")
+        .trim()
+    );
   }
 
   // #endregion Public Methods (3)
