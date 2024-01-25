@@ -40,7 +40,58 @@ describe("PGNParser", () => {
     const result = parser.parse();
     const moves = result["Moves"];
     const parsedMoves = parser.parseMoveText(moves);
-    console.log(parsedMoves);
-    expect(parsedMoves.length).toEqual(43);
+
+    // prettier-ignore
+    const expectedMoves = [
+		"e4", "d5", "exd5", "Qxd5", "Nc3", "Qe5+", "Qe2", "Qxe2+", "Bxe2", "e6",
+		"Nf3", "Bc5", "d4", "Bb4", "Bb5+", "c6", "Ba4", "b5", "Bxb5", "cxb5",
+		"O-O", "Bxc3", "bxc3", "Nf6", "Bg5", "O-O", "Rfe1", "Ng4", "h3", "Nh6",
+		"Be7", "Re8", "Bd6", "Nd7", "Ne5", "Nxe5", "dxe5", "Nf5", "Rad1", "Bb7",
+		"Be7", "Rxe7", "Rd8+"
+	];
+
+    expect(parsedMoves.length).toEqual(expectedMoves.length);
+    for (let i = 0; i < expectedMoves.length; i++) {
+      expect(parsedMoves[i]).toEqual(expectedMoves[i]);
+    }
+  });
+
+  xit("should parse PGN moves correctly ending in checkmate", () => {
+    const filePath = "./data/pgn.txt";
+    const pgn = fs.readFileSync(path.resolve(__dirname, filePath), "utf-8");
+
+    const parser = new PGNParser(pgn);
+    const result = parser.parse();
+    const moves = result["Moves"];
+    const parsedMoves = parser.parseMoveText(moves);
+
+    // prettier-ignore
+    const expectedMoves = [
+		"e4", "d5", "exd5", "Qxd5", "Nc3", "Qe5+", "Qe2", "Qxe2+", "Bxe2", "e6",
+		"Nf3", "Bc5", "d4", "Bb4", "Bb5+", "c6", "Ba4", "b5", "Bxb5", "cxb5",
+		"O-O", "Bxc3", "bxc3", "Nf6", "Bg5", "O-O", "Rfe1", "Ng4", "h3", "Nh6",
+		"Be7", "Re8", "Bd6", "Nd7", "Ne5", "Nxe5", "dxe5", "Nf5", "Rad1", "Bb7",
+		"Be7", "Rxe7", "Rd8+"
+	];
+
+    expect(parsedMoves.length).toEqual(expectedMoves.length);
+    for (let i = 0; i < expectedMoves.length; i++) {
+      expect(parsedMoves[i]).toEqual(expectedMoves[i]);
+    }
+  });
+
+
+  xit("should build a chess game from PGN", () => {
+    const filePath = "./data/pgn.checkmate.txt";
+    const pgn = fs.readFileSync(path.resolve(__dirname, filePath), "utf-8");
+    const parser = new PGNParser(pgn);
+    const result = parser.parse();
+    const moves = result["Moves"];
+    const parsedMoves = parser.parseMoveText(moves);
+
+    const gameResult = parser.SANMovesToChessGame(parsedMoves);
+    expect(gameResult.isOk()).toEqual(true);
+    const game = gameResult.data;
+    expect(game.gameState.currentPlayer).toEqual("White");
   });
 });

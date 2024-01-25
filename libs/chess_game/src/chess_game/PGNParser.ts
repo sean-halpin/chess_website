@@ -1,4 +1,6 @@
-import { SANMove } from "./SANMove";
+import { Err, Ok, Result } from "../rust_types/Result";
+import { ChessGame } from "./ChessGame";
+import { Loc } from "./Loc";
 
 export class PGNParser {
   // #region Properties (1)
@@ -15,7 +17,30 @@ export class PGNParser {
 
   // #endregion Constructors (1)
 
-  // #region Public Methods (2)
+  // #region Public Methods (3)
+
+  public SANMovesToChessGame(moves: string[]): Result<ChessGame, string> {
+    const game = new ChessGame();
+    moves.forEach((move) => {
+      const legalMoves = ChessGame.findLegalMoves(
+        game.gameState,
+        game.gameState.currentPlayer
+      );
+      const moveCmd = Loc.fromSAN(move);
+      if (moveCmd.isSome()) {
+        const moveCommand = legalMoves.find((m) =>
+          m.destination.isEqual(moveCmd.unwrap())
+        );
+        if (moveCommand === undefined || moveCommand === null) {
+          return Err("Invalid move");
+        }
+        game.executeCommand(moveCommand);
+      } else {
+        return Err("Invalid move");
+      }
+    });
+    return Ok(game);
+  }
 
   // parse pgn and return a map of key value pairs, move list should be keyed with 'moves'
   public parse(): Record<string, string> {
@@ -42,22 +67,28 @@ export class PGNParser {
   }
 
   public parseMoveText(moveText: string): string[] {
-    const movesRegex = /(\d+)[.]+\s([a-zA-Z0-9+]+)/g;
+    // (\d+)(\.+)\s([RNBQKa-h0-8x+=#?!\-O]+)\s(?:([RNBQKa-h0-8x+=#?!\-O]+)\s)*  // Regex for move number and SAN
+    // (?![^(]*\))(?![^{]*\})(?![^(]*\)) // Regex for ignoring comments in parentheses or curly braces
+    const movesRegex =
+      /(\d+)(\.+)\s([RNBQKa-h0-8x+=#?!\-O]+)\s(?:([RNBQKa-h0-8x+=#?!\-O]+)\s)*(?![^(]*\))(?![^{]*\})(?![^(]*\))/g;
 
     let match;
-    const moves: SANMove[] = [];
+    const moves: string[] = [];
 
     while ((match = movesRegex.exec(moveText)) !== null) {
-      const moveNumber = parseInt(match[1]);
-      const moveColor = match[2];
-      const san = match[4];
-      const clock = match[5];
-
-      moves.push(new SANMove(moveNumber, moveColor, san, clock));
+      console.log(match);
+      if (match[2] === ".") {
+        const white = match[3];
+        const black = match[4];
+        if (white !== undefined) moves.push(white);
+        if (black !== undefined) moves.push(black);
+      } else if (match[2] === "...") {
+        const black = match[3];
+        moves.push(black);
+      }
     }
-
-    return moves.map((move) => move.san);
+    return moves;
   }
 
-  // #endregion Public Methods (2)
+  // #endregion Public Methods (3)
 }

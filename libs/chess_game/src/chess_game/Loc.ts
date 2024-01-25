@@ -17,8 +17,14 @@ export class Loc {
 
   // #endregion Constructors (1)
 
-  // #region Public Static Methods (2)
+  // #region Public Static Methods (3)
 
+  /**
+   * Creates a Loc object from a chess notation string.
+   *
+   * @param notation - The chess notation string representing the location. e.g. a1, b2, c3, ...
+   * @returns An Option<Loc> object representing the location if the notation is valid, otherwise None.
+   */
   public static fromNotation(notation: string): Option<Loc> {
     const column = notation.charCodeAt(0) - 97; // Convert letter to column index (A=0, B=1, ...)
     const row = parseInt(notation.charAt(1)) - 1; // Convert number to row index (1=0, 2=1, ...)
@@ -44,7 +50,21 @@ export class Loc {
     return Some(new Loc(row, col));
   }
 
-  // #endregion Public Static Methods (2)
+  public static fromSAN(move: string): Option<Loc> {
+    try {
+      if (move.length === 2) {
+        return this.fromNotation(move);
+      } else {
+        console.warn(`Invalid move: ${move}`);
+        return None;
+      }
+    } catch (e) {
+      console.warn(`Invalid move: ${move}`);
+      return None;
+    }
+  }
+
+  // #endregion Public Static Methods (3)
 
   // #region Public Methods (3)
 
