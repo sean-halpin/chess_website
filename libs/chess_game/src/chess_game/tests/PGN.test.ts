@@ -1,6 +1,7 @@
 import { PGNParser } from "../PGNParser";
 import fs from "fs";
 import path from "path";
+import { ChessGame } from "../ChessGame";
 
 describe("PGNParser", () => {
   it("should parse PGN correctly", () => {
@@ -90,7 +91,7 @@ describe("PGNParser", () => {
     const moves = result["Moves"];
     const parsedMoves = parser.parseMoveText(moves);
 
-    const gameResult = parser.SANMovesToChessGame(parsedMoves);
+    const gameResult = ChessGame.SANMovesToChessGame(parsedMoves);
     expect(gameResult.isOk()).toEqual(true);
     const game = gameResult.data;
     expect(game.gameState.currentPlayer).toEqual("White");

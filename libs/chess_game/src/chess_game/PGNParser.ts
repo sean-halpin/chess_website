@@ -1,7 +1,3 @@
-import { Err, Ok, Result } from "../rust_types/Result";
-import { ChessGame } from "./ChessGame";
-import { Loc } from "./Loc";
-
 export class PGNParser {
   // #region Properties (1)
 
@@ -17,30 +13,7 @@ export class PGNParser {
 
   // #endregion Constructors (1)
 
-  // #region Public Methods (3)
-
-  public SANMovesToChessGame(moves: string[]): Result<ChessGame, string> {
-    const game = new ChessGame();
-    moves.forEach((move) => {
-      const legalMoves = ChessGame.findLegalMoves(
-        game.gameState,
-        game.gameState.currentPlayer
-      );
-      const moveCmd = Loc.fromSAN(move);
-      if (moveCmd.isSome()) {
-        const moveCommand = legalMoves.find((m) =>
-          m.destination.isEqual(moveCmd.unwrap())
-        );
-        if (moveCommand === undefined || moveCommand === null) {
-          return Err("Invalid move");
-        }
-        game.executeCommand(moveCommand);
-      } else {
-        return Err("Invalid move");
-      }
-    });
-    return Ok(game);
-  }
+  // #region Public Methods (2)
 
   // parse pgn and return a map of key value pairs, move list should be keyed with 'moves'
   public parse(): Record<string, string> {
@@ -87,12 +60,8 @@ export class PGNParser {
       }
     }
     // remove special characters from moves, like !, ?, +, #.
-    return moves.map((m) =>
-      m
-        .replace(/[?!#+]/g, "")
-        .trim()
-    );
+    return moves.map((m) => m.replace(/[?!#+]/g, "").trim());
   }
 
-  // #endregion Public Methods (3)
+  // #endregion Public Methods (2)
 }

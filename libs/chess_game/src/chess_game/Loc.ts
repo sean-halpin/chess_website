@@ -1,4 +1,6 @@
 import { None, Option, Some } from "../rust_types/Option";
+import { rankFromAlgebraic } from "./Rank";
+import { StandardAlgebraicNotationMove } from "./StandardAlgebraicNotationMove";
 
 export class Loc {
   // #region Properties (2)
@@ -50,12 +52,36 @@ export class Loc {
     return Some(new Loc(row, col));
   }
 
-  public static fromSAN(move: string): Option<Loc> {
+  public static fromSAN(move: string): Option<StandardAlgebraicNotationMove> {
     try {
-      if (move.length === 2) {
-        return this.fromNotation(move);
+      console.log("fromSAN", move);
+      if (move === "O-O" || move === "O-O-O") {
+        if (move === "O-O") {
+          return Some(StandardAlgebraicNotationMove.withKingSideCastle());
+        } else if (move === "O-O-O") {
+          return Some(StandardAlgebraicNotationMove.withQueenSideCastle());
+        } else {
+          console.warn(`Invalid move: ${move}`);
+          return None;
+        }
+      } else if (move.length === 2) {
+        const locOption = this.fromNotation(move);
+        if (locOption.isNone()) {
+          return None;
+        }
+        return Some(StandardAlgebraicNotationMove.withLoc(locOption));
+      } else if (move.length === 3) {
+        // take first character as Piece type B, N, R, Q, K
+        const pieceChar = move.charAt(0);
+        const pieceRank = rankFromAlgebraic(pieceChar);
+        // take second character as column and third as row
+        const loc = this.fromNotation(move.substring(1, 3));
+        if (loc.isNone() || pieceRank.isNone()) {
+          return None;
+        }
+        return Some(StandardAlgebraicNotationMove.withLocRank(loc, pieceRank));
       } else {
-        console.warn(`Invalid move: ${move}`);
+        console.warn(`Invalid move: ${move} ${move.length}`);
         return None;
       }
     } catch (e) {

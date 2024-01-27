@@ -4,7 +4,7 @@ import { gameToFEN, fenPieceToTeam, fenToRank, fenToTeam } from "./FenNotation";
 import { MoveCommand } from "./MoveCommand";
 import { moveFunctions } from "./PieceLogic";
 import { Err, Ok, Result } from "../rust_types/Result";
-import { Rank } from "./Rank";
+import { Rank, rankValue } from "./Rank";
 import { Team } from "./Team";
 import {
   None,
@@ -20,6 +20,8 @@ import { ChessPiece } from "./ChessPiece";
 import { Board } from "./Board";
 import { GameState, GameStatus } from "./GameState";
 import { findBestMoveMinimax } from "./Minimax";
+import { StandardAlgebraicNotationMove } from "./StandardAlgebraicNotationMove";
+import { MoveCommandAndResult } from "./MoveCommandAndResult";
 
 export class ChessGame {
   // #region Properties (10)
@@ -176,11 +178,12 @@ export class ChessGame {
     }
     return clonedGameState;
   };
+
   public static findLegalMoves = (
     gameState: GameState,
     team: Team
-  ): MoveCommand[] => {
-    const legalMoves: MoveCommand[] = [];
+  ): MoveCommandAndResult[] => {
+    const legalMoves: MoveCommandAndResult[] = [];
     // Make a copy of the current game state
     const clonedState = gameState.clone();
     // Apply the move command to the copied game state
@@ -196,12 +199,18 @@ export class ChessGame {
       legalMoves.push(
         ...moves
           .flat()
-          .map((m: { toMoveCommand: () => any }) => m.toMoveCommand())
+          .map(
+            (m): MoveCommandAndResult =>
+              new MoveCommandAndResult(m.toMoveCommand(), m)
+          )
       );
     }
     return legalMoves.filter(
       (move) =>
-        !this.isKingInCheck(this.applyMoveCommand(move, clonedState), team)
+        !this.isKingInCheck(
+          this.applyMoveCommand(move.command, clonedState),
+          team
+        )
     );
   };
   public static findLegalMovesCurry = (gs: GameState) => (t: Team) => {
@@ -251,7 +260,111 @@ export class ChessGame {
     return false;
   };
 
-  public executeCommandAlgebraic = (cmd: string): Result<ChessGame, string> => {
+  public static SANMovesToChessGame(
+    moves: string[]
+  ): Result<ChessGame, string> {
+    let game = new ChessGame();
+
+    for (const move of moves) {
+      console.log(move);
+      const legalMoves = ChessGame.findLegalMoves(
+        game.gameState,
+        game.gameState.currentPlayer
+      );
+      const sanCmdOption = Loc.fromSAN(move);
+      if (sanCmdOption.isNone()) {
+        console.error("Ambiguous move", move);
+        return Err(`Invalid move ${move}`);
+      }
+      const sanCmd: StandardAlgebraicNotationMove = sanCmdOption.unwrap();
+      const moveCommands: MoveCommandAndResult[] = legalMoves.filter((m) =>
+        // err here
+        m.command.destination.isEqual(sanCmd.location.unwrap())
+      );
+      if (!moveCommands || moveCommands.length === 0) {
+        console.error("Ambiguous move", move, sanCmd);
+        return Err(`Invalid move ${move} - ${sanCmd.toString()}`);
+      }
+      let moveCommand;
+      if (moveCommands.length === 1) {
+        console.log("Single move", move, sanCmd);
+        moveCommand = Some(moveCommands[0]);
+      } else if (sanCmd.movingPieceRank.isSome()) {
+        const ambiguousCommandsFilteredByRank: MoveCommandAndResult[] =
+          moveCommands
+            .map((move) => {
+              const movingPiece = game.gameState.board.pieceFromLoc(
+                move.command.source
+              );
+              if (movingPiece.isNone()) {
+                return { m: move, r: None };
+              }
+              return { m: move, r: Some(movingPiece.unwrap().rank) };
+            })
+            .filter((move) => {
+              if (move.r.isSome() && sanCmd.movingPieceRank.isSome()) {
+                return move.r.unwrap() === sanCmd.movingPieceRank.unwrap();
+              }
+              return false;
+            })
+            .map((move) => move.m);
+        if (ambiguousCommandsFilteredByRank.length === 1) {
+          moveCommand = Some(ambiguousCommandsFilteredByRank[0]);
+        } else {
+          console.error(
+            "Ambiguous move",
+            move,
+            sanCmd,
+            ambiguousCommandsFilteredByRank.length
+          );
+          return Err(
+            `Amibuous move ${move} - ${sanCmd.toString()} - ${
+              ambiguousCommandsFilteredByRank.length
+            }`
+          );
+        }
+      } else if (sanCmd.movingPieceRank.isNone()) {
+        const legalMovesWithSourceRank = moveCommands.map((move) => {
+          const movingPiece = game.gameState.board.pieceFromLoc(
+            move.command.source
+          );
+          if (movingPiece.isNone()) {
+            return { m: move, r: None };
+          }
+          return { m: move, r: Some(movingPiece.unwrap().rank) };
+        });
+        // take the first moveCommand with the lowest rank value using rankValue function from legalMovesWithSourceRank
+        const moveCommandWithLowestRankValue = legalMovesWithSourceRank.reduce(
+          (acc, curr) => {
+            if (acc.r.isSome() && curr.r.isSome()) {
+              return rankValue(acc.r.unwrap()) < rankValue(curr.r.unwrap())
+                ? acc
+                : curr;
+            }
+            return acc;
+          }
+        );
+        moveCommand = Some(moveCommandWithLowestRankValue.m);
+      } else {
+        console.error("Ambiguous move", move, sanCmd);
+        return Err(`Amibuous move ${move} - ${sanCmd.toString()}`);
+      }
+      const cmdResult = game.executeCommand(moveCommand.unwrap().command);
+      if (cmdResult.isError()) {
+        console.error(cmdResult.error, move, sanCmd);
+        console.error(cmdResult.error, move, sanCmd.toString());
+        return Err(cmdResult.error);
+      } else {
+        game = cmdResult.data;
+        game.gameState.board.print();
+      }
+    }
+    return Ok(game);
+  }
+
+  private executeCommandAlgebraic = (
+    cmd: string
+  ): Result<ChessGame, string> => {
     const cmdArr = cmd.split(" ");
     const source = cmdArr[0];
     const destination = cmdArr[1];
@@ -267,6 +380,11 @@ export class ChessGame {
   };
 
   public executeCommand = (cmd: MoveCommand): Result<ChessGame, string> => {
+    console.log(
+      "Executing command",
+      cmd.source.toNotation(),
+      cmd.destination.toNotation()
+    );
     const clonedState = this.gameState.clone();
     const currentPlayer = clonedState.currentPlayer;
     // check the cmd source is the current player's piece
