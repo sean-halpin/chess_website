@@ -25,6 +25,7 @@ describe("Loc", () => {
             testValidMove("g7", Some(StandardAlgebraicNotationMove.withLoc(Loc.fromNotation("g7"))));
             testValidMove("g8", Some(StandardAlgebraicNotationMove.withLoc(Loc.fromNotation("g8"))));
             expect(Loc.fromSAN("O-O")).toEqual(Some(StandardAlgebraicNotationMove.withKingSideCastle()));
+            expect(Loc.fromSAN("O-O-O")).toEqual(Some(StandardAlgebraicNotationMove.withQueenSideCastle()));
     });
 
     // prettier-ignore
