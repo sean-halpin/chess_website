@@ -260,6 +260,10 @@ export class ChessGame {
     return false;
   };
 
+  private static isCastleMove = (move: string): boolean => {
+    return move === "O-O" || move === "O-O-O";
+  };
+
   public static SANMovesToChessGame(
     moves: string[]
   ): Result<ChessGame, string> {
@@ -277,10 +281,26 @@ export class ChessGame {
         return Err(`Invalid move ${move}`);
       }
       const sanCmd: StandardAlgebraicNotationMove = sanCmdOption.unwrap();
-      const moveCommands: MoveCommandAndResult[] = legalMoves.filter((m) =>
-        // err here
-        m.command.destination.isEqual(sanCmd.location.unwrap())
-      );
+      const moveCommands: MoveCommandAndResult[] = legalMoves.filter((m) => {
+        // Handle Castle Moves
+        if (ChessGame.isCastleMove(move)) {
+          if (m.result.rookSrcDestCastling.isNone()) {
+            return false;
+          }
+          const rookSrcDestCastling = m.result.rookSrcDestCastling.unwrap();
+          const dest = rookSrcDestCastling.dest;
+          const validDestinations = [
+            Loc.fromNotation("c1").unwrap(),
+            Loc.fromNotation("c8").unwrap(),
+            Loc.fromNotation("f1").unwrap(),
+            Loc.fromNotation("f8").unwrap(),
+          ];
+          return validDestinations.some((validDest) => validDest.isEqual(dest));
+        } else {
+          const destination = sanCmd.location.unwrap();
+          return m.command.destination.isEqual(destination);
+        }
+      });
       if (!moveCommands || moveCommands.length === 0) {
         console.error("Ambiguous move", move, sanCmd);
         return Err(`Invalid move ${move} - ${sanCmd.toString()}`);
