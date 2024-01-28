@@ -19,7 +19,15 @@ export class Loc {
 
   // #endregion Constructors (1)
 
-  // #region Public Static Methods (3)
+  // #region Public Static Methods (5)
+
+  public static columnFromNotation(col: string): Option<number> {
+    const column = col.charCodeAt(0) - 97; // Convert letter to column index (A=0, B=1, ...)
+    if (isNaN(column) || column < 0 || column > 7) {
+      return None; // Invalid notation
+    }
+    return Some(column);
+  }
 
   /**
    * Creates a Loc object from a chess notation string.
@@ -28,20 +36,13 @@ export class Loc {
    * @returns An Option<Loc> object representing the location if the notation is valid, otherwise None.
    */
   public static fromNotation(notation: string): Option<Loc> {
-    const column = notation.charCodeAt(0) - 97; // Convert letter to column index (A=0, B=1, ...)
-    const row = parseInt(notation.charAt(1)) - 1; // Convert number to row index (1=0, 2=1, ...)
-    if (
-      isNaN(row) ||
-      isNaN(column) ||
-      row < 0 ||
-      row > 7 ||
-      column < 0 ||
-      column > 7
-    ) {
+    const column = this.columnFromNotation(notation.charAt(0)); // Convert letter to column index (A=0, B=1, ...)
+    const row = this.rowFromNotation(notation.charAt(1)); // Convert number to row index (1=0, 2=1, ...)
+    if (column.isNone() || row.isNone()) {
       return None; // Invalid notation
     }
 
-    return Some(new Loc(row, column));
+    return Some(new Loc(row.unwrap(), column.unwrap()));
   }
 
   public static fromRowCol(row: number, col: number): Option<Loc> {
@@ -80,6 +81,21 @@ export class Loc {
           return None;
         }
         return Some(StandardAlgebraicNotationMove.withLocRank(loc, pieceRank));
+      } else if (move.length === 4) {
+        // if (move.includes("x", 1)) {
+        //   return Some(
+        //     StandardAlgebraicNotationMove.withTakesPiece(
+        //       this.fromNotation(move.substring(2, 4)),
+        //       rankFromAlgebraic(move.charAt(0)),
+        //       this.rowFromNotation(move.charAt(0)),
+        //       this.columnFromNotation(move.charAt(0))
+        //     )
+        //   );
+        // } else {
+        //   console.warn(`Unknown move: ${move} ${move.length}`);
+        //   return None;
+        // }
+        return None;
       } else {
         console.warn(`Invalid move: ${move} ${move.length}`);
         return None;
@@ -90,7 +106,15 @@ export class Loc {
     }
   }
 
-  // #endregion Public Static Methods (3)
+  public static rowFromNotation(row: string): Option<number> {
+    const rowNumber = parseInt(row.charAt(0)) - 1; // Convert number to row index (1=0, 2=1, ...)
+    if (isNaN(rowNumber) || rowNumber < 0 || rowNumber > 7) {
+      return None; // Invalid notation
+    }
+    return Some(rowNumber);
+  }
+
+  // #endregion Public Static Methods (5)
 
   // #region Public Methods (3)
 

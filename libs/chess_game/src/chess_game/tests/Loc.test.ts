@@ -8,8 +8,8 @@ describe("Loc", () => {
     move: string,
     expected: Option<StandardAlgebraicNotationMove>
   ) => {
-    expect(Loc.fromSAN(move).unwrap().location.unwrap().toNotation()).toEqual(
-      expected.unwrap().location.unwrap().toNotation()
+    expect(Loc.fromSAN(move).unwrap().destination.unwrap().toNotation()).toEqual(
+      expected.unwrap().destination.unwrap().toNotation()
     );
   };
   const testInvalidMove = (move: string) => {

@@ -297,7 +297,7 @@ export class ChessGame {
           ];
           return validDestinations.some((validDest) => validDest.isEqual(dest));
         } else {
-          const destination = sanCmd.location.unwrap();
+          const destination = sanCmd.destination.unwrap();
           return m.command.destination.isEqual(destination);
         }
       });
@@ -309,7 +309,7 @@ export class ChessGame {
       if (moveCommands.length === 1) {
         console.log("Single move", move, sanCmd);
         moveCommand = Some(moveCommands[0]);
-      } else if (sanCmd.movingPieceRank.isSome()) {
+      } else if (sanCmd.sourcePieceRank.isSome()) {
         const ambiguousCommandsFilteredByRank: MoveCommandAndResult[] =
           moveCommands
             .map((move) => {
@@ -322,8 +322,8 @@ export class ChessGame {
               return { m: move, r: Some(movingPiece.unwrap().rank) };
             })
             .filter((move) => {
-              if (move.r.isSome() && sanCmd.movingPieceRank.isSome()) {
-                return move.r.unwrap() === sanCmd.movingPieceRank.unwrap();
+              if (move.r.isSome() && sanCmd.sourcePieceRank.isSome()) {
+                return move.r.unwrap() === sanCmd.sourcePieceRank.unwrap();
               }
               return false;
             })
@@ -343,7 +343,7 @@ export class ChessGame {
             }`
           );
         }
-      } else if (sanCmd.movingPieceRank.isNone()) {
+      } else if (sanCmd.sourcePieceRank.isNone()) {
         const legalMovesWithSourceRank = moveCommands.map((move) => {
           const movingPiece = game.gameState.board.pieceFromLoc(
             move.command.source

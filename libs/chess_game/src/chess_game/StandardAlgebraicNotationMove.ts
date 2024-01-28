@@ -4,23 +4,32 @@ import { Loc } from "./Loc";
 
 export class StandardAlgebraicNotationMove {
   // #region Properties (2)
-  public location: Option<Loc>;
-  public movingPieceRank: Option<Rank>;
+  public destination: Option<Loc>;
+  public sourcePieceRank: Option<Rank>;
   public kingSideCastle: boolean;
   public queenSideCastle: boolean;
+  public takesPiece: boolean;
+  public sourceFile: Option<number>;
+  public sourceRank: Option<number>;
 
   // #endregion Properties (2)
   // #region Constructors (1)
   private constructor(
-    loc: Option<Loc> = None,
-    piece: Option<Rank> = None,
+    dest: Option<Loc> = None,
+    sourcePieceRank: Option<Rank> = None,
     kingSideCastle: boolean = false,
-    queenSideCastle: boolean = false
+    queenSideCastle: boolean = false,
+    takesPiece: boolean = false,
+    sourceFile: Option<number> = None,
+    sourceRank: Option<number> = None
   ) {
-    this.location = loc;
-    this.movingPieceRank = piece;
+    this.destination = dest;
+    this.sourcePieceRank = sourcePieceRank;
     this.kingSideCastle = kingSideCastle;
     this.queenSideCastle = queenSideCastle;
+    this.takesPiece = takesPiece;
+    this.sourceFile = sourceFile;
+    this.sourceRank = sourceRank;
   }
 
   // #endregion Constructors (1)
@@ -30,10 +39,10 @@ export class StandardAlgebraicNotationMove {
   }
 
   public static withLocRank(
-    loc: Option<Loc>,
+    dest: Option<Loc>,
     piece: Option<Rank>
   ): StandardAlgebraicNotationMove {
-    return new StandardAlgebraicNotationMove(loc, piece);
+    return new StandardAlgebraicNotationMove(dest, piece);
   }
 
   public static withKingSideCastle(): StandardAlgebraicNotationMove {
@@ -44,15 +53,32 @@ export class StandardAlgebraicNotationMove {
     return new StandardAlgebraicNotationMove(None, None, false, true);
   }
 
+  public static withTakesPiece(
+    dest: Option<Loc>,
+    piece: Option<Rank>,
+    sourceFile: Option<number>,
+    sourceRank: Option<number>
+  ): StandardAlgebraicNotationMove {
+    return new StandardAlgebraicNotationMove(
+      dest,
+      piece,
+      false,
+      false,
+      true,
+      sourceFile,
+      sourceRank
+    );
+  }
+
   // #endregion Public Static Methods (2)
   // #region Public Methods (1)
   public toString() {
-    if (this.movingPieceRank.isSome()) {
-      return `${algebraicFromRank(this.movingPieceRank.unwrap())}${this.location
-        .unwrap()
-        .toNotation()}`;
+    if (this.sourcePieceRank.isSome()) {
+      return `${algebraicFromRank(
+        this.sourcePieceRank.unwrap()
+      )}${this.destination.unwrap().toNotation()}`;
     } else {
-      return this.location.unwrap().toNotation();
+      return this.destination.unwrap().toNotation();
     }
   }
 }
