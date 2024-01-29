@@ -1,9 +1,5 @@
 import { None, Some, isSome, unwrap } from "../rust_types/Option";
-import {
-  isSquareEmpty,
-  isSquareEmptyNotation,
-  squareEntry,
-} from "./ChessGame";
+import { isSquareEmpty, isSquareEmptyNotation, squareEntry } from "./ChessGame";
 import { MoveResult } from "./MoveResult";
 import { Loc } from "./Loc";
 import { ChessPiece } from "./ChessPiece";
@@ -28,7 +24,11 @@ const findMovesInDirection = (
 
   let count = 0;
   let shouldExit = false;
-  while (!Board.isRowColOOB(newRow, newCol) && count < maximumDistance && !shouldExit) {
+  while (
+    !Board.isRowColOOB(newRow, newCol) &&
+    count < maximumDistance &&
+    !shouldExit
+  ) {
     count += 1;
     const possiblePiece = currentBoard.pieceFromRowCol(newRow, newCol);
     if (isSome(possiblePiece)) {
@@ -176,7 +176,10 @@ const findLegalPawnMoves = (
 
   // En Passant
   const lastCommandResult = gameState.commands[gameState.commands.length - 1];
-  if (gameState.commands.length > 0 && lastCommandResult[1]?.enPassantPossible) {
+  if (
+    gameState.commands.length > 0 &&
+    lastCommandResult.result.enPassantPossible
+  ) {
     const enPassantAttackable = (column_offset: number) => {
       const possiblePiece = squareEntry(
         movingPieceCurrentRow,

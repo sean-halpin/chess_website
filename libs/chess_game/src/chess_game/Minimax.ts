@@ -52,7 +52,7 @@ export const findBestMoveMinimax = async (
     const value = minimax(child, depth, -Infinity, Infinity, false);
     if (value > bestValue) {
       bestValue = value;
-      bestMove = child.commands[child.commands.length - 1][0];
+      bestMove = child.commands[child.commands.length - 1].command;
     }
     if (Date.now() - start > timeLimit) {
       break;
