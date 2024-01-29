@@ -388,7 +388,7 @@ export class ChessGame {
       // unwrap SAN move
       const sanCmd: StandardAlgebraicNotationMove = sanCmdOption.unwrap();
       // filter castle moves
-      const filterCastleMoves = (
+      const filterIfCastleMove = (
         m: MoveCommandAndResult,
         sanMove: StandardAlgebraicNotationMove
       ) => {
@@ -424,7 +424,7 @@ export class ChessGame {
         return true;
       };
       // filterMovesWithDestination
-      const filterMovesWithDestination = (
+      const filterIfDestination = (
         m: MoveCommandAndResult,
         sanMove: StandardAlgebraicNotationMove
       ) => {
@@ -434,7 +434,7 @@ export class ChessGame {
         return m.command.destination.isEqual(sanMove.destination.unwrap());
       };
       // filter Moves with source column
-      const filterMovesWithSourceColumn = (
+      const filterIfSourceColumn = (
         m: MoveCommandAndResult,
         sanMove: StandardAlgebraicNotationMove
       ) => {
@@ -444,7 +444,7 @@ export class ChessGame {
         return m.command.source.col === sanMove.sourceColumn.unwrap();
       };
       // filter Moves with source row
-      const filterMovesWithSourceRow = (
+      const filterIfSourceRow = (
         m: MoveCommandAndResult,
         sanMove: StandardAlgebraicNotationMove
       ) => {
@@ -454,7 +454,7 @@ export class ChessGame {
         return m.command.source.row === sanMove.sourceRow.unwrap();
       };
       // filter moves with source piece rank
-      const filterMovesWithSourcePieceRank = (
+      const filterIfSourceRank = (
         m: MoveCommandAndResult,
         sanMove: StandardAlgebraicNotationMove
       ) => {
@@ -478,11 +478,11 @@ export class ChessGame {
       };
       // filter legal moves by SAN move
       const moveCommands: MoveCommandAndResult[] = legalMoves
-        .filter((m) => filterCastleMoves(m, sanCmd))
-        .filter((m) => filterMovesWithDestination(m, sanCmd))
-        .filter((m) => filterMovesWithSourceColumn(m, sanCmd))
-        .filter((m) => filterMovesWithSourceRow(m, sanCmd))
-        .filter((m) => filterMovesWithSourcePieceRank(m, sanCmd));
+        .filter((m) => filterIfCastleMove(m, sanCmd))
+        .filter((m) => filterIfDestination(m, sanCmd))
+        .filter((m) => filterIfSourceColumn(m, sanCmd))
+        .filter((m) => filterIfSourceRow(m, sanCmd))
+        .filter((m) => filterIfSourceRank(m, sanCmd));
       if (moveCommands.length === 0) {
         console.error("No legal moves", move);
         return Err(`Invalid move ${move}`);
