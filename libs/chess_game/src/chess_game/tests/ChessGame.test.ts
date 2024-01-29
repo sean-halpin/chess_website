@@ -8,7 +8,7 @@ import { MoveCommand } from "../MoveCommand";
 import { GameStatus } from "../GameState";
 import { None, Some } from "../../rust_types/Option";
 
-xdescribe("ChessGameLogic", () => {
+describe("ChessGameLogic", () => {
   let chessGameLogic: ChessGame;
 
   beforeEach(() => {
