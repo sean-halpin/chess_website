@@ -2,7 +2,7 @@ export * from './chess_game/ChessGame';
 export * from './chess_game/ChessPiece';
 export * from './chess_game/Board';
 export * from './chess_game/FenNotation';
-export * from './chess_game/GameCommands';
+export * from './chess_game/MoveCommand';
 export * from './chess_game/GameState';
 export * from './chess_game/Loc';
 export * from './chess_game/Minimax';

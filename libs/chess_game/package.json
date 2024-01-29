@@ -1,6 +1,6 @@
 {
     "name": "@sean_halpin/chess_game",
-    "version": "1.0.25",
+    "version": "2.0.0",
     "description": "Chess game logic written in typescript",
     "types": "types/index.d.ts",
     "main": "dist/index.js",
@@ -11,6 +11,7 @@
     "scripts": {
         "test": "jest",
         "test:watch": "jest --watchAll",
+        "test:debug": "node --inspect-brk -r ts-node/register node_modules/.bin/jest --runInBand",
         "test:coverage": "jest --coverage",
         "build": "tsc",
         "lint": "eslint src --ext .js,.jsx,.ts,.tsx",

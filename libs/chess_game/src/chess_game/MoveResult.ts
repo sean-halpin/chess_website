@@ -1,18 +1,20 @@
-import { MoveCommand } from "./GameCommands";
+import { MoveCommand } from "./MoveCommand";
 import { None, Option } from "../rust_types/Option";
 import { ChessPiece } from "./ChessPiece";
 import { Loc } from "./Loc";
+import { Rank } from "./Rank";
 
 export class MoveResult {
   // #region Constructors (1)
 
   constructor(
     readonly destination: Loc,
-    readonly movingPiece: ChessPiece,
+    readonly sourcePieceRank: ChessPiece,
     readonly takenPiece: Option<ChessPiece>,
     readonly enPassantPossible: boolean = false,
     readonly kingLocationsMustNotBeInCheck: Option<Loc[]> = None,
-    readonly rookSrcDestCastling: Option<{ src: Loc; dest: Loc }> = None
+    readonly rookSrcDestCastling: Option<{ src: Loc; dest: Loc }> = None,
+    readonly pawnPromotion: Option<Rank> = None
   ) {}
 
   // #endregion Constructors (1)
@@ -21,9 +23,9 @@ export class MoveResult {
 
   public toMoveCommand(): MoveCommand {
     return {
-      command: "move",
-      source: this.movingPiece.position,
+      source: this.sourcePieceRank.position,
       destination: this.destination,
+      promotionRank: this.pawnPromotion,
     };
   }
 

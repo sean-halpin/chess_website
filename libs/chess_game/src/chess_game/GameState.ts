@@ -5,7 +5,7 @@ import _ from "lodash";
 import { isSome, unwrap } from "../rust_types/Option";
 import { rankValue } from "./Rank";
 import { ChessGame } from "./ChessGame";
-import { MoveCommand } from "./GameCommands";
+import { MoveCommand } from "./MoveCommand";
 
 // #region Classes (1)
 
@@ -51,7 +51,7 @@ export class GameState {
     const moves = ChessGame.findLegalMoves(this, this.currentPlayer);
 
     const children = moves.map((move) =>
-      ChessGame.applyMoveCommand(move, this)
+      ChessGame.applyMoveCommand(move.command, this)
     );
     return children;
   }

@@ -1,6 +1,8 @@
 import { Option } from "../rust_types/Option";
 import { Loc } from "./Loc";
 import { ChessPiece } from "./ChessPiece";
+import { Team } from "./Team";
+import { algebraicFromRank } from "./Rank";
 
 export class Board {
   // #region Properties (1)
@@ -43,7 +45,7 @@ export class Board {
 
   // #endregion Public Static Methods (2)
 
-  // #region Public Methods (3)
+  // #region Public Methods (4)
 
   public pieceFromLoc(location: Loc): Option<ChessPiece> {
     return this.squares[location.row][location.col];
@@ -51,6 +53,36 @@ export class Board {
 
   public pieceFromRowCol(row: number, col: number): Option<ChessPiece> {
     return this.squares[row][col];
+  }
+
+  public print(): void {
+    const columnLabels = "abcdefgh".split("").join(" ");
+    const rows = this.squares
+      .map((row, rowIndex) => {
+        const rowString = row
+          .map((piece) => {
+            if (piece.isNone()) {
+              return ".";
+            } else {
+              const chessPiece = piece.unwrap();
+              const team = chessPiece.team;
+              const rank = chessPiece.rank;
+              const pieceChar = algebraicFromRank(rank);
+              if (team === Team.White) {
+                return pieceChar.toUpperCase();
+              } else {
+                return pieceChar.toLowerCase();
+              }
+            }
+          })
+          .join(" ");
+        return `${rowIndex + 1} ${rowString} ${rowIndex + 1}`;
+      })
+      .reverse(); // Reverse the order of the rows
+    const boardString = `  ${columnLabels}\n${rows.join(
+      "\n"
+    )}\n  ${columnLabels}`;
+    console.log(boardString);
   }
 
   public updatePieceFromLoc(
@@ -70,5 +102,5 @@ export class Board {
     return new Board(updatedSquares);
   }
 
-  // #endregion Public Methods (3)
+  // #endregion Public Methods (4)
 }

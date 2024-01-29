@@ -8,6 +8,8 @@
     "strict": true,
     "esModuleInterop": true,
     "declarationDir": "types",
-    "types": ["jest", "node"]
+    "types": ["jest", "node"],
+    "sourceMap": true,
+    "inlineSources": true
   }
 }

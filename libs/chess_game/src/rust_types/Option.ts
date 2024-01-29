@@ -46,7 +46,6 @@ export class Option<T> {
       throw new Error("Cannot unwrap None");
     }
   }
-
   // #endregion Public Methods (3)
 }
 
@@ -66,4 +65,14 @@ export function isNone<T>(option: Option<T>): boolean {
 
 export function unwrap<T>(option: Option<T>): T {
   return option.unwrap();
+}
+
+export function collect<T>(options: Option<T>[]): T[] {
+  const results: T[] = [];
+  options.forEach((option) => {
+    if (option.isSome()) {
+      results.push(option.unwrap());
+    }
+  });
+  return results;
 }

@@ -1,6 +1,7 @@
-import { MoveCommand } from "./GameCommands";
+import { MoveCommand } from "./MoveCommand";
 import { GameState, GameStatus } from "./GameState";
 import { Loc } from "./Loc";
+import { None } from "../rust_types/Option";
 
 export const minimax = (
   state: GameState,
@@ -59,9 +60,9 @@ export const findBestMoveMinimax = async (
   }
   return (
     bestMove || {
-      command: "move",
       source: new Loc(0, 0),
       destination: new Loc(0, 0),
+      promotionRank: None,
     }
   );
 };
