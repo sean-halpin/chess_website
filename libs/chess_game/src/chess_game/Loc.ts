@@ -1,4 +1,4 @@
-import { None, Option, Some } from "../rust_types/Option";
+import { None, Option, Some, collect } from "../rust_types/Option";
 import { Rank, rankFromAlgebraic } from "./Rank";
 import { StandardAlgebraicNotationMove } from "./StandardAlgebraicNotationMove";
 
@@ -79,15 +79,6 @@ export class Loc {
           move.substring(move.length - 2, move.length)
         );
         const lhs = move.substring(0, move.length - 2);
-        const collect = <T>(options: Option<T>[]) => {
-          const results: T[] = [];
-          options.forEach((option) => {
-            if (option.isSome()) {
-              results.push(option.unwrap());
-            }
-          });
-          return results;
-        };
         // prettier-ignore
         const maybePieceRank: Rank[] = collect(lhs.split("").map((c) => { return rankFromAlgebraic(c) }));
         // prettier-ignore
