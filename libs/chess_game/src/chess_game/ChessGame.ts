@@ -24,7 +24,11 @@ import { StandardAlgebraicNotationMove } from "./StandardAlgebraicNotationMove";
 import { MoveCommandAndResult } from "./MoveCommandAndResult";
 
 export class ChessGame {
-  // #region Properties (10)
+  // #region Properties (12)
+
+  private static isCastleMove = (move: string): boolean => {
+    return move === "O-O" || move === "O-O-O";
+  };
 
   private _gameState: GameState;
   private createPiece = (
@@ -40,6 +44,22 @@ export class ChessGame {
       position,
       firstMove: true,
     };
+  };
+  private executeCommandAlgebraic = (
+    cmd: string
+  ): Result<ChessGame, string> => {
+    const cmdArr = cmd.split(" ");
+    const source = cmdArr[0];
+    const destination = cmdArr[1];
+    try {
+      const cmdObj = new MoveCommand(
+        Loc.fromNotation(source).unwrap(),
+        Loc.fromNotation(destination).unwrap()
+      );
+      return this.executeCommand(cmdObj);
+    } catch (e) {
+      return Err("Invalid move");
+    }
   };
   private initializeGameState = (
     fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -109,8 +129,8 @@ export class ChessGame {
     ).filter(
       (move) =>
         move.destination.isEqual(newCommand.destination) &&
-        move.movingPiece.position.row === newCommand.source.row &&
-        move.movingPiece.position.col === newCommand.source.col
+        move.sourcePieceRank.position.row === newCommand.source.row &&
+        move.sourcePieceRank.position.col === newCommand.source.col
     );
     if (moveResult.length > 0) {
       const moveRes = moveResult[0];
@@ -178,7 +198,6 @@ export class ChessGame {
     }
     return clonedGameState;
   };
-
   public static findLegalMoves = (
     gameState: GameState,
     team: Team
@@ -260,145 +279,6 @@ export class ChessGame {
     return false;
   };
 
-  private static isCastleMove = (move: string): boolean => {
-    return move === "O-O" || move === "O-O-O";
-  };
-
-  public static SANMovesToChessGame(
-    moves: string[]
-  ): Result<ChessGame, string> {
-    let game = new ChessGame();
-
-    for (const move of moves) {
-      console.log(move);
-      const legalMoves = ChessGame.findLegalMoves(
-        game.gameState,
-        game.gameState.currentPlayer
-      );
-      const sanCmdOption = Loc.fromSAN(move);
-      if (sanCmdOption.isNone()) {
-        console.error("Ambiguous move", move);
-        return Err(`Invalid move ${move}`);
-      }
-      const sanCmd: StandardAlgebraicNotationMove = sanCmdOption.unwrap();
-      const moveCommands: MoveCommandAndResult[] = legalMoves.filter((m) => {
-        // Handle Castle Moves
-        if (ChessGame.isCastleMove(move)) {
-          if (m.result.rookSrcDestCastling.isNone()) {
-            return false;
-          }
-          const rookSrcDestCastling = m.result.rookSrcDestCastling.unwrap();
-          const dest = rookSrcDestCastling.dest;
-          const validDestinations = [
-            Loc.fromNotation("c1").unwrap(),
-            Loc.fromNotation("c8").unwrap(),
-            Loc.fromNotation("f1").unwrap(),
-            Loc.fromNotation("f8").unwrap(),
-          ];
-          return validDestinations.some((validDest) => validDest.isEqual(dest));
-        } else {
-          const destination = sanCmd.destination.unwrap();
-          return m.command.destination.isEqual(destination);
-        }
-      });
-      if (!moveCommands || moveCommands.length === 0) {
-        console.error("Ambiguous move", move, sanCmd);
-        return Err(`Invalid move ${move} - ${sanCmd.toString()}`);
-      }
-      let moveCommand;
-      if (moveCommands.length === 1) {
-        console.log("Single move", move, sanCmd);
-        moveCommand = Some(moveCommands[0]);
-      } else if (sanCmd.sourcePieceRank.isSome()) {
-        const ambiguousCommandsFilteredByRank: MoveCommandAndResult[] =
-          moveCommands
-            .map((move) => {
-              const movingPiece = game.gameState.board.pieceFromLoc(
-                move.command.source
-              );
-              if (movingPiece.isNone()) {
-                return { m: move, r: None };
-              }
-              return { m: move, r: Some(movingPiece.unwrap().rank) };
-            })
-            .filter((move) => {
-              if (move.r.isSome() && sanCmd.sourcePieceRank.isSome()) {
-                return move.r.unwrap() === sanCmd.sourcePieceRank.unwrap();
-              }
-              return false;
-            })
-            .map((move) => move.m);
-        if (ambiguousCommandsFilteredByRank.length === 1) {
-          moveCommand = Some(ambiguousCommandsFilteredByRank[0]);
-        } else {
-          console.error(
-            "Ambiguous move",
-            move,
-            sanCmd,
-            ambiguousCommandsFilteredByRank.length
-          );
-          return Err(
-            `Amibuous move ${move} - ${sanCmd.toString()} - ${
-              ambiguousCommandsFilteredByRank.length
-            }`
-          );
-        }
-      } else if (sanCmd.sourcePieceRank.isNone()) {
-        const legalMovesWithSourceRank = moveCommands.map((move) => {
-          const movingPiece = game.gameState.board.pieceFromLoc(
-            move.command.source
-          );
-          if (movingPiece.isNone()) {
-            return { m: move, r: None };
-          }
-          return { m: move, r: Some(movingPiece.unwrap().rank) };
-        });
-        // take the first moveCommand with the lowest rank value using rankValue function from legalMovesWithSourceRank
-        const moveCommandWithLowestRankValue = legalMovesWithSourceRank.reduce(
-          (acc, curr) => {
-            if (acc.r.isSome() && curr.r.isSome()) {
-              return rankValue(acc.r.unwrap()) < rankValue(curr.r.unwrap())
-                ? acc
-                : curr;
-            }
-            return acc;
-          }
-        );
-        moveCommand = Some(moveCommandWithLowestRankValue.m);
-      } else {
-        console.error("Ambiguous move", move, sanCmd);
-        return Err(`Amibuous move ${move} - ${sanCmd.toString()}`);
-      }
-      const cmdResult = game.executeCommand(moveCommand.unwrap().command);
-      if (cmdResult.isError()) {
-        console.error(cmdResult.error, move, sanCmd);
-        console.error(cmdResult.error, move, sanCmd.toString());
-        return Err(cmdResult.error);
-      } else {
-        game = cmdResult.data;
-        game.gameState.board.print();
-      }
-    }
-    return Ok(game);
-  }
-
-  private executeCommandAlgebraic = (
-    cmd: string
-  ): Result<ChessGame, string> => {
-    const cmdArr = cmd.split(" ");
-    const source = cmdArr[0];
-    const destination = cmdArr[1];
-    try {
-      const cmdObj = new MoveCommand(
-        Loc.fromNotation(source).unwrap(),
-        Loc.fromNotation(destination).unwrap()
-      );
-      return this.executeCommand(cmdObj);
-    } catch (e) {
-      return Err("Invalid move");
-    }
-  };
-
   public executeCommand = (cmd: MoveCommand): Result<ChessGame, string> => {
     console.log(
       "Executing command",
@@ -451,7 +331,7 @@ export class ChessGame {
     return gameToFEN(this.gameState);
   };
 
-  // #endregion Properties (10)
+  // #endregion Properties (12)
 
   // #region Constructors (1)
 
@@ -484,6 +364,162 @@ export class ChessGame {
   }
 
   // #endregion Public Getters And Setters (5)
+
+  // #region Public Static Methods (1)
+
+  public static SANMovesToChessGame(
+    moves: string[]
+  ): Result<ChessGame, string> {
+    let game = new ChessGame();
+
+    for (const move of moves) {
+      console.log(move);
+      // get legal moves
+      const legalMoves = ChessGame.findLegalMoves(
+        game.gameState,
+        game.gameState.currentPlayer
+      );
+      // extract info from SAN move
+      const sanCmdOption = Loc.fromSAN(move);
+      if (sanCmdOption.isNone()) {
+        console.error("Ambiguous move", move);
+        return Err(`Invalid move ${move}`);
+      }
+      // unwrap SAN move
+      const sanCmd: StandardAlgebraicNotationMove = sanCmdOption.unwrap();
+      // filter castle moves
+      const filterCastleMoves = (
+        m: MoveCommandAndResult,
+        sanMove: StandardAlgebraicNotationMove
+      ) => {
+        // eslint-disable-next-line no-debugger
+        if (
+          sanMove.kingSideCastle.isNone() &&
+          sanMove.queenSideCastle.isNone()
+        ) {
+          return true;
+        }
+        const kingSideCastleDestinations = [
+          Loc.fromNotation("g1").unwrap(),
+          Loc.fromNotation("g8").unwrap(),
+        ];
+        const queenSideCastleDestinations = [
+          Loc.fromNotation("c1").unwrap(),
+          Loc.fromNotation("c8").unwrap(),
+        ];
+        if (sanMove.kingSideCastle.isSome()) {
+          return (
+            kingSideCastleDestinations.filter((d) =>
+              m.command.destination.isEqual(d) && m.result.sourcePieceRank.rank === Rank.King
+            ).length > 0
+          );
+        }
+        if (sanMove.queenSideCastle.isSome()) {
+          return (
+            queenSideCastleDestinations.filter((d) =>
+              m.command.destination.isEqual(d) && m.result.sourcePieceRank.rank === Rank.King
+            ).length > 0
+          );
+        }
+        return true;
+      };
+      // filterMovesWithDestination
+      const filterMovesWithDestination = (
+        m: MoveCommandAndResult,
+        sanMove: StandardAlgebraicNotationMove
+      ) => {
+        if (sanCmd.destination.isNone()) {
+          return true;
+        }
+        return m.command.destination.isEqual(sanMove.destination.unwrap());
+      };
+      // filter Moves with source column
+      const filterMovesWithSourceColumn = (
+        m: MoveCommandAndResult,
+        sanMove: StandardAlgebraicNotationMove
+      ) => {
+        if (sanCmd.sourceColumn.isNone()) {
+          return true;
+        }
+        return m.command.source.col === sanMove.sourceColumn.unwrap();
+      };
+      // filter Moves with source row
+      const filterMovesWithSourceRow = (
+        m: MoveCommandAndResult,
+        sanMove: StandardAlgebraicNotationMove
+      ) => {
+        if (sanCmd.sourceRow.isNone()) {
+          return true;
+        }
+        return m.command.source.row === sanMove.sourceRow.unwrap();
+      };
+      // filter moves with source piece rank
+      const filterMovesWithSourcePieceRank = (
+        m: MoveCommandAndResult,
+        sanMove: StandardAlgebraicNotationMove
+      ) => {
+        if (sanCmd.sourcePieceRank.isNone()) {
+          return true;
+        }
+        return (
+          m.result.sourcePieceRank.rank === sanMove.sourcePieceRank.unwrap() &&
+          m.command.destination.isEqual(sanMove.destination.unwrap())
+        );
+      };
+      // reduce to move with lowest rank value if multiple moves
+      const reduceToLowestRankValue = (
+        m: MoveCommandAndResult,
+        n: MoveCommandAndResult
+      ) => {
+        return rankValue(m.result.sourcePieceRank.rank) <=
+          rankValue(n.result.sourcePieceRank.rank)
+          ? m
+          : n;
+      };
+      // filter legal moves by SAN move
+      const moveCommands: MoveCommandAndResult[] = legalMoves
+        .filter((m) => filterCastleMoves(m, sanCmd))
+        .filter((m) => filterMovesWithDestination(m, sanCmd))
+        .filter((m) => filterMovesWithSourceColumn(m, sanCmd))
+        .filter((m) => filterMovesWithSourceRow(m, sanCmd))
+        .filter((m) => filterMovesWithSourcePieceRank(m, sanCmd));
+      if (moveCommands.length === 0) {
+        console.error("No legal moves", move);
+        return Err(`Invalid move ${move}`);
+      } else if (moveCommands.length > 1) {
+        // filter by lowest rank value
+        const lowestRankValueMove = moveCommands.reduce(
+          reduceToLowestRankValue
+        );
+        // execute move
+        const moveCmd = lowestRankValueMove;
+        const result = game.executeCommand(moveCmd.command);
+        // print board state
+        if (result.isError()) {
+          console.error("Invalid move", move);
+          return Err(`Invalid move ${move}`);
+        } else {
+          game = result.data;
+          game.gameState.board.print();
+        }
+      } else if (moveCommands.length === 1) {
+        // execute move
+        const moveCmd = moveCommands[0].command;
+        const result = game.executeCommand(moveCmd);
+        // print board state
+        if (result.isError()) {
+          console.error("Invalid move", move);
+          return Err(`Invalid move ${move}`);
+        } else {
+          game = result.data;
+          game.gameState.board.print();
+        }
+      }
+    }
+    return Ok(game);
+  }
+
+  // #endregion Public Static Methods (1)
 
   // #region Public Methods (1)
 

@@ -8,9 +8,7 @@ describe("Loc", () => {
     move: string,
     expected: Option<StandardAlgebraicNotationMove>
   ) => {
-    expect(Loc.fromSAN(move).unwrap().destination.unwrap().toNotation()).toEqual(
-      expected.unwrap().destination.unwrap().toNotation()
-    );
+    expect(Loc.fromSAN(move)).toEqual(expected);
   };
   const testInvalidMove = (move: string) => {
     expect(Loc.fromSAN(move)).toEqual(None);
@@ -19,19 +17,22 @@ describe("Loc", () => {
   describe("fromSAN", () => {
     // prettier-ignore
     it("should return Some(StandardAlgebraicNotationMove) for valid moves of length 2", () => {
-            testValidMove("a1", Some(StandardAlgebraicNotationMove.withLoc(Loc.fromNotation("a1"))));
-            testValidMove("a3", Some(StandardAlgebraicNotationMove.withLoc(Loc.fromNotation("a3"))));
-            testValidMove("e4", Some(StandardAlgebraicNotationMove.withLoc(Loc.fromNotation("e4"))));
-            testValidMove("g7", Some(StandardAlgebraicNotationMove.withLoc(Loc.fromNotation("g7"))));
-            testValidMove("g8", Some(StandardAlgebraicNotationMove.withLoc(Loc.fromNotation("g8"))));
-            expect(Loc.fromSAN("O-O")).toEqual(Some(StandardAlgebraicNotationMove.withKingSideCastle()));
-            expect(Loc.fromSAN("O-O-O")).toEqual(Some(StandardAlgebraicNotationMove.withQueenSideCastle()));
+            testValidMove("a1", Some(StandardAlgebraicNotationMove.create(Loc.fromNotation("a1"), None, None, None, None, None, None)));
+            testValidMove("a3", Some(StandardAlgebraicNotationMove.create(Loc.fromNotation("a3"), None, None, None, None, None, None)));
+            testValidMove("e4", Some(StandardAlgebraicNotationMove.create(Loc.fromNotation("e4"), None, None, None, None, None, None)));
+            testValidMove("g7", Some(StandardAlgebraicNotationMove.create(Loc.fromNotation("g7"), None, None, None, None, None, None)));
+            testValidMove("g8", Some(StandardAlgebraicNotationMove.create(Loc.fromNotation("g8"), None, None, None, None, None, None)));
+            expect(Loc.fromSAN("O-O")).toEqual(Some(StandardAlgebraicNotationMove.create(None, None, Some(true), None, None, None, None)));
+            expect(Loc.fromSAN("O-O-O")).toEqual(Some(StandardAlgebraicNotationMove.create(None, None, None, Some(true), None, None, None)));
+            testValidMove("dxe4", Some(StandardAlgebraicNotationMove.create(Loc.fromNotation("e4"), None, None, None, Some(true), Loc.columnFromNotation("d"), None)));
+            testValidMove("Nxe4", Some(StandardAlgebraicNotationMove.create(Loc.fromNotation("e4"), Some(Rank.Knight), None, None, Some(true), None, None)));
+            testValidMove("Rf3", Some(StandardAlgebraicNotationMove.create(Loc.fromNotation("f3"), Some(Rank.Rook), None, None, None, None, None)));
     });
 
     // prettier-ignore
     it("should return Some(StandardAlgebraicNotationMove) for valid moves of length 3", () => {
-            testValidMove("Nf3", Some(StandardAlgebraicNotationMove.withLocRank(Loc.fromNotation("f3"), Some(Rank.Knight))));
-        });
+            testValidMove("Nf6", Some(StandardAlgebraicNotationMove.create(Loc.fromNotation("f6"), Some(Rank.Knight), None, None, None, None, None)));
+    });
     // prettier-ignore
     it("should return None for invalid moves", () => {
             testInvalidMove("a0");

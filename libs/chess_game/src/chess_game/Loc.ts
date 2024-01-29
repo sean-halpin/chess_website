@@ -1,5 +1,5 @@
 import { None, Option, Some } from "../rust_types/Option";
-import { rankFromAlgebraic } from "./Rank";
+import { Rank, rankFromAlgebraic } from "./Rank";
 import { StandardAlgebraicNotationMove } from "./StandardAlgebraicNotationMove";
 
 export class Loc {
@@ -58,9 +58,11 @@ export class Loc {
       console.log("fromSAN", move);
       if (move === "O-O" || move === "O-O-O") {
         if (move === "O-O") {
-          return Some(StandardAlgebraicNotationMove.withKingSideCastle());
+          // prettier-ignore
+          return Some(StandardAlgebraicNotationMove.create(None, None, Some(true), None, None, None, None));
         } else if (move === "O-O-O") {
-          return Some(StandardAlgebraicNotationMove.withQueenSideCastle());
+          // prettier-ignore
+          return Some(StandardAlgebraicNotationMove.create(None, None, None, Some(true), None, None, None));
         } else {
           console.warn(`Invalid move: ${move}`);
           return None;
@@ -70,32 +72,45 @@ export class Loc {
         if (locOption.isNone()) {
           return None;
         }
-        return Some(StandardAlgebraicNotationMove.withLoc(locOption));
-      } else if (move.length === 3) {
-        // take first character as Piece type B, N, R, Q, K
-        const pieceChar = move.charAt(0);
-        const pieceRank = rankFromAlgebraic(pieceChar);
-        // take second character as column and third as row
-        const loc = this.fromNotation(move.substring(1, 3));
-        if (loc.isNone() || pieceRank.isNone()) {
+        // prettier-ignore
+        return Some(StandardAlgebraicNotationMove.create(locOption, None, None, None, None, None, None));
+      } else if (move.length >= 3) {
+        const loc = this.fromNotation(
+          move.substring(move.length - 2, move.length)
+        );
+        const lhs = move.substring(0, move.length - 2);
+        const collect = <T>(options: Option<T>[]) => {
+          const results: T[] = [];
+          options.forEach((option) => {
+            if (option.isSome()) {
+              results.push(option.unwrap());
+            }
+          });
+          return results;
+        };
+        // prettier-ignore
+        const maybePieceRank: Rank[] = collect(lhs.split("").map((c) => { return rankFromAlgebraic(c) }));
+        // prettier-ignore
+        const maybeTakesPiece: boolean[] = collect(lhs.split("").map((c) => { return c === "x" ? Some(true) : None}));
+        // prettier-ignore
+        const maybeSourceColumn: number[] = collect(lhs.split("").map((c) => { return this.columnFromNotation(c) }));
+        // prettier-ignore
+        const maybeSourceRow: number[] = collect(lhs.split("").map((c) => { return this.rowFromNotation(c) }));
+        if (loc.isNone()) {
+          console.warn(`Invalid move: ${move} ${move.length}`);
           return None;
         }
-        return Some(StandardAlgebraicNotationMove.withLocRank(loc, pieceRank));
-      } else if (move.length === 4) {
-        // if (move.includes("x", 1)) {
-        //   return Some(
-        //     StandardAlgebraicNotationMove.withTakesPiece(
-        //       this.fromNotation(move.substring(2, 4)),
-        //       rankFromAlgebraic(move.charAt(0)),
-        //       this.rowFromNotation(move.charAt(0)),
-        //       this.columnFromNotation(move.charAt(0))
-        //     )
-        //   );
-        // } else {
-        //   console.warn(`Unknown move: ${move} ${move.length}`);
-        //   return None;
-        // }
-        return None;
+        return Some(
+          StandardAlgebraicNotationMove.create(
+            loc,
+            maybePieceRank.length > 0 ? Some(maybePieceRank[0]) : None,
+            None,
+            None,
+            maybeTakesPiece.length > 0 ? Some(maybeTakesPiece[0]) : None,
+            maybeSourceColumn.length > 0 ? Some(maybeSourceColumn[0]) : None,
+            maybeSourceRow.length > 0 ? Some(maybeSourceRow[0]) : None
+          )
+        );
       } else {
         console.warn(`Invalid move: ${move} ${move.length}`);
         return None;

@@ -8,7 +8,7 @@ export class MoveResult {
 
   constructor(
     readonly destination: Loc,
-    readonly movingPiece: ChessPiece,
+    readonly sourcePieceRank: ChessPiece,
     readonly takenPiece: Option<ChessPiece>,
     readonly enPassantPossible: boolean = false,
     readonly kingLocationsMustNotBeInCheck: Option<Loc[]> = None,
@@ -21,7 +21,7 @@ export class MoveResult {
 
   public toMoveCommand(): MoveCommand {
     return {
-      source: this.movingPiece.position,
+      source: this.sourcePieceRank.position,
       destination: this.destination,
     };
   }
