@@ -6,6 +6,7 @@ import { Rank } from "../Rank";
 import { Loc } from "../Loc";
 import { MoveCommand } from "../MoveCommand";
 import { GameStatus } from "../GameState";
+import { None, Some } from "../../rust_types/Option";
 
 xdescribe("ChessGameLogic", () => {
   let chessGameLogic: ChessGame;
@@ -22,6 +23,7 @@ xdescribe("ChessGameLogic", () => {
     const cmd: MoveCommand = {
       source: new Loc(4, 7),
       destination: expected_dest,
+      promotionRank: None,
     };
     const result = initialGame.executeCommand(cmd);
     const updatedState = result.success ? result.data : initialGame;
@@ -42,6 +44,7 @@ xdescribe("ChessGameLogic", () => {
     const cmd: MoveCommand = {
       source: new Loc(4, 7),
       destination: expected_dest,
+      promotionRank: None,
     };
     const result = initialGame.executeCommand(cmd);
     const updatedState = result.success ? result.data : initialGame;
@@ -60,6 +63,7 @@ xdescribe("ChessGameLogic", () => {
     const cmd: MoveCommand = {
       source: new Loc(6, 2),
       destination: expected_dest,
+      promotionRank: Some(Rank.Queen),
     };
     const result = initialGame.executeCommand(cmd);
     const updatedState = result.success ? result.data : initialGame;
@@ -98,6 +102,7 @@ xdescribe("ChessGameLogic", () => {
     const moveCommand: MoveCommand = {
       source: new Loc(1, 3),
       destination: new Loc(3, 3),
+      promotionRank: None,
     };
     const result = chessGameLogic.executeCommand(moveCommand);
     expect(result.success).toBeTruthy();
@@ -112,6 +117,7 @@ xdescribe("ChessGameLogic", () => {
     const cmd: MoveCommand = {
       source: Loc.fromNotation("e1").unwrap(),
       destination: expected_king_loc,
+      promotionRank: None,
     };
     const result = initialGame.executeCommand(cmd);
     const updatedState = result.success ? result.data : initialGame;
@@ -144,6 +150,7 @@ xdescribe("ChessGameLogic", () => {
     const cmd: MoveCommand = {
       source: Loc.fromNotation("e1").unwrap(),
       destination: expected_king_loc,
+      promotionRank: None,
     };
     const result = initialGame.executeCommand(cmd);
     const updatedState = result.success ? result.data : initialGame;
@@ -171,6 +178,7 @@ xdescribe("ChessGameLogic", () => {
     const invalidMoveCommand: MoveCommand = {
       source: new Loc(5, 0),
       destination: new Loc(2, 0),
+      promotionRank: None,
     };
     const result = chessGameLogic.executeCommand(invalidMoveCommand);
     expect(result.success).toBeFalsy();
@@ -183,6 +191,7 @@ xdescribe("ChessGameLogic", () => {
     const invalidMoveCommand: MoveCommand = {
       source: Loc.fromNotation("e7").unwrap(),
       destination: Loc.fromNotation("e6").unwrap(),
+      promotionRank: None,
     };
     const result = chessGameLogic.executeCommand(invalidMoveCommand);
     expect(result.success).toBeFalsy();

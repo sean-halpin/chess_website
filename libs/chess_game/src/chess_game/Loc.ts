@@ -56,7 +56,22 @@ export class Loc {
   public static fromSAN(move: string): Option<StandardAlgebraicNotationMove> {
     try {
       console.log("fromSAN", move);
-      if (move === "O-O" || move === "O-O-O") {
+      if (move.includes("=")) {
+        const lhs = move.substring(0, move.length - 2);
+        const rhs = move.substring(move.length - 1, move.length);
+        const promotionRank = rankFromAlgebraic(rhs);
+        if (promotionRank.isNone()) {
+          console.warn(`Invalid move: ${move}`);
+          return None;
+        }
+        const locOption = this.fromNotation(lhs);
+        if (locOption.isNone()) {
+          console.warn(`Invalid move: ${move}`);
+          return None;
+        }
+        // prettier-ignore
+        return Some(StandardAlgebraicNotationMove.create(locOption, None, None, None, None, None, None, promotionRank));
+      } else if (move === "O-O" || move === "O-O-O") {
         if (move === "O-O") {
           // prettier-ignore
           return Some(StandardAlgebraicNotationMove.create(None, None, Some(true), None, None, None, None));

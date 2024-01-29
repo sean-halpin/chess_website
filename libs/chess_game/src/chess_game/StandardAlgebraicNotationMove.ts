@@ -12,6 +12,7 @@ export class StandardAlgebraicNotationMove {
   public sourcePieceRank: Option<Rank>;
   public sourceRow: Option<number>;
   public takesPiece: Option<boolean>;
+  public promotionRank: Option<Rank>;
 
   // #endregion Properties (7)
 
@@ -24,7 +25,8 @@ export class StandardAlgebraicNotationMove {
     queenSideCastle: Option<boolean> = None,
     takesPiece: Option<boolean> = None,
     sourceColumn: Option<number> = None,
-    sourceRow: Option<number> = None
+    sourceRow: Option<number> = None,
+    promotionRank: Option<Rank> = None
   ) {
     this.destination = dest;
     this.sourcePieceRank = sourcePieceRank;
@@ -33,6 +35,7 @@ export class StandardAlgebraicNotationMove {
     this.takesPiece = takesPiece;
     this.sourceColumn = sourceColumn;
     this.sourceRow = sourceRow;
+    this.promotionRank = promotionRank;
   }
 
   // #endregion Constructors (1)
@@ -46,7 +49,8 @@ export class StandardAlgebraicNotationMove {
     queenSideCastle: Option<boolean>,
     takesPiece: Option<boolean>,
     sourceColumn: Option<number>,
-    sourceRow: Option<number>
+    sourceRow: Option<number>,
+    promotionRank: Option<Rank> = None
   ): StandardAlgebraicNotationMove {
     return new StandardAlgebraicNotationMove(
       dest,
@@ -55,7 +59,8 @@ export class StandardAlgebraicNotationMove {
       queenSideCastle,
       takesPiece,
       sourceColumn,
-      sourceRow
+      sourceRow,
+      promotionRank
     );
   }
 

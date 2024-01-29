@@ -173,7 +173,9 @@ export class ChessGame {
           movingPiece.team,
           movingPiece.rank === Rank.Pawn &&
           (moveRes.destination.row === 0 || moveRes.destination.row === 7)
-            ? Rank.Queen // Promote pawn to queen
+            ? newCommand.promotionRank.isSome()
+              ? newCommand.promotionRank.unwrap()
+              : Rank.Queen // Promote pawn to queen by default
             : movingPiece.rank,
           moveRes.destination,
           false
@@ -409,15 +411,19 @@ export class ChessGame {
         ];
         if (sanMove.kingSideCastle.isSome()) {
           return (
-            kingSideCastleDestinations.filter((d) =>
-              m.command.destination.isEqual(d) && m.result.sourcePieceRank.rank === Rank.King
+            kingSideCastleDestinations.filter(
+              (d) =>
+                m.command.destination.isEqual(d) &&
+                m.result.sourcePieceRank.rank === Rank.King
             ).length > 0
           );
         }
         if (sanMove.queenSideCastle.isSome()) {
           return (
-            queenSideCastleDestinations.filter((d) =>
-              m.command.destination.isEqual(d) && m.result.sourcePieceRank.rank === Rank.King
+            queenSideCastleDestinations.filter(
+              (d) =>
+                m.command.destination.isEqual(d) &&
+                m.result.sourcePieceRank.rank === Rank.King
             ).length > 0
           );
         }
@@ -464,6 +470,20 @@ export class ChessGame {
         return (
           m.result.sourcePieceRank.rank === sanMove.sourcePieceRank.unwrap() &&
           m.command.destination.isEqual(sanMove.destination.unwrap())
+        );
+      };
+      // filter moves with pawn promotion
+      const filterIfPawnPromotion = (
+        m: MoveCommandAndResult,
+        sanMove: StandardAlgebraicNotationMove
+      ) => {
+        if (sanMove.promotionRank.isNone()) {
+          return true;
+        }
+        return (
+          m.result.sourcePieceRank.rank === Rank.Pawn &&
+          m.command.promotionRank.isSome() &&
+          m.command.promotionRank.unwrap() === sanMove.promotionRank.unwrap()
         );
       };
       // reduce to move with lowest rank value if multiple moves

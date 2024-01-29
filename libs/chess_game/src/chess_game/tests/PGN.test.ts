@@ -94,6 +94,9 @@ describe("PGNParser", () => {
     const gameResult = ChessGame.SANMovesToChessGame(parsedMoves);
     expect(gameResult.isOk()).toEqual(true);
     const game = gameResult.data;
-    expect(game.gameState.currentPlayer).toEqual("White");
+    expect(game.gameState.currentPlayer).toEqual("Black");
+    expect(game.gameState.status).toEqual("Checkmate");
+    expect(game.gameState.commands.length).toEqual(65);
+    expect(game.getCurrentFen().split(" ")[0]).toEqual("8/1Q4Qk/8/1B6/8/4R3/PP3P1K/R1B5");
   });
 });
