@@ -1,11 +1,10 @@
 import { Team } from "./Team";
-import { MoveResult } from "./MoveResult";
 import { Board } from "./Board";
 import _ from "lodash";
 import { isSome, unwrap } from "../rust_types/Option";
 import { rankValue } from "./Rank";
 import { ChessGame } from "./ChessGame";
-import { MoveCommand } from "./MoveCommand";
+import { MoveCommandAndResult } from "./MoveCommandAndResult";
 
 // #region Classes (1)
 
@@ -15,7 +14,7 @@ export class GameState {
   constructor(
     readonly board: Board,
     readonly currentPlayer: Team.White | Team.Black,
-    readonly commands: [MoveCommand, MoveResult][],
+    readonly commands: MoveCommandAndResult[],
     readonly counter: number,
     readonly status: GameStatus
   ) {}

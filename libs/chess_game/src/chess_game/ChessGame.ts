@@ -26,10 +26,6 @@ import { MoveCommandAndResult } from "./MoveCommandAndResult";
 export class ChessGame {
   // #region Properties (12)
 
-  private static isCastleMove = (move: string): boolean => {
-    return move === "O-O" || move === "O-O-O";
-  };
-
   private _gameState: GameState;
   private createPiece = (
     team: Team,
@@ -61,6 +57,7 @@ export class ChessGame {
       return Err("Invalid move");
     }
   };
+
   private initializeGameState = (
     fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
   ): GameState => {
@@ -188,7 +185,9 @@ export class ChessGame {
       }
 
       // Push Latest Command Result
-      clonedGameState.commands.push([newCommand, moveRes]);
+      clonedGameState.commands.push(
+        new MoveCommandAndResult(newCommand, moveRes)
+      );
 
       return new GameState(
         updatedBoard,
@@ -543,7 +542,7 @@ export class ChessGame {
 
   // #region Public Methods (1)
 
-  public async cpuMoveMinimax(team: Team): Promise<Result<ChessGame, string>> {
+  public async moveMinimax(team: Team): Promise<Result<ChessGame, string>> {
     const clonedGameState = this.gameState.clone();
     const possibleMoves = ChessGame.findLegalMoves(clonedGameState, team);
 
