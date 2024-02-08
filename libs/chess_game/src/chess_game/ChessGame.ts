@@ -282,9 +282,9 @@ export class ChessGame {
 
   public executeCommand = (cmd: MoveCommand): Result<ChessGame, string> => {
     console.log(
-      "Executing command",
-      cmd.source.toNotation(),
-      cmd.destination.toNotation()
+    "Executing command",
+    cmd.source.toNotation(),
+    cmd.destination.toNotation()
     );
     const clonedState = this.gameState.clone();
     const currentPlayer = clonedState.currentPlayer;
@@ -374,7 +374,7 @@ export class ChessGame {
     let game = new ChessGame();
 
     for (const move of moves) {
-      console.log(move);
+      // console.log(move);
       // get legal moves
       const legalMoves = ChessGame.findLegalMoves(
         game.gameState,

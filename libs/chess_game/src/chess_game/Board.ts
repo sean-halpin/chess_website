@@ -80,7 +80,7 @@ export class Board {
       })
       .reverse(); // Reverse the order of the rows
     const boardString = `  ${columnLabels}\n${rows.join(
-      "\n"
+    "\n"
     )}\n  ${columnLabels}`;
     console.log(boardString);
   }
