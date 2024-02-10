@@ -55,7 +55,7 @@ export class Loc {
 
   public static fromSAN(move: string): Option<StandardAlgebraicNotationMove> {
     try {
-      console.log("fromSAN", move);
+    console.log("fromSAN", move);
       if (move.includes("=")) {
         const lhs = move.substring(0, move.length - 2);
         const rhs = move.substring(move.length - 1, move.length);
