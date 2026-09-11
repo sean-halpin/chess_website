@@ -89,15 +89,10 @@ export class Board {
     location: Loc,
     newPiece: Option<ChessPiece>
   ): Board {
-    const updatedSquares = this.squares.map((row, rowIndex) => {
-      return row.map((piece, colIndex) => {
-        if (rowIndex === location.row && colIndex === location.col) {
-          return newPiece;
-        } else {
-          return piece;
-        }
-      });
-    });
+    const updatedSquares = this.squares.slice();
+    const updatedRow = this.squares[location.row].slice();
+    updatedRow[location.col] = newPiece;
+    updatedSquares[location.row] = updatedRow;
 
     return new Board(updatedSquares);
   }

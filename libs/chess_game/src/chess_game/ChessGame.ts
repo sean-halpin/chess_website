@@ -106,31 +106,31 @@ export class ChessGame {
 
   public static applyMoveCommand = (
     newCommand: MoveCommand,
-    gameState: GameState
+    gameState: GameState,
+    generatedMoveResult?: MoveResult
   ): GameState => {
-    const clonedGameState = gameState.clone();
-    let updatedBoard = clonedGameState.board;
+    let updatedBoard = gameState.board;
 
-    const movingPiece: ChessPiece = updatedBoard.squares
-      .flat()
-      .filter(isSome)
-      .map(unwrap)
-      .find(
-        (piece) =>
-          piece.position.row === newCommand.source.row &&
-          piece.position.col === newCommand.source.col
-      ) as ChessPiece;
-    const moveResult: MoveResult[] = moveFunctions[movingPiece.rank](
-      movingPiece,
-      clonedGameState
-    ).filter(
-      (move) =>
-        move.destination.isEqual(newCommand.destination) &&
-        move.sourcePieceRank.position.row === newCommand.source.row &&
-        move.sourcePieceRank.position.col === newCommand.source.col
-    );
-    if (moveResult.length > 0) {
-      const moveRes = moveResult[0];
+    const movingPiece: ChessPiece =
+      generatedMoveResult?.sourcePieceRank ??
+      (updatedBoard.squares
+        .flat()
+        .filter(isSome)
+        .map(unwrap)
+        .find(
+          (piece) =>
+            piece.position.row === newCommand.source.row &&
+            piece.position.col === newCommand.source.col
+        ) as ChessPiece);
+    const moveRes =
+      generatedMoveResult ??
+      moveFunctions[movingPiece.rank](movingPiece, gameState).find(
+        (move) =>
+          move.destination.isEqual(newCommand.destination) &&
+          move.sourcePieceRank.position.row === newCommand.source.row &&
+          move.sourcePieceRank.position.col === newCommand.source.col
+      );
+    if (moveRes !== undefined) {
       // Remove taken piece
       if (isSome(moveRes.takenPiece)) {
         updatedBoard = updatedBoard = updatedBoard.updatePieceFromLoc(
@@ -185,37 +185,34 @@ export class ChessGame {
       }
 
       // Push Latest Command Result
-      clonedGameState.commands.push(
-        new MoveCommandAndResult(newCommand, moveRes)
-      );
+      const updatedCommands = [
+        ...gameState.commands,
+        new MoveCommandAndResult(newCommand, moveRes),
+      ];
 
       return new GameState(
         updatedBoard,
-        clonedGameState.currentPlayer === Team.White ? Team.Black : Team.White,
-        clonedGameState.commands,
-        clonedGameState.counter,
+        gameState.currentPlayer === Team.White ? Team.Black : Team.White,
+        updatedCommands,
+        gameState.counter,
         GameStatus.InProgress
       );
     }
-    return clonedGameState;
+    return gameState.clone();
   };
   public static findLegalMoves = (
     gameState: GameState,
     team: Team
   ): MoveCommandAndResult[] => {
     const legalMoves: MoveCommandAndResult[] = [];
-    // Make a copy of the current game state
-    const clonedState = gameState.clone();
-    // Apply the move command to the copied game state
-
-    const pieces: ChessPiece[] = clonedState.board.squares
+    const pieces: ChessPiece[] = gameState.board.squares
       .flat()
       .filter(isSome)
       .map(unwrap)
       .filter((p: { team: Team }) => p.team === team);
 
     for (const piece of pieces) {
-      const moves = moveFunctions[piece.rank](piece, clonedState);
+      const moves = moveFunctions[piece.rank](piece, gameState);
       legalMoves.push(
         ...moves
           .flat()
@@ -228,7 +225,7 @@ export class ChessGame {
     return legalMoves.filter(
       (move) =>
         !this.isKingInCheck(
-          this.applyMoveCommand(move.command, clonedState),
+          this.applyMoveCommand(move.command, gameState, move.result),
           team
         )
     );
@@ -240,11 +237,8 @@ export class ChessGame {
     return gameState.status === "Checkmate" || gameState.status === "Draw";
   };
   public static isKingInCheck = (gameState: GameState, team: Team): boolean => {
-    // Make a copy of the current game state
-    const clonedGameState = gameState.clone();
-
     // Find the player's king on the updated board
-    const king = clonedGameState.board.squares
+    const king = gameState.board.squares
       .flat()
       .filter(isSome)
       .map(unwrap)
@@ -255,7 +249,7 @@ export class ChessGame {
 
     // Check if the king is under threat after the move
     const opponentColor = team === Team.White ? Team.Black : Team.White;
-    const opponentPieces: ChessPiece[] = clonedGameState.board.squares
+    const opponentPieces: ChessPiece[] = gameState.board.squares
       .flat()
       .filter(isSome)
       .map(unwrap)
@@ -265,7 +259,7 @@ export class ChessGame {
     for (const opponentPiece of opponentPieces) {
       const opponentMoves = moveFunctions[opponentPiece.rank](
         opponentPiece,
-        clonedGameState
+        gameState
       );
 
       for (const moveResult of opponentMoves) {
@@ -286,10 +280,10 @@ export class ChessGame {
       cmd.source.toNotation(),
       cmd.destination.toNotation()
     );
-    const clonedState = this.gameState.clone();
-    const currentPlayer = clonedState.currentPlayer;
+    const currentState = this.gameState;
+    const currentPlayer = currentState.currentPlayer;
     // check the cmd source is the current player's piece
-    const piece = clonedState.board.pieceFromLoc(cmd.source);
+    const piece = currentState.board.pieceFromLoc(cmd.source);
     if (isNone(piece)) {
       const err = "Invalid move: no piece at source";
       console.info(err);
@@ -301,7 +295,7 @@ export class ChessGame {
       return Err(err);
     }
     const enemyPlayer = currentPlayer === Team.White ? Team.Black : Team.White;
-    let updatedState = ChessGame.applyMoveCommand(cmd, clonedState);
+    let updatedState = ChessGame.applyMoveCommand(cmd, currentState);
     const ownKingChecked = ChessGame.isKingInCheck(updatedState, currentPlayer);
     if (ownKingChecked) {
       const err = "Invalid move: puts own king in check";
@@ -543,12 +537,12 @@ export class ChessGame {
   // #region Public Methods (1)
 
   public async moveMinimax(team: Team): Promise<Result<ChessGame, string>> {
-    const clonedGameState = this.gameState.clone();
-    const possibleMoves = ChessGame.findLegalMoves(clonedGameState, team);
+    const gameState = this.gameState;
+    const possibleMoves = ChessGame.findLegalMoves(gameState, team);
 
     if (possibleMoves.length > 0) {
       const bestMove = findBestMoveMinimax(
-        clonedGameState,
+        gameState,
         team,
         3,
         3 * 1000

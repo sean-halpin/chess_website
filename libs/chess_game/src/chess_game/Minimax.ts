@@ -127,19 +127,23 @@ export const findBestMoveMinimax = async (
   const deadline = Date.now() + timeLimit;
   // A deadline that expires before depth one still returns a valid legal move.
   let bestMove = children[0].commands[children[0].commands.length - 1].command;
+  let orderedChildren = children;
 
   for (let searchDepth = 1; searchDepth <= depth; searchDepth++) {
     let completedMove: MoveCommand | undefined;
+    let completedChild: GameState | undefined;
     let bestValue = maximizingRoot ? -Infinity : Infinity;
+    let alpha = -Infinity;
+    let beta = Infinity;
 
     try {
-      for (const child of children) {
+      for (const child of orderedChildren) {
         throwIfSearchTimedOut(deadline);
         const value = minimax(
           child,
           searchDepth - 1,
-          -Infinity,
-          Infinity,
+          alpha,
+          beta,
           !maximizingRoot,
           deadline
         );
@@ -149,6 +153,12 @@ export const findBestMoveMinimax = async (
         ) {
           bestValue = value;
           completedMove = child.commands[child.commands.length - 1].command;
+          completedChild = child;
+        }
+        if (maximizingRoot) {
+          alpha = Math.max(alpha, value);
+        } else {
+          beta = Math.min(beta, value);
         }
       }
     } catch (error) {
@@ -160,6 +170,12 @@ export const findBestMoveMinimax = async (
 
     if (completedMove !== undefined) {
       bestMove = completedMove;
+    }
+    if (completedChild !== undefined) {
+      orderedChildren = [
+        completedChild,
+        ...orderedChildren.filter((child) => child !== completedChild),
+      ];
     }
   }
 

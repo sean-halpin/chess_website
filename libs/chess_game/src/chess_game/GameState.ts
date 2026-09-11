@@ -50,7 +50,7 @@ export class GameState {
     const moves = ChessGame.findLegalMoves(this, this.currentPlayer);
 
     const children = moves.map((move) =>
-      ChessGame.applyMoveCommand(move.command, this)
+      ChessGame.applyMoveCommand(move.command, this, move.result)
     );
     return children;
   }

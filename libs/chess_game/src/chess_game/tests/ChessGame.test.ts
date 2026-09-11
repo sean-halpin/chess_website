@@ -199,4 +199,51 @@ describe("ChessGameLogic", () => {
     expect(result.isError()).toBeTruthy();
     expect(result.error).toEqual("Invalid move: not current player's piece");
   });
+
+  it("reuses generated move results without changing child states", () => {
+    const enPassantState = [
+      ["e2", "e4"],
+      ["a7", "a6"],
+      ["e4", "e5"],
+      ["d7", "d5"],
+    ].reduce(
+      (state, [source, destination]) =>
+        ChessGame.applyMoveCommand(
+          new MoveCommand(
+            Loc.fromNotation(source).unwrap(),
+            Loc.fromNotation(destination).unwrap()
+          ),
+          state
+        ),
+      new ChessGame().gameState
+    );
+    const states = [
+      new ChessGame().gameState,
+      new ChessGame("3qk3/8/8/8/8/8/8/3Q2K1 b - - 0 1").gameState,
+      new ChessGame("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1").gameState,
+      enPassantState,
+      new ChessGame("7k/2P5/8/8/8/8/8/K7 w - - 0 1").gameState,
+    ];
+
+    for (const state of states) {
+      const legalMoves = ChessGame.findLegalMoves(state, state.currentPlayer);
+      const optimizedChildren = state.getChildren();
+
+      expect(optimizedChildren).toHaveLength(legalMoves.length);
+      legalMoves.forEach((move, index) => {
+        const commandOnlyChild = ChessGame.applyMoveCommand(
+          move.command,
+          state
+        );
+        const generatedResultChild = ChessGame.applyMoveCommand(
+          move.command,
+          state,
+          move.result
+        );
+
+        expect(generatedResultChild).toEqual(commandOnlyChild);
+        expect(optimizedChildren[index]).toEqual(commandOnlyChild);
+      });
+    }
+  });
 });
