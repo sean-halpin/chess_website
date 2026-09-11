@@ -34,7 +34,7 @@ export const Game: React.FC = () => {
 
   async function executeCpuMoves(team: Team) {
     state.game
-      .cpuMoveMinimax(team)
+      .moveMinimax(team)
       .then((res) => {
         if (res.success) {
           playAudio();
@@ -85,24 +85,20 @@ export const Game: React.FC = () => {
   });
 
   const sendMoveCommand = (newCommand: MoveCommand) => {
-    switch (newCommand.command) {
-      case "move":
-        {
-          const result = state.game.executeCommand(newCommand);
-          if (result.success) {
-            playAudio();
-            setState({
-              ...state,
-              game: result.data,
-            });
-          }
-        }
-        break;
-      default:
-        console.warn(`[Game] Unknown command`);
-        break;
+    const result = state.game.executeCommand(newCommand);
+    if (result.success) {
+      playAudio();
+      setState({
+        ...state,
+        game: result.data,
+      });
     }
   };
+
+  const legalMoves = (team: Team): MoveCommand[] =>
+    ChessGame.findLegalMoves(state.game.gameState, team).map(
+      ({ command }) => command
+    );
 
   if (state) {
     if (isTouchDevice()) {
@@ -125,9 +121,7 @@ export const Game: React.FC = () => {
                   <Board
                     pieces={state.game.pieces}
                     sendMoveCommand={sendMoveCommand}
-                    legalMoves={ChessGame.findLegalMovesCurry(
-                      state.game.gameState
-                    )}
+                    legalMoves={legalMoves}
                   />
                 </DndProvider>
               </div>
@@ -167,9 +161,7 @@ export const Game: React.FC = () => {
                   <Board
                     pieces={state.game.pieces}
                     sendMoveCommand={sendMoveCommand}
-                    legalMoves={ChessGame.findLegalMovesCurry(
-                      state.game.gameState
-                    )}
+                    legalMoves={legalMoves}
                   />
                 </DndProvider>
               </div>

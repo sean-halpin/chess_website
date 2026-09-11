@@ -25,12 +25,18 @@ in `libs/chess_game/` unless a change deliberately spans clients.
 
 Each JavaScript/TypeScript project has its own lockfile. From the relevant
 directory, install its pinned dependencies with `npm ci` (or `npm install` if
-intentionally updating dependencies).
+intentionally updating dependencies). The web client consumes the local
+`libs/chess_game` package, so bootstrap and build that package before running
+web commands.
 
 ### Web application
 
 ```sh
-cd interfaces/web
+cd libs/chess_game
+npm ci
+npm run build
+
+cd ../../interfaces/web
 npm ci
 npm start
 ```
@@ -102,10 +108,15 @@ The published URL is
 the `homepage` value in `interfaces/web/package.json`.
 
 Before publishing, work from a clean branch with credentials that can push to
-the repository. Run the normal checks, then deploy from the web directory:
+the repository. Build the local package, run the normal checks, then deploy
+from the web directory:
 
 ```sh
-cd interfaces/web
+cd libs/chess_game
+npm ci
+npm run build
+
+cd ../../interfaces/web
 CI=true npm test -- --watchAll=false
 npm run lint
 npm run deploy

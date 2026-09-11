@@ -55,11 +55,10 @@ const Square: React.FC<SquareProps> = ({
           piece.rank
         } from ${piece.position.toNotation()} to ${position.toNotation()}`;
         console.log(info);
-        const moveCommand: MoveCommand = {
-          command: "move",
-          source: new Loc(piece.position.row, piece.position.col),
-          destination: new Loc(position.row, position.col),
-        };
+        const moveCommand = new MoveCommand(
+          new Loc(piece.position.row, piece.position.col),
+          new Loc(position.row, position.col)
+        );
         sendMoveCommand(moveCommand);
       }
     },
