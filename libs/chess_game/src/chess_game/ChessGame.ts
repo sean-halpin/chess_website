@@ -547,7 +547,12 @@ export class ChessGame {
     const possibleMoves = ChessGame.findLegalMoves(clonedGameState, team);
 
     if (possibleMoves.length > 0) {
-      const bestMove = findBestMoveMinimax(clonedGameState, 3, 3 * 1000);
+      const bestMove = findBestMoveMinimax(
+        clonedGameState,
+        team,
+        3,
+        3 * 1000
+      );
       return this.executeCommand(await bestMove);
     } else {
       return Err("No legal moves");

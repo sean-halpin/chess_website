@@ -2,6 +2,7 @@ import { MoveCommand } from "./MoveCommand";
 import { GameState, GameStatus } from "./GameState";
 import { Loc } from "./Loc";
 import { None } from "../rust_types/Option";
+import { Team } from "./Team";
 
 export const minimax = (
   state: GameState,
@@ -41,16 +42,33 @@ export const minimax = (
 
 export const findBestMoveMinimax = async (
   gameState: GameState,
+  team: Team,
   depth: number,
   timeLimit: number
 ): Promise<MoveCommand> => {
+  if (team !== gameState.currentPlayer) {
+    throw new Error(
+      `Cannot find a minimax move for ${team}: it is ${gameState.currentPlayer}'s turn`
+    );
+  }
+
   const start = Date.now();
   let bestMove = null;
-  let bestValue = -Infinity;
+  const maximizingRoot = team === Team.White;
+  let bestValue = maximizingRoot ? -Infinity : Infinity;
   const children = gameState.getChildren();
   for (const child of children) {
-    const value = minimax(child, depth, -Infinity, Infinity, false);
-    if (value > bestValue) {
+    const value = minimax(
+      child,
+      depth,
+      -Infinity,
+      Infinity,
+      !maximizingRoot
+    );
+    if (
+      (maximizingRoot && value > bestValue) ||
+      (!maximizingRoot && value < bestValue)
+    ) {
       bestValue = value;
       bestMove = child.commands[child.commands.length - 1].command;
     }
