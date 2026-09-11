@@ -1,4 +1,4 @@
-import { isNone, unwrap } from "../rust_types/Option";
+import { isNone, isSome, unwrap } from "../rust_types/Option";
 import { Team } from "./Team";
 import { Rank } from "./Rank";
 import { GameState } from "./GameState";
@@ -89,11 +89,20 @@ export function gameToFEN(game: GameState): string {
     }
   }
 
-  // Active color
+  const castlingRights = [
+    game.castlingRights.whiteKingSide ? "K" : "",
+    game.castlingRights.whiteQueenSide ? "Q" : "",
+    game.castlingRights.blackKingSide ? "k" : "",
+    game.castlingRights.blackQueenSide ? "q" : "",
+  ].join("") || "-";
+  const enPassantTarget = isSome(game.enPassantTarget)
+    ? game.enPassantTarget.unwrap().toNotation()
+    : "-";
+
   fen += ` ${game.currentPlayer === Team.White ? "w" : "b"} `;
-  fen += "KQkq ";
-  fen += "- ";
-  fen += "0 1";
+  fen += `${castlingRights} `;
+  fen += `${enPassantTarget} `;
+  fen += `${game.halfmoveClock} ${game.fullmoveNumber}`;
 
   return fen;
 }

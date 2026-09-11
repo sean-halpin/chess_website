@@ -246,4 +246,103 @@ describe("ChessGameLogic", () => {
       });
     }
   });
+
+  it("rejects illegal destinations, king captures, and moves after game end", () => {
+    const game = new ChessGame();
+    expect(
+      game.executeCommand(
+        new MoveCommand(
+          Loc.fromNotation("e2").unwrap(),
+          Loc.fromNotation("e5").unwrap()
+        )
+      ).isError()
+    ).toBe(true);
+
+    const kingCapture = new ChessGame("4k3/8/8/8/8/8/8/4Q1K1 w - - 0 1");
+    expect(
+      kingCapture.executeCommand(
+        new MoveCommand(
+          Loc.fromNotation("e1").unwrap(),
+          Loc.fromNotation("e8").unwrap()
+        )
+      ).isError()
+    ).toBe(true);
+
+    const checkmate = new ChessGame("7k/6Q1/6K1/8/8/8/8/8 b - - 0 1");
+    expect(checkmate.status).toBe(GameStatus.Checkmate);
+    expect(
+      checkmate.executeCommand(
+        new MoveCommand(
+          Loc.fromNotation("h8").unwrap(),
+          Loc.fromNotation("h7").unwrap()
+        )
+      ).isError()
+    ).toBe(true);
+  });
+
+  it("enforces FEN castling rights and castle-square safety", () => {
+    const destinationsForKing = (fen: string) =>
+      ChessGame.findLegalMoves(new ChessGame(fen).gameState, Team.White)
+        .filter((move) => move.command.source.isEqual(Loc.fromNotation("e1").unwrap()))
+        .map((move) => move.command.destination.toNotation());
+
+    expect(
+      destinationsForKing("r3k2r/8/8/8/8/8/8/R3K2R w - - 0 1")
+    ).not.toEqual(expect.arrayContaining(["c1", "g1"]));
+    expect(
+      destinationsForKing("r3k2r/8/8/8/8/8/4r3/R3K2R w KQkq - 0 1")
+    ).not.toEqual(expect.arrayContaining(["c1", "g1"]));
+    expect(
+      destinationsForKing("r3kr1r/8/8/8/8/8/8/R3K2R w KQkq - 0 1")
+    ).not.toContain("g1");
+  });
+
+  it("round-trips FEN state and updates rights, en-passant, and counters", () => {
+    const fen = "r3k2r/8/8/3pP3/8/8/8/R3K2R w KQkq d6 17 42";
+    expect(new ChessGame(fen).getCurrentFen()).toBe(fen);
+    expect(() => new ChessGame("invalid")).toThrow("Invalid FEN");
+    expect(() => new ChessGame("8/8/8/8/8/8/8/8 w - - 0 1")).toThrow(
+      "exactly one king"
+    );
+
+    const game = new ChessGame();
+    game.executeCommand(
+      new MoveCommand(
+        Loc.fromNotation("e2").unwrap(),
+        Loc.fromNotation("e4").unwrap()
+      )
+    );
+    expect(game.gameState.enPassantTarget.unwrap().toNotation()).toBe("e3");
+    expect(game.gameState.halfmoveClock).toBe(0);
+    expect(game.gameState.fullmoveNumber).toBe(1);
+
+    game.executeCommand(
+      new MoveCommand(
+        Loc.fromNotation("a7").unwrap(),
+        Loc.fromNotation("a6").unwrap()
+      )
+    );
+    expect(game.gameState.enPassantTarget.isNone()).toBe(true);
+    expect(game.gameState.fullmoveNumber).toBe(2);
+
+    const rookCapture = new ChessGame("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1");
+    rookCapture.executeCommand(
+      new MoveCommand(
+        Loc.fromNotation("a1").unwrap(),
+        Loc.fromNotation("a8").unwrap()
+      )
+    );
+    expect(rookCapture.gameState.castlingRights.blackQueenSide).toBe(false);
+    expect(rookCapture.gameState.castlingRights.whiteQueenSide).toBe(false);
+
+    const castle = new ChessGame("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1");
+    castle.executeCommand(
+      new MoveCommand(
+        Loc.fromNotation("e1").unwrap(),
+        Loc.fromNotation("g1").unwrap()
+      )
+    );
+    expect(castle.gameState.castlingRights.whiteKingSide).toBe(false);
+    expect(castle.gameState.castlingRights.whiteQueenSide).toBe(false);
+  });
 });

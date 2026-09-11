@@ -51,10 +51,10 @@ npm run lint
 ```
 
 For a production build validation that does not change package version
-metadata, run:
+metadata or generate public source maps, run:
 
 ```sh
-npx react-scripts build
+GENERATE_SOURCEMAP=false npx react-scripts build
 ```
 
 ### Publish to GitHub Pages

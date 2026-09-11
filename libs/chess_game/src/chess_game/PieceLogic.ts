@@ -159,8 +159,9 @@ const findLegalPawnMoves = (
 
   // Pawn advance 2 on first move
   const doubleMoveRow = nextRow + 1 * teamDirection;
+  const startingPawnRow = movingPiece.team === Team.White ? 1 : 6;
   if (
-    movingPiece.firstMove &&
+    movingPieceCurrentRow === startingPawnRow &&
     isSquareEmpty(doubleMoveRow, movingPieceCurrentCol, currentBoard) &&
     isSquareEmpty(nextRow, movingPieceCurrentCol, currentBoard)
   ) {
@@ -175,46 +176,22 @@ const findLegalPawnMoves = (
   }
 
   // En Passant
-  const lastCommandResult = gameState.commands[gameState.commands.length - 1];
-  if (
-    gameState.commands.length > 0 &&
-    lastCommandResult.result.enPassantPossible
-  ) {
-    const enPassantAttackable = (column_offset: number) => {
-      const possiblePiece = squareEntry(
-        movingPieceCurrentRow,
-        movingPieceCurrentCol + column_offset,
-        currentBoard
-      );
-      return (
-        isSome(possiblePiece) &&
-        possiblePiece.unwrap().rank === Rank.Pawn &&
-        possiblePiece.unwrap().team !== movingPiece.team
-      );
-    };
-    if (enPassantAttackable(-1)) {
-      moveResults.push(
-        new MoveResult(
-          new Loc(attackableRow, attackableCol(-1)),
-          movingPiece,
-          currentBoard.pieceFromRowCol(
-            movingPieceCurrentRow,
-            movingPieceCurrentCol - 1
-          )
-        )
-      );
-    }
-    if (enPassantAttackable(1)) {
-      moveResults.push(
-        new MoveResult(
-          new Loc(attackableRow, attackableCol(1)),
-          movingPiece,
-          currentBoard.pieceFromRowCol(
-            movingPieceCurrentRow,
-            movingPieceCurrentCol + 1
-          )
-        )
-      );
+  if (gameState.enPassantTarget.isSome()) {
+    const target = gameState.enPassantTarget.unwrap();
+    const adjacentPawn = squareEntry(
+      movingPieceCurrentRow,
+      target.col,
+      currentBoard
+    );
+    if (
+      target.row === attackableRow &&
+      Math.abs(target.col - movingPieceCurrentCol) === 1 &&
+      isSquareEmpty(target.row, target.col, currentBoard) &&
+      isSome(adjacentPawn) &&
+      adjacentPawn.unwrap().rank === Rank.Pawn &&
+      adjacentPawn.unwrap().team !== movingPiece.team
+    ) {
+      moveResults.push(new MoveResult(target, movingPiece, adjacentPawn));
     }
   }
   return moveResults;
@@ -255,8 +232,8 @@ const findLegalKingMoves = (
   );
 
   // Handle Queen side Castling
-  const cP = gameState.currentPlayer;
-  const row = cP === Team.White ? "1" : "8";
+  const team = movingPiece.team;
+  const row = team === Team.White ? "1" : "8";
   const kingLoc = Loc.fromNotation(`e${row}`).unwrap();
   const queenSideRookLoc = Loc.fromNotation(`a${row}`).unwrap();
   const maybeKing = gameState.board.pieceFromLoc(kingLoc);
@@ -264,8 +241,19 @@ const findLegalKingMoves = (
   if (maybeKing.isSome() && maybeQueenSideRook.isSome()) {
     const king = maybeKing.unwrap();
     const rook = maybeQueenSideRook.unwrap();
-    if (king.firstMove && rook.firstMove) {
-      const row = cP === Team.White ? "1" : "8";
+    const queenSideRight =
+      team === Team.White
+        ? gameState.castlingRights.whiteQueenSide
+        : gameState.castlingRights.blackQueenSide;
+    if (
+      queenSideRight &&
+      king.team === team &&
+      rook.team === team &&
+      king.position.isEqual(kingLoc) &&
+      king.rank === Rank.King &&
+      rook.rank === Rank.Rook
+    ) {
+      const row = team === Team.White ? "1" : "8";
       const isD1Empty = isSquareEmptyNotation(`d${row}`, gameState.board);
       const isC1Empty = isSquareEmptyNotation(`c${row}`, gameState.board);
       const isB1Empty = isSquareEmptyNotation(`b${row}`, gameState.board);
@@ -277,6 +265,7 @@ const findLegalKingMoves = (
             None,
             false,
             Some([
+              Loc.fromNotation(`e${row}`).unwrap(),
               Loc.fromNotation(`c${row}`).unwrap(),
               Loc.fromNotation(`d${row}`).unwrap(),
             ]),
@@ -295,8 +284,19 @@ const findLegalKingMoves = (
   if (maybeKing.isSome() && maybeKingSideRook.isSome()) {
     const king = maybeKing.unwrap();
     const rook = maybeKingSideRook.unwrap();
-    if (king.firstMove && rook.firstMove) {
-      const row = cP === Team.White ? "1" : "8";
+    const kingSideRight =
+      team === Team.White
+        ? gameState.castlingRights.whiteKingSide
+        : gameState.castlingRights.blackKingSide;
+    if (
+      kingSideRight &&
+      king.team === team &&
+      rook.team === team &&
+      king.position.isEqual(kingLoc) &&
+      king.rank === Rank.King &&
+      rook.rank === Rank.Rook
+    ) {
+      const row = team === Team.White ? "1" : "8";
       const isG1Empty = isSquareEmptyNotation(`g${row}`, gameState.board);
       const isF1Empty = isSquareEmptyNotation(`f${row}`, gameState.board);
       if (isG1Empty && isF1Empty) {

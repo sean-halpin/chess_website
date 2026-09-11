@@ -5,6 +5,22 @@ import { isSome, unwrap } from "../rust_types/Option";
 import { rankValue } from "./Rank";
 import { ChessGame } from "./ChessGame";
 import { MoveCommandAndResult } from "./MoveCommandAndResult";
+import { Loc } from "./Loc";
+import { None, Option } from "../rust_types/Option";
+
+export interface CastlingRights {
+  whiteKingSide: boolean;
+  whiteQueenSide: boolean;
+  blackKingSide: boolean;
+  blackQueenSide: boolean;
+}
+
+export const noCastlingRights = (): CastlingRights => ({
+  whiteKingSide: false,
+  whiteQueenSide: false,
+  blackKingSide: false,
+  blackQueenSide: false,
+});
 
 // #region Classes (1)
 
@@ -16,7 +32,11 @@ export class GameState {
     readonly currentPlayer: Team.White | Team.Black,
     readonly commands: MoveCommandAndResult[],
     readonly counter: number,
-    readonly status: GameStatus
+    readonly status: GameStatus,
+    readonly castlingRights: CastlingRights = noCastlingRights(),
+    readonly enPassantTarget: Option<Loc> = None,
+    readonly halfmoveClock: number = 0,
+    readonly fullmoveNumber: number = 1
   ) {}
 
   // #endregion Constructors (1)
@@ -61,7 +81,11 @@ export class GameState {
       this.currentPlayer,
       this.commands,
       this.counter,
-      status
+      status,
+      this.castlingRights,
+      this.enPassantTarget,
+      this.halfmoveClock,
+      this.fullmoveNumber
     );
   }
 

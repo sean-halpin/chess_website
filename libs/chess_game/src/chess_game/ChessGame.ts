@@ -18,7 +18,11 @@ import { MoveResult } from "./MoveResult";
 import { Loc } from "./Loc";
 import { ChessPiece } from "./ChessPiece";
 import { Board } from "./Board";
-import { GameState, GameStatus } from "./GameState";
+import {
+  CastlingRights,
+  GameState,
+  GameStatus,
+} from "./GameState";
 import { findBestMoveMinimax } from "./Minimax";
 import { StandardAlgebraicNotationMove } from "./StandardAlgebraicNotationMove";
 import { MoveCommandAndResult } from "./MoveCommandAndResult";
@@ -61,17 +65,33 @@ export class ChessGame {
   private initializeGameState = (
     fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
   ): GameState => {
-    const [piecePlacement, activeColor] = fen.split(" ");
+    const fields = fen.trim().split(/\s+/);
+    if (fields.length !== 6) {
+      throw new Error("Invalid FEN: expected six fields");
+    }
+    const [piecePlacement, activeColor, castling, enPassant, halfmove, fullmove] =
+      fields;
+    if (activeColor !== "w" && activeColor !== "b") {
+      throw new Error("Invalid FEN: active color must be w or b");
+    }
 
     const fenRows = piecePlacement.split("/");
+    if (fenRows.length !== 8) {
+      throw new Error("Invalid FEN: expected eight board ranks");
+    }
 
     let index = 0;
     const pieces: ChessPiece[] = [];
     fenRows.forEach((row) => {
+      let rankWidth = 0;
       row.split("").forEach((fenInstruction) => {
-        if (!isNaN(Number(fenInstruction))) {
+        if (/^[1-8]$/.test(fenInstruction)) {
           index += Number(fenInstruction);
+          rankWidth += Number(fenInstruction);
         } else {
+          if (!/^[prnbqkPRNBQK]$/.test(fenInstruction)) {
+            throw new Error("Invalid FEN: invalid board piece");
+          }
           pieces.push(
             this.createPiece(
               fenPieceToTeam(fenInstruction),
@@ -81,9 +101,41 @@ export class ChessGame {
             )
           );
           index += 1;
+          rankWidth += 1;
         }
       });
+      if (rankWidth !== 8) {
+        throw new Error("Invalid FEN: each rank must contain eight squares");
+      }
     });
+    const whiteKings = pieces.filter(
+      (piece) => piece.team === Team.White && piece.rank === Rank.King
+    );
+    const blackKings = pieces.filter(
+      (piece) => piece.team === Team.Black && piece.rank === Rank.King
+    );
+    if (whiteKings.length !== 1 || blackKings.length !== 1) {
+      throw new Error("Invalid FEN: exactly one king is required for each team");
+    }
+    if (!/^(?:-|K?Q?k?q?)$/.test(castling) ||
+      (castling !== "-" && new Set(castling).size !== castling.length)) {
+      throw new Error("Invalid FEN: invalid castling rights");
+    }
+    if (enPassant !== "-" && !/^[a-h][36]$/.test(enPassant)) {
+      throw new Error("Invalid FEN: invalid en-passant target");
+    }
+    if (!/^\d+$/.test(halfmove) || !/^[1-9]\d*$/.test(fullmove)) {
+      throw new Error("Invalid FEN: invalid move counters");
+    }
+    const castlingRights: CastlingRights = {
+      whiteKingSide: castling.includes("K"),
+      whiteQueenSide: castling.includes("Q"),
+      blackKingSide: castling.includes("k"),
+      blackQueenSide: castling.includes("q"),
+    };
+    const enPassantTarget = enPassant === "-"
+      ? None
+      : Loc.fromNotation(enPassant);
     let initialBoard: Board = new Board(
       Array.from({ length: 8 }, () => Array(8).fill(None))
     );
@@ -94,13 +146,28 @@ export class ChessGame {
       );
     });
 
-    const initialState: GameState = new GameState(
+    let initialState: GameState = new GameState(
       initialBoard,
       fenToTeam(activeColor),
       [],
       0,
-      GameStatus.InProgress
+      GameStatus.InProgress,
+      castlingRights,
+      enPassantTarget,
+      Number(halfmove),
+      Number(fullmove)
     );
+    const sideToMove = initialState.currentPlayer;
+    const hasLegalMoves = ChessGame.findLegalMoves(initialState, sideToMove).length > 0;
+    if (!hasLegalMoves) {
+      initialState = initialState.updateStatus(
+        ChessGame.isKingInCheck(initialState, sideToMove)
+          ? GameStatus.Checkmate
+          : GameStatus.Draw
+      );
+    } else if (ChessGame.isKingInCheck(initialState, sideToMove)) {
+      initialState = initialState.updateStatus(GameStatus.Check);
+    }
     return initialState;
   };
 
@@ -189,13 +256,72 @@ export class ChessGame {
         ...gameState.commands,
         new MoveCommandAndResult(newCommand, moveRes),
       ];
+      const updatedCastlingRights = { ...gameState.castlingRights };
+      const clearRookCastlingRight = (team: Team, location: Loc) => {
+        const homeRow = team === Team.White ? 0 : 7;
+        if (location.row !== homeRow) {
+          return;
+        }
+        if (location.col === 0) {
+          if (team === Team.White) {
+            updatedCastlingRights.whiteQueenSide = false;
+          } else {
+            updatedCastlingRights.blackQueenSide = false;
+          }
+        } else if (location.col === 7) {
+          if (team === Team.White) {
+            updatedCastlingRights.whiteKingSide = false;
+          } else {
+            updatedCastlingRights.blackKingSide = false;
+          }
+        }
+      };
+      if (movingPiece.rank === Rank.King) {
+        if (movingPiece.team === Team.White) {
+          updatedCastlingRights.whiteKingSide = false;
+          updatedCastlingRights.whiteQueenSide = false;
+        } else {
+          updatedCastlingRights.blackKingSide = false;
+          updatedCastlingRights.blackQueenSide = false;
+        }
+      } else if (movingPiece.rank === Rank.Rook) {
+        clearRookCastlingRight(movingPiece.team, newCommand.source);
+      }
+      if (
+        isSome(moveRes.takenPiece) &&
+        moveRes.takenPiece.unwrap().rank === Rank.Rook
+      ) {
+        const takenRook = moveRes.takenPiece.unwrap();
+        clearRookCastlingRight(takenRook.team, takenRook.position);
+      }
+      const isPawnMove = movingPiece.rank === Rank.Pawn;
+      const enPassantTarget =
+        isPawnMove && Math.abs(newCommand.destination.row - newCommand.source.row) === 2
+          ? Some(
+              new Loc(
+                (newCommand.destination.row + newCommand.source.row) / 2,
+                newCommand.source.col
+              )
+            )
+          : None;
+      const halfmoveClock =
+        isPawnMove || isSome(moveRes.takenPiece)
+          ? 0
+          : gameState.halfmoveClock + 1;
+      const fullmoveNumber =
+        gameState.fullmoveNumber +
+        (gameState.currentPlayer === Team.Black ? 1 : 0);
 
       return new GameState(
         updatedBoard,
         gameState.currentPlayer === Team.White ? Team.Black : Team.White,
         updatedCommands,
         gameState.counter,
-        GameStatus.InProgress
+        GameStatus.InProgress,
+        updatedCastlingRights,
+        enPassantTarget,
+        halfmoveClock,
+        fullmoveNumber
       );
     }
     return gameState.clone();
@@ -222,19 +348,120 @@ export class ChessGame {
           )
       );
     }
-    return legalMoves.filter(
-      (move) =>
-        !this.isKingInCheck(
-          this.applyMoveCommand(move.command, gameState, move.result),
-          team
-        )
-    );
+    return legalMoves
+      .filter(
+        (move) =>
+          isNone(move.result.takenPiece) ||
+          move.result.takenPiece.unwrap().rank !== Rank.King
+      )
+      .filter(
+        (move) =>
+          move.result.kingLocationsMustNotBeInCheck.isNone() ||
+          this.isCastlePathSafe(gameState, team, move.result)
+      )
+      .filter(
+        (move) =>
+          !this.isKingInCheck(
+            this.applyMoveCommand(move.command, gameState, move.result),
+            team
+          )
+      );
   };
   public static findLegalMovesCurry = (gs: GameState) => (t: Team) => {
     return ChessGame.findLegalMoves(gs, t);
   };
   public static isGameOver = (gameState: GameState): boolean => {
-    return gameState.status === "Checkmate" || gameState.status === "Draw";
+    return (
+      gameState.status === GameStatus.Checkmate ||
+      gameState.status === GameStatus.Draw ||
+      gameState.status === GameStatus.Stalemate
+    );
+  };
+  public static isSquareAttacked = (
+    gameState: GameState,
+    defendingTeam: Team,
+    square: Loc
+  ): boolean => {
+    const attackingTeam =
+      defendingTeam === Team.White ? Team.Black : Team.White;
+    const attackers = gameState.board.squares
+      .flat()
+      .filter(isSome)
+      .map(unwrap)
+      .filter((piece) => piece.team === attackingTeam);
+
+    for (const piece of attackers) {
+      const rowDelta = square.row - piece.position.row;
+      const colDelta = square.col - piece.position.col;
+      const absRow = Math.abs(rowDelta);
+      const absCol = Math.abs(colDelta);
+      if (
+        piece.rank === Rank.Pawn &&
+        rowDelta === (piece.team === Team.White ? 1 : -1) &&
+        absCol === 1
+      ) {
+        return true;
+      }
+      if (piece.rank === Rank.Knight &&
+        ((absRow === 1 && absCol === 2) || (absRow === 2 && absCol === 1))) {
+        return true;
+      }
+      if (piece.rank === Rank.King && absRow <= 1 && absCol <= 1) {
+        return true;
+      }
+      const movesStraight = rowDelta === 0 || colDelta === 0;
+      const movesDiagonal = absRow === absCol;
+      const canSlide =
+        (movesStraight && (piece.rank === Rank.Rook || piece.rank === Rank.Queen)) ||
+        (movesDiagonal && (piece.rank === Rank.Bishop || piece.rank === Rank.Queen));
+      if (canSlide) {
+        const rowStep = Math.sign(rowDelta);
+        const colStep = Math.sign(colDelta);
+        let row = piece.position.row + rowStep;
+        let col = piece.position.col + colStep;
+        let blocked = false;
+        while (row !== square.row || col !== square.col) {
+          if (isSome(gameState.board.pieceFromRowCol(row, col))) {
+            blocked = true;
+            break;
+          }
+          row += rowStep;
+          col += colStep;
+        }
+        if (!blocked) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+  private static isCastlePathSafe = (
+    gameState: GameState,
+    team: Team,
+    moveResult: MoveResult
+  ): boolean => {
+    const king = moveResult.sourcePieceRank;
+    const locations = moveResult.kingLocationsMustNotBeInCheck.unwrap();
+    return locations.every((location) => {
+      const board = gameState.board
+        .updatePieceFromLoc(king.position, None)
+        .updatePieceFromLoc(
+          location,
+          Some(new ChessPiece(king.id, king.team, king.rank, location, false))
+        );
+      const state = new GameState(
+        board,
+        gameState.currentPlayer,
+        gameState.commands,
+        gameState.counter,
+        gameState.status,
+        gameState.castlingRights,
+        gameState.enPassantTarget,
+        gameState.halfmoveClock,
+        gameState.fullmoveNumber
+      );
+      return !this.isSquareAttacked(state, team, location);
+    });
   };
   public static isKingInCheck = (gameState: GameState, team: Team): boolean => {
     // Find the player's king on the updated board
@@ -247,34 +474,13 @@ export class ChessGame {
           piece.team === team && piece.rank === Rank.King
       ) as ChessPiece;
 
-    // Check if the king is under threat after the move
-    const opponentColor = team === Team.White ? Team.Black : Team.White;
-    const opponentPieces: ChessPiece[] = gameState.board.squares
-      .flat()
-      .filter(isSome)
-      .map(unwrap)
-      .filter((piece: { team: Team }) => piece.team === opponentColor)
-      .map((piece: ChessPiece) => piece as ChessPiece);
-
-    for (const opponentPiece of opponentPieces) {
-      const opponentMoves = moveFunctions[opponentPiece.rank](
-        opponentPiece,
-        gameState
-      );
-
-      for (const moveResult of opponentMoves) {
-        if (moveResult.destination.isEqual(king.position)) {
-          // The king is in check after the move
-          return true;
-        }
-      }
-    }
-
-    // The king is not in check after the move
-    return false;
+    return this.isSquareAttacked(gameState, team, king.position);
   };
 
   public executeCommand = (cmd: MoveCommand): Result<ChessGame, string> => {
+    if (ChessGame.isGameOver(this.gameState)) {
+      return Err(`Invalid move: game is over (${this.gameState.status})`);
+    }
     console.log(
       "Executing command",
       cmd.source.toNotation(),
@@ -294,8 +500,25 @@ export class ChessGame {
       console.info(err);
       return Err(err);
     }
+    const legalMove = ChessGame.findLegalMoves(currentState, currentPlayer).find(
+      (move) =>
+        move.command.source.isEqual(cmd.source) &&
+        move.command.destination.isEqual(cmd.destination) &&
+        (move.command.promotionRank.isSome()
+          ? cmd.promotionRank.isSome() &&
+            move.command.promotionRank.unwrap() === cmd.promotionRank.unwrap()
+          : cmd.promotionRank.isNone() ||
+            cmd.promotionRank.unwrap() === Rank.Queen)
+    );
+    if (legalMove === undefined) {
+      return Err("Invalid move: move is not legal");
+    }
     const enemyPlayer = currentPlayer === Team.White ? Team.Black : Team.White;
-    let updatedState = ChessGame.applyMoveCommand(cmd, currentState);
+    let updatedState = ChessGame.applyMoveCommand(
+      cmd,
+      currentState,
+      legalMove.result
+    );
     const ownKingChecked = ChessGame.isKingInCheck(updatedState, currentPlayer);
     if (ownKingChecked) {
       const err = "Invalid move: puts own king in check";

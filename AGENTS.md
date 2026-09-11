@@ -129,12 +129,16 @@ root directory. After the push and Pages propagation, load the published URL
 and verify that assets and chess-board interaction work under the
 `/chess_website/` path.
 
+The production build sets `GENERATE_SOURCEMAP=false`, so deploys do not publish
+JavaScript source-map files. Browser code and all build-time `REACT_APP_*`
+values remain public and must not contain secrets.
+
 ### Important deployment safeguard
 
 The current web `build` script is:
 
 ```sh
-react-scripts build && npm version patch
+GENERATE_SOURCEMAP=false react-scripts build && npm version patch
 ```
 
 Consequently, both `npm run build` and `npm run deploy` are state-changing:
