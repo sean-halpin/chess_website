@@ -1,11 +1,11 @@
 {
   "files": {
     "main.css": "/chess_website/static/css/main.4ced29a2.css",
-    "main.js": "/chess_website/static/js/main.b91e1404.js",
+    "main.js": "/chess_website/static/js/main.553a962e.js",
     "index.html": "/chess_website/index.html"
   },
   "entrypoints": [
     "static/css/main.4ced29a2.css",
-    "static/js/main.b91e1404.js"
+    "static/js/main.553a962e.js"
   ]
 }
