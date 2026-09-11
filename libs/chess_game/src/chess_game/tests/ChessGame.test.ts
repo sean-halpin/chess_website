@@ -5,7 +5,7 @@ import { Team } from "../Team";
 import { Rank } from "../Rank";
 import { Loc } from "../Loc";
 import { MoveCommand } from "../MoveCommand";
-import { GameStatus } from "../GameState";
+import { DrawReason, GameStatus } from "../GameState";
 import { None, Some } from "../../rust_types/Option";
 
 describe("ChessGameLogic", () => {
@@ -344,5 +344,66 @@ describe("ChessGameLogic", () => {
     );
     expect(castle.gameState.castlingRights.whiteKingSide).toBe(false);
     expect(castle.gameState.castlingRights.whiteQueenSide).toBe(false);
+  });
+
+  it("requires a promotion choice and generates all four promotion variants", () => {
+    const game = new ChessGame("7k/2P5/8/8/8/8/8/K7 w - - 0 1");
+    const source = Loc.fromNotation("c7").unwrap();
+    const destination = Loc.fromNotation("c8").unwrap();
+    const promotions = ChessGame.findLegalMoves(game.gameState, Team.White)
+      .filter(({ command }) => command.source.isEqual(source) && command.destination.isEqual(destination))
+      .map(({ command }) => command.promotionRank.unwrap());
+    expect(promotions).toEqual([Rank.Queen, Rank.Rook, Rank.Bishop, Rank.Knight]);
+    expect(game.executeCommand(new MoveCommand(source, destination)).isError()).toBe(true);
+    expect(game.executeCommand(new MoveCommand(source, destination, Some(Rank.Knight))).isOk()).toBe(true);
+    expect(game.pieces.find((piece) => piece.position.isEqual(destination))?.rank).toBe(Rank.Knight);
+  });
+
+  it("uses only legally available en-passant rights in repetition identity", () => {
+    const noCapture = new ChessGame("4k3/8/8/8/8/8/8/4K3 w - e6 0 1");
+    const noTarget = new ChessGame("4k3/8/8/8/8/8/8/4K3 w - - 0 1");
+    expect(ChessGame.positionKey(noCapture.gameState)).toBe(ChessGame.positionKey(noTarget.gameState));
+    const capture = new ChessGame("4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 1");
+    const withoutCapture = new ChessGame("4k3/8/8/3pP3/8/8/8/4K3 w - - 0 1");
+    expect(ChessGame.positionKey(capture.gameState)).not.toBe(ChessGame.positionKey(withoutCapture.gameState));
+  });
+
+  it("supports claimable and automatic repetition draws", () => {
+    const cycle = [
+      ["g1", "f3"], ["g8", "f6"], ["f3", "g1"], ["f6", "g8"],
+    ];
+    const game = new ChessGame();
+    for (let repetition = 0; repetition < 2; repetition++) {
+      for (const [source, destination] of cycle) {
+        expect(game.executeCommand(new MoveCommand(Loc.fromNotation(source).unwrap(), Loc.fromNotation(destination).unwrap())).isOk()).toBe(true);
+      }
+    }
+    expect(game.canClaimDraw()).toBe(DrawReason.ThreefoldRepetition);
+    expect(game.claimDraw().isOk()).toBe(true);
+    expect(game.gameState.drawReason).toBe(DrawReason.ThreefoldRepetition);
+
+    const fivefold = new ChessGame();
+    for (let repetition = 0; repetition < 4; repetition++) {
+      for (const [source, destination] of cycle) {
+        fivefold.executeCommand(new MoveCommand(Loc.fromNotation(source).unwrap(), Loc.fromNotation(destination).unwrap()));
+      }
+    }
+    expect(fivefold.gameState.drawReason).toBe(DrawReason.FivefoldRepetition);
+  });
+
+  it("handles FIDE fifty and seventy-five move thresholds plus insufficient material", () => {
+    const claimable = new ChessGame("3qk3/8/8/8/8/8/8/3QK3 w - - 100 1");
+    expect(claimable.canClaimDraw()).toBe(DrawReason.FiftyMoveRule);
+    const intendedMove = new ChessGame("3qk3/8/8/8/8/8/8/3QK3 w - - 99 1");
+    const intendedCommand = new MoveCommand(Loc.fromNotation("d1").unwrap(), Loc.fromNotation("d2").unwrap());
+    const originalFen = intendedMove.getCurrentFen();
+    expect(intendedMove.canClaimDraw(intendedCommand)).toBe(DrawReason.FiftyMoveRule);
+    expect(intendedMove.claimDraw(intendedCommand).isOk()).toBe(true);
+    expect(intendedMove.getCurrentFen()).toBe(originalFen);
+    const automatic = new ChessGame("3qk3/8/8/8/8/8/8/3QK3 w - - 149 1");
+    expect(automatic.executeCommand(new MoveCommand(Loc.fromNotation("d1").unwrap(), Loc.fromNotation("d2").unwrap())).isOk()).toBe(true);
+    expect(automatic.gameState.drawReason).toBe(DrawReason.SeventyFiveMoveRule);
+    const bareKings = new ChessGame("4k3/8/8/8/8/8/8/4K3 w - - 0 1");
+    expect(bareKings.gameState.drawReason).toBe(DrawReason.InsufficientMaterial);
   });
 });

@@ -22,6 +22,15 @@ export const noCastlingRights = (): CastlingRights => ({
   blackQueenSide: false,
 });
 
+export enum DrawReason {
+  ThreefoldRepetition = "Threefold repetition",
+  FivefoldRepetition = "Fivefold repetition",
+  FiftyMoveRule = "Fifty-move rule",
+  SeventyFiveMoveRule = "Seventy-five-move rule",
+  InsufficientMaterial = "Insufficient material",
+  Stalemate = "Stalemate",
+}
+
 // #region Classes (1)
 
 export class GameState {
@@ -36,7 +45,9 @@ export class GameState {
     readonly castlingRights: CastlingRights = noCastlingRights(),
     readonly enPassantTarget: Option<Loc> = None,
     readonly halfmoveClock: number = 0,
-    readonly fullmoveNumber: number = 1
+    readonly fullmoveNumber: number = 1,
+    readonly positionHistory: readonly string[] = [],
+    readonly drawReason?: DrawReason
   ) {}
 
   // #endregion Constructors (1)
@@ -85,7 +96,25 @@ export class GameState {
       this.castlingRights,
       this.enPassantTarget,
       this.halfmoveClock,
-      this.fullmoveNumber
+      this.fullmoveNumber,
+      this.positionHistory,
+      this.drawReason
+    );
+  }
+
+  public updateDraw(reason: DrawReason): GameState {
+    return new GameState(
+      this.board,
+      this.currentPlayer,
+      this.commands,
+      this.counter,
+      GameStatus.Draw,
+      this.castlingRights,
+      this.enPassantTarget,
+      this.halfmoveClock,
+      this.fullmoveNumber,
+      this.positionHistory,
+      reason
     );
   }
 

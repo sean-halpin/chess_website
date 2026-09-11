@@ -24,7 +24,8 @@ const terminalEvaluation = (
 ): number | undefined => {
   if (
     state.status === GameStatus.Draw ||
-    state.status === GameStatus.Stalemate
+    state.status === GameStatus.Stalemate ||
+    ChessGame.automaticDrawReason(state) !== undefined
   ) {
     return 0;
   }

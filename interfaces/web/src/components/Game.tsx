@@ -1,7 +1,5 @@
-// Game.tsx
-
 import { DndProvider } from "react-dnd";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Board from "./Board";
 import "./css/Game.css";
 import isTouchDevice from "is-touch-device";
@@ -9,180 +7,75 @@ import { TouchBackend } from "react-dnd-touch-backend";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import AudioPlayer from "./AudioPlayer";
 import { TextComponent } from "./TextComponent";
-import { ChessGame, MoveCommand, Team } from "@sean_halpin/chess_game";
-
-export interface GameProps {
-  game: ChessGame;
-  displayText: string;
-  fen: string;
-}
+import { ChessGame, MoveCommand, Rank, Some, Team } from "@sean_halpin/chess_game";
 
 export const Game: React.FC = () => {
   const audioPlayerRef = useRef<AudioPlayer>(null);
-
-  const playAudio = () => {
-    if (audioPlayerRef.current) {
-      audioPlayerRef.current.play();
-    }
+  const [game, setGame] = useState(() => new ChessGame());
+  const [renderVersion, setRenderVersion] = useState(0);
+  const [pendingPromotion, setPendingPromotion] = useState<MoveCommand>();
+  const [pendingDrawClaim, setPendingDrawClaim] = useState<MoveCommand>();
+  const gameOver = ChessGame.isGameOver(game.gameState);
+  const playAudio = () => audioPlayerRef.current?.play();
+  const updateGame = (updatedGame: ChessGame) => {
+    setGame(updatedGame);
+    setRenderVersion((version) => version + 1);
   };
-
-  const [state, setState] = useState<GameProps>({
-    game: new ChessGame(),
-    displayText: "",
-    fen: "",
-  });
-
-  async function executeCpuMoves(team: Team) {
-    state.game
-      .moveMinimax(team)
-      .then((res) => {
-        if (res.success) {
-          playAudio();
-          setState({
-            ...state,
-            game: res.data,
-          });
-        }
-      })
-      .catch((err) => {
-        console.error("Error during CPU move:", err);
-      });
-  }
-
-  if (
-    !state.game.status?.includes("Checkmate") &&
-    !state.game.status?.includes("Draw")
-  ) {
-    const curr_player = state.game.currentPlayer;
-    const capitalized_player =
-      curr_player.charAt(0).toUpperCase() + curr_player.slice(1);
-
-    state.displayText = `${capitalized_player} to move`;
-  } else {
-    state.displayText = `${state.game.status}`;
-  }
-  state.fen = state.game.getCurrentFen();
-
+  const commitMove = (command: MoveCommand) => {
+    const result = game.executeCommand(command);
+    if (result.success) { playAudio(); updateGame(result.data); }
+  };
+  const sendMoveCommand = (command: MoveCommand) => {
+    const matchingMoves = ChessGame.findLegalMoves(game.gameState, game.gameState.currentPlayer)
+      .filter(({ command: legal }) => legal.source.isEqual(command.source) && legal.destination.isEqual(command.destination));
+    if (command.promotionRank.isNone() && matchingMoves.some(({ command: legal }) => legal.promotionRank.isSome())) {
+      setPendingPromotion(command);
+    } else if (game.canClaimDraw(command) !== undefined) {
+      setPendingDrawClaim(command);
+    } else commitMove(command);
+  };
+  const choosePromotion = (rank: Rank) => {
+    if (pendingPromotion === undefined) return;
+    setPendingPromotion(undefined);
+    sendMoveCommand(new MoveCommand(pendingPromotion.source, pendingPromotion.destination, Some(rank)));
+  };
+  const claimDraw = (command?: MoveCommand) => {
+    const result = game.claimDraw(command);
+    if (result.success) updateGame(result.data);
+    setPendingDrawClaim(undefined);
+  };
   useEffect(() => {
-    const waitOneSecond = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      if (state.game.currentPlayer === Team.Black) {
-        executeCpuMoves(Team.Black);
-      }
-    };
-    if (
-      !state.game.status?.includes("Checkmate") &&
-      !state.game.status?.includes("Draw")
-    ) {
-      const curr_player = state.game.currentPlayer;
-      const capitalized_player =
-        curr_player.charAt(0).toUpperCase() + curr_player.slice(1);
-      state.displayText = `${capitalized_player} to move`;
-      waitOneSecond();
-    } else {
-      state.displayText = `${state.game.status}`;
-    }
-  });
-
-  const sendMoveCommand = (newCommand: MoveCommand) => {
-    const result = state.game.executeCommand(newCommand);
-    if (result.success) {
-      playAudio();
-      setState({
-        ...state,
-        game: result.data,
-      });
-    }
-  };
+    if (gameOver || game.currentPlayer !== Team.Black) return;
+    const timer = window.setTimeout(() => {
+      game.moveMinimax(Team.Black).then((result) => {
+        if (result.success) { playAudio(); updateGame(result.data); }
+      }).catch((error) => console.error("Error during CPU move:", error));
+    }, 2000);
+    return () => window.clearTimeout(timer);
+  }, [game, gameOver, renderVersion]);
 
   const legalMoves = (team: Team): MoveCommand[] =>
-    ChessGame.findLegalMoves(state.game.gameState, team).map(
-      ({ command }) => command
-    );
-
-  if (state) {
-    if (isTouchDevice()) {
-      return (
-        <div>
-          <div className="header">
-            <h1>Chess</h1>
-          </div>
-          <div className="topnav">
-            <button>Connect</button>
-          </div>
-          <div className="row">
-            <div className="column">
-              <h2></h2>
-              <p></p>
-            </div>
-            <div className="column">
-              <div className="chessBox">
-                <DndProvider backend={TouchBackend}>
-                  <Board
-                    pieces={state.game.pieces}
-                    sendMoveCommand={sendMoveCommand}
-                    legalMoves={legalMoves}
-                  />
-                </DndProvider>
-              </div>
-              <div>
-                <TextComponent
-                  statusMessage={state.game.status || ""}
-                  nextToMove={`${state.game.currentPlayer} to move next`}
-                  fenString={state.fen}
-                />
-                <AudioPlayer ref={audioPlayerRef} />
-              </div>
-            </div>
-            <div className="column">
-              <h2></h2>
-              <p></p>
-            </div>
-          </div>
-        </div>
-      );
-    } else {
-      return (
-        <div>
-          <div className="header">
-            <h1>Chess</h1>
-          </div>
-          <div className="topnav">
-            <button>Connect</button>
-          </div>
-          <div className="row">
-            <div className="column">
-              <h2></h2>
-              <p></p>
-            </div>
-            <div className="column">
-              <div className="chessBox">
-                <DndProvider backend={HTML5Backend}>
-                  <Board
-                    pieces={state.game.pieces}
-                    sendMoveCommand={sendMoveCommand}
-                    legalMoves={legalMoves}
-                  />
-                </DndProvider>
-              </div>
-              <div>
-                <TextComponent
-                  statusMessage={state.game.status || ""}
-                  nextToMove={`${state.game.currentPlayer} to move next`}
-                  fenString={state.fen}
-                />
-                <AudioPlayer ref={audioPlayerRef} />
-              </div>
-            </div>
-            <div className="column">
-              <h2></h2>
-              <p></p>
-            </div>
-          </div>
-        </div>
-      );
-    }
-  } else {
-    return <></>;
-  }
+    ChessGame.findLegalMoves(game.gameState, team).map(({ command }) => command);
+  const backend = isTouchDevice() ? TouchBackend : HTML5Backend;
+  return <div>
+    <div className="header"><h1>Chess</h1></div>
+    <div className="topnav"><button>Connect</button></div>
+    <div className="row"><div className="column" /><div className="column">
+      <div className="chessBox"><DndProvider backend={backend}>
+        <Board pieces={game.pieces} sendMoveCommand={sendMoveCommand} legalMoves={legalMoves} />
+      </DndProvider></div>
+      <div>
+        {game.currentPlayer === Team.White && game.canClaimDraw() !== undefined && !gameOver && <button onClick={() => claimDraw()}>Claim draw</button>}
+        {pendingPromotion !== undefined && <div role="dialog" aria-label="Choose promotion"><p>Promote pawn to:</p>
+          {[Rank.Queen, Rank.Rook, Rank.Bishop, Rank.Knight].map((rank) => <button key={rank} onClick={() => choosePromotion(rank)}>{rank}</button>)}
+        </div>}
+        {pendingDrawClaim !== undefined && <div role="dialog" aria-label="Claim draw"><p>This move permits a draw claim.</p>
+          <button onClick={() => claimDraw(pendingDrawClaim)}>Claim draw</button>
+          <button onClick={() => { commitMove(pendingDrawClaim); setPendingDrawClaim(undefined); }}>Play move</button>
+        </div>}
+        <TextComponent statusMessage={game.gameState.drawReason || game.status || ""} nextToMove={`${game.currentPlayer} to move next`} fenString={game.getCurrentFen()} />
+        <AudioPlayer ref={audioPlayerRef} />
+      </div>
+    </div><div className="column" /></div>
+  </div>;
 };

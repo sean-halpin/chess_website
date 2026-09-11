@@ -194,7 +194,23 @@ const findLegalPawnMoves = (
       moveResults.push(new MoveResult(target, movingPiece, adjacentPawn));
     }
   }
-  return moveResults;
+  const promotionRanks = [Rank.Queen, Rank.Rook, Rank.Bishop, Rank.Knight];
+  return moveResults.flatMap((move) =>
+    move.destination.row === 0 || move.destination.row === 7
+      ? promotionRanks.map(
+          (promotionRank) =>
+            new MoveResult(
+              move.destination,
+              move.sourcePieceRank,
+              move.takenPiece,
+              move.enPassantPossible,
+              move.kingLocationsMustNotBeInCheck,
+              move.rookSrcDestCastling,
+              Some(promotionRank)
+            )
+        )
+      : [move]
+  );
 };
 
 const findLegalCastleMoves = (
