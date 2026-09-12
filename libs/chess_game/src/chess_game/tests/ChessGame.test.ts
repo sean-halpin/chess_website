@@ -108,6 +108,48 @@ describe("ChessGameLogic", () => {
     expect(result.success).toBeTruthy();
   });
 
+  it("undoes one or more plies and rejects invalid undo requests", () => {
+    const initialFen = chessGameLogic.getCurrentFen();
+    chessGameLogic.executeCommand(new MoveCommand(
+      Loc.fromNotation("e2").unwrap(),
+      Loc.fromNotation("e4").unwrap()
+    ));
+    const afterWhiteMove = chessGameLogic.getCurrentFen();
+    chessGameLogic.executeCommand(new MoveCommand(
+      Loc.fromNotation("e7").unwrap(),
+      Loc.fromNotation("e5").unwrap()
+    ));
+    expect(chessGameLogic.undo().isOk()).toBe(true);
+    expect(chessGameLogic.getCurrentFen()).toBe(afterWhiteMove);
+    expect(chessGameLogic.undo(1).isOk()).toBe(true);
+    expect(chessGameLogic.getCurrentFen()).toBe(initialFen);
+    expect(chessGameLogic.undo(0).isError()).toBe(true);
+    expect(chessGameLogic.undo().isError()).toBe(true);
+  });
+
+  it("validates configurable minimax options", async () => {
+    const invalidDepth = await chessGameLogic.moveMinimax(Team.White, {
+      maxDepth: 0,
+      timeLimitMs: 100,
+    });
+    expect(invalidDepth.error).toBe("AI maxDepth must be an integer between 1 and 6");
+    const invalidTime = await chessGameLogic.moveMinimax(Team.White, {
+      maxDepth: 1,
+      timeLimitMs: 99,
+    });
+    expect(invalidTime.error).toBe("AI timeLimitMs must be an integer between 100 and 10000");
+    chessGameLogic.executeCommand(new MoveCommand(
+      Loc.fromNotation("e2").unwrap(),
+      Loc.fromNotation("e4").unwrap()
+    ));
+    const configuredMove = await chessGameLogic.moveMinimax(Team.Black, {
+      maxDepth: 1,
+      timeLimitMs: 100,
+    });
+    expect(configuredMove.isOk()).toBe(true);
+    expect(chessGameLogic.currentPlayer).toBe(Team.White);
+  });
+
   it("should initialize from a FEN string move the king and assert queen side rook position", () => {
     const bothSideCastleInOneFen =
       "rn1qkbnr/1b6/pppppppp/8/4PP2/N1PPBN2/PP1QB1PP/R3K2R w KQkq - 2 10";

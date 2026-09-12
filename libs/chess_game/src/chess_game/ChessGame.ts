@@ -28,10 +28,21 @@ import { findBestMoveMinimax } from "./Minimax";
 import { StandardAlgebraicNotationMove } from "./StandardAlgebraicNotationMove";
 import { MoveCommandAndResult } from "./MoveCommandAndResult";
 
+export interface AiOptions {
+  maxDepth: number;
+  timeLimitMs: number;
+}
+
+export const defaultAiOptions: AiOptions = {
+  maxDepth: 3,
+  timeLimitMs: 3_000,
+};
+
 export class ChessGame {
   // #region Properties (12)
 
   private _gameState: GameState;
+  private readonly previousStates: GameState[] = [];
   private createPiece = (
     team: Team,
     position: Loc,
@@ -685,6 +696,7 @@ export class ChessGame {
       updatedState = updatedState.updateDraw(automaticDraw);
     }
     // Lastly update the game state from updatedState
+    this.previousStates.push(currentState);
     this.gameState = updatedState;
     return Ok(this);
   };
@@ -719,7 +731,20 @@ export class ChessGame {
     if (reason === undefined) {
       return Err("Draw cannot be claimed in this position");
     }
+    this.previousStates.push(this.gameState);
     this.gameState = this.gameState.updateDraw(reason);
+    return Ok(this);
+  };
+  public undo = (plies = 1): Result<ChessGame, string> => {
+    if (!Number.isInteger(plies) || plies <= 0) {
+      return Err("Undo count must be a positive integer");
+    }
+    if (plies > this.previousStates.length) {
+      return Err("Cannot undo more moves than have been played");
+    }
+    const restoredState = this.previousStates[this.previousStates.length - plies];
+    this.previousStates.splice(this.previousStates.length - plies, plies);
+    this.gameState = restoredState;
     return Ok(this);
   };
   public getCurrentFen = () => {
@@ -738,7 +763,7 @@ export class ChessGame {
 
   // #region Public Getters And Setters (5)
 
-  public get currentPlayer(): string {
+  public get currentPlayer(): Team.White | Team.Black {
     return this.gameState.currentPlayer;
   }
 
@@ -937,7 +962,16 @@ export class ChessGame {
 
   // #region Public Methods (1)
 
-  public async moveMinimax(team: Team): Promise<Result<ChessGame, string>> {
+  public async moveMinimax(
+    team: Team,
+    options: AiOptions = defaultAiOptions
+  ): Promise<Result<ChessGame, string>> {
+    if (!Number.isInteger(options.maxDepth) || options.maxDepth < 1 || options.maxDepth > 6) {
+      return Err("AI maxDepth must be an integer between 1 and 6");
+    }
+    if (!Number.isInteger(options.timeLimitMs) || options.timeLimitMs < 100 || options.timeLimitMs > 10_000) {
+      return Err("AI timeLimitMs must be an integer between 100 and 10000");
+    }
     const gameState = this.gameState;
     const drawReason = this.canClaimDraw();
     if (drawReason !== undefined) {
@@ -949,8 +983,8 @@ export class ChessGame {
       const bestMove = findBestMoveMinimax(
         gameState,
         team,
-        3,
-        3 * 1000
+        options.maxDepth,
+        options.timeLimitMs
       );
       return this.executeCommand(await bestMove);
     } else {

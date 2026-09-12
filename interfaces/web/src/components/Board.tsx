@@ -1,70 +1,65 @@
-// Board.tsx
-
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Square from "./Square";
-import { MoveCommand } from "@sean_halpin/chess_game";
-import { Loc } from "@sean_halpin/chess_game";
-import { ChessPiece } from "@sean_halpin/chess_game";
-import { None, Some } from "@sean_halpin/chess_game";
-import { Team } from "@sean_halpin/chess_game";
+import { ChessPiece, Loc, MoveCommand, None, Option, Some, Team, isSome } from "@sean_halpin/chess_game";
 
 interface BoardProps {
   pieces: ChessPiece[];
   sendMoveCommand: (command: MoveCommand) => void;
-  legalMoves: (team: Team) => MoveCommand[];
+  legalMoves: MoveCommand[];
+  currentPlayer: Team;
+  gameOver: boolean;
+  lastMove?: MoveCommand;
+  interactionKey: number;
 }
 
 const Board: React.FC<BoardProps> = ({
-  pieces,
-  sendMoveCommand,
-  legalMoves,
+  pieces, sendMoveCommand, legalMoves, currentPlayer, gameOver, lastMove, interactionKey,
 }) => {
-  const renderSquare = (
-    row: number,
-    col: number,
-    moves: MoveCommand[]
-  ): JSX.Element => {
-    const isEven = (row + col) % 2 === 1;
-    const color = isEven ? "rgb(255, 205, 148)" : "rgb(200, 110, 25)";
-    const piece = pieces.find((p) => {
-      return p ? p.position.row === row && p.position.col === col : false;
-    });
+  const [selectedSquare, setSelectedSquare] = useState<Loc>();
+  useEffect(() => setSelectedSquare(undefined), [interactionKey, currentPlayer, gameOver]);
 
-    return (
-      <Square
-        key={`${row}-${col}`}
-        color={color}
-        piece={piece !== undefined ? Some(piece) : None}
-        position={new Loc(row, col)}
-        sendMoveCommand={sendMoveCommand}
-        moves={moves}
-      />
-    );
-  };
-
-  const renderRow = (row: number, moves: MoveCommand[]): JSX.Element => {
-    const squares: JSX.Element[] = [];
-
-    for (let col = 0; col <= 7; col++) {
-      squares.push(renderSquare(row, col, moves));
+  const handleSquareClick = (position: Loc, piece: Option<ChessPiece>) => {
+    if (gameOver || currentPlayer !== Team.White) return;
+    if (selectedSquare !== undefined) {
+      const legalMove = legalMoves.find((move) =>
+        move.source.isEqual(selectedSquare) && move.destination.isEqual(position)
+      );
+      if (legalMove !== undefined) {
+        setSelectedSquare(undefined);
+        sendMoveCommand(new MoveCommand(selectedSquare, position));
+        return;
+      }
     }
-
-    return (
-      <div key={row} style={{ display: "flex" }}>
-        {squares}
-      </div>
-    );
+    if (isSome(piece) && piece.unwrap().team === Team.White) setSelectedSquare(position);
+    else setSelectedSquare(undefined);
   };
 
-  const rows: JSX.Element[] = [];
-  const legalMovesBlack = legalMoves(Team.Black);
-  const legalMovesWhite = legalMoves(Team.White);
-  const legalMovesAll = [...legalMovesBlack, ...legalMovesWhite];
-  for (let row = 7; row >= 0; row--) {
-    rows.push(renderRow(row, legalMovesAll));
-  }
+  const destinations = selectedSquare === undefined ? [] : legalMoves
+    .filter((move) => move.source.isEqual(selectedSquare))
+    .map((move) => move.destination);
+  const renderSquare = (row: number, col: number): JSX.Element => {
+    const position = new Loc(row, col);
+    const piece = pieces.find((candidate) => candidate.position.isEqual(position));
+    return <Square
+      key={`${row}-${col}`}
+      color={(row + col) % 2 === 1 ? "rgb(255, 205, 148)" : "rgb(200, 110, 25)"}
+      piece={piece === undefined ? None : Some(piece)}
+      position={position}
+      sendMoveCommand={sendMoveCommand}
+      selected={selectedSquare?.isEqual(position) ?? false}
+      legalDestination={destinations.some((destination) => destination.isEqual(position))}
+      lastMoveSource={lastMove?.source.isEqual(position) ?? false}
+      lastMoveDestination={lastMove?.destination.isEqual(position) ?? false}
+      draggable={currentPlayer === Team.White && !gameOver}
+      onSquareClick={handleSquareClick}
+    />;
+  };
 
-  return <div>{rows}</div>;
+  return <div>{Array.from({ length: 8 }, (_, index) => 7 - index).map((row) =>
+    <div key={row} style={{ display: "flex" }}>
+      {Array.from({ length: 8 }, (_, col) => renderSquare(row, col))}
+    </div>
+  )}</div>;
 };
 
 export default Board;

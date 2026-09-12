@@ -1,5 +1,31 @@
 .container {
     position: relative;
+    cursor: pointer;
+}
+
+.square-last-move {
+    background-color: var(--highlight-last) !important;
+    color: var(--highlight-last-text);
+}
+
+.square-selected {
+    box-shadow: inset 0 0 0 5px var(--highlight-selected);
+}
+
+.square-legal-destination {
+    box-shadow: inset 0 0 0 4px var(--highlight-legal);
+}
+
+.move-marker {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    left: 17px;
+    top: 17px;
+    border-radius: 50%;
+    background: var(--highlight-legal);
+    pointer-events: none;
+    z-index: 4;
 }
 
 .box {

@@ -1,73 +1,69 @@
-body {
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
+html, body, #root {
+    width: 100%;
+    height: 100%;
     margin: 0;
-    background-color: black;
-    color: white;
-}
-
-.chessBox {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 50px;
-}
-
-.infoBox {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-* {
-    box-sizing: border-box;
-}
-
-/* Style the header */
-.header {
-    /* background-color: #f1f1f1; */
-    padding: 0px;
-    text-align: center;
-}
-
-/* Style the top navigation bar */
-.topnav {
     overflow: hidden;
+    overscroll-behavior: none;
 }
 
-/* Style the topnav links */
-.topnav button {
-    float: right;
+body {
+    background: #000;
+    color: #fff;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+button, input { touch-action: manipulation; }
+input { user-select: text; -webkit-user-select: text; }
+* { box-sizing: border-box; }
+
+.game-shell { height: 100dvh; overflow: hidden; }
+.header { position: relative; height: 52px; text-align: center; }
+.header h1 { margin: 0; padding-top: 8px; font-size: 28px; }
+.settings { position: absolute; right: 12px; top: 8px; z-index: 10; }
+.burger-button { font-size: 24px; line-height: 28px; }
+.settings-menu {
+    position: absolute;
+    right: 0;
+    top: 42px;
+    width: 235px;
+    padding: 12px;
+    border: 2px solid #fff;
+    border-radius: 8px;
+    background: #151515;
+    color: #fff;
+    text-align: left;
+}
+.settings-menu label { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.settings-menu input { width: 74px; }
+.settings-section-button {
     display: block;
-    text-align: center;
-    padding: 10px 12px;
-    text-decoration: none;
+    width: 100%;
+    margin: 0;
+    padding: 8px 10px;
+    border: 1px solid #858585;
+    border-radius: 4px;
+    background: #292929;
+    color: inherit;
+    font-weight: 700;
+    text-align: left;
 }
+.settings-section-button + .settings-section { margin-top: 8px; }
+.settings-section + .settings-section-button { margin-top: 10px; }
+.settings-section { padding: 2px 2px 0; }
+.theme-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.theme-options button { min-height: 32px; }
+.theme-active { outline: 3px solid #fff; }
 
-/* Change color on hover */
-.topnav button:hover {
-    background-color: #ddd;
-    color: black;
-}
+.row { display: flex; justify-content: center; }
+.column { width: auto; padding: 0; }
+.chessBox { display: flex; justify-content: center; padding: 8px; }
+.game-controls { display: flex; justify-content: center; gap: 12px; margin: 4px 0 10px; }
+.game-status { display: flex; flex-direction: column; align-items: center; }
 
-/* Create three equal columns that floats next to each other */
-.column {
-    float: left;
-    width: 33.33%;
-    padding: 15px;
-}
-
-/* Clear floats after the columns */
-.row::after {
-    content: "";
-    display: table;
-    clear: both;
-}
-
-/* Responsive layout - makes the three columns stack on top of each other instead of next to each other */
-@media screen and (max-width:600px) {
-    .column {
-        width: 100%;
-    }
+@media screen and (max-width: 600px) {
+    .header { height: 44px; }
+    .header h1 { font-size: 24px; padding-top: 5px; }
+    .chessBox { padding: 0; }
 }
